@@ -23,17 +23,18 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 
 ## 📋 Pendiente (roadmap)
 
-- **Deploy Fase 1 (Vercel)** — frontend en producción en **https://fimplify.vercel.app** (`vercel` CLI, proyecto `fimplify`, env vars `REACT_APP_*` en Production). Fix: `loadSummaries` memoizada con `useCallback` para pasar el build con `CI=true`. Resta **Fase 2: DNS Cloudflare con dominio propio**.
+- **Deploy Fase 1 (Vercel)** — frontend en producción en **https://fimplify.vercel.app** (`vercel` CLI, proyecto `fimplify`, env vars `REACT_APP_*` en Production). Fix: `loadSummaries` memoizada con `useCallback` para pasar el build con `CI=true`.
+- **Deploy Fase 2 (Cloudflare DNS)** — **en pausa**: requiere dominio propio (cuenta Cloudflare ya disponible; registrar dominio o usar uno existente).
+- **Pulido visual** — la app funciona pero la UI quedó básica. **TailwindCSS adoptado** (sale del hold) e integrado vía CRACO (CRA 5). Primer pase Tailwind en **Auth + Dashboard**; quedan para segunda pasada: layout/sidebar/header, `UploadSummaries` y tabla, responsive completo.
 - **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 
 ## ⏸️ En hold (refactor / limpieza — posponer hasta estabilizar)
 
-- **CSS framework** — evaluar TailwindCSS (u otro utility-first) para reemplazar el CSS plano; decidir al terminar el proyecto, en conjunto con el refactor.
 - **Conversión PDF→Markdown (Microsoft MarkItDown)** — evaluar `markitdown` para convertir el PDF a Markdown antes de parsear y comparar si simplifica el parser posicional actual de `unpdf`. Nota: es Python (librería/CLI o REST API `api.markitdown.ai` con key), no corre nativo en Deno — evaluar vía REST o como herramienta de desarrollo, no en la edge function.
 - `frontend/src/App.test.js` — boilerplate de CRA sin uso.
 - `frontend/src/logo.svg` — imagen sin uso (la UI actual no la renderiza).
 - `frontend/src/reportWebVitals.js` + llamada en `index.js` — no requerido.
-- `frontend/src/index.css` y partes de `App.css` — estilos CRA residuales (repasar junto con el rediseño del dashboard).
+- `frontend/src/index.css` y partes de `App.css` — estilos CRA residuales (repasar junto con la segunda pasada del rediseño; index.css ahora es el entry de Tailwind).
 - `backend/package.json` — verificar si `@supabase/server` se usa; si no, quitar.
 - `parse-summary` — el archivo concentra parseo + categorías + análisis; modularizar cuando la feature-set se estabilice.

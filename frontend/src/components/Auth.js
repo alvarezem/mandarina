@@ -17,31 +17,70 @@ export default function Auth() {
   }
 
   return (
-    <div className="auth-screen">
-      <form className="auth-form" onSubmit={handleSubmit}>
-        <h1>Fimplify</h1>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          required
-        />
-        <button type="submit" className="primary">
-          {isSignUp ? 'Crear cuenta' : 'Iniciar sesión'}
-        </button>
-        <button type="button" className="ghost" onClick={() => setIsSignUp(!isSignUp)}>
-          {isSignUp ? 'Ya tengo cuenta' : 'Crear cuenta'}
-        </button>
-        {error && <p className="error-text">{error}</p>}
-      </form>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 via-slate-50 to-slate-100 px-4">
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-600 text-2xl font-bold text-white shadow-lg shadow-teal-600/20">
+            F
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Fimplify</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Subí tu resumen y analizá el consumo de tus tarjetas
+          </p>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm"
+        >
+          <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            required
+            className="mb-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+          />
+
+          <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">
+            Contraseña
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            className="mb-6 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+          />
+
+          <button
+            type="submit"
+            className="w-full rounded-lg bg-teal-600 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+          >
+            {isSignUp ? 'Crear cuenta' : 'Iniciar sesión'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="mt-3 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+          >
+            {isSignUp ? 'Ya tengo cuenta' : 'Crear cuenta'}
+          </button>
+
+          {error && (
+            <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              {error}
+            </p>
+          )}
+        </form>
+      </div>
     </div>
   )
 }

@@ -16,8 +16,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "concurrently -k \"tailwindcss -i ./src/index.css -o ./src/index.generated.css --watch\" \"react-scripts start\"",
+    "build:css": "tailwindcss -i ./src/index.css -o ./src/index.generated.css --minify",
+    "build": "npm run build:css && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -38,5 +39,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "concurrently": "^10.0.4",
+    "tailwindcss": "^4.3.3"
   }
 }

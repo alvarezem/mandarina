@@ -23,7 +23,7 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 
 ## 📋 Pendiente (roadmap)
 
-- **Deploy** — Vercel (frontend) + DNS Cloudflare (requiere dominio). Repo listo en GitHub (privado) para conectar con Vercel.
+- **Deploy Fase 1 (Vercel)** — frontend en producción en **https://fimplify.vercel.app** (`vercel` CLI, proyecto `fimplify`, env vars `REACT_APP_*` en Production). Fix: `loadSummaries` memoizada con `useCallback` para pasar el build con `CI=true`. Resta **Fase 2: DNS Cloudflare con dominio propio**.
 - **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 

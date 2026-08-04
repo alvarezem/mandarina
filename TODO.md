@@ -30,6 +30,8 @@ Lista viva del proyecto. Se actualiza en cada iteración.
   - **2do pase**: layout + sidebar + `UploadSummaries` + responsive — header sticky con blur, drawer móvil (`<lg`), drop zone de subida auto-subida, pills de status, `App.css` eliminado (todo Tailwind).
   - **Tema claro/oscuro**: toggle sol/luna (`ThemeToggle.js`) en header y pantalla Auth; dark mode por clase (`@custom-variant dark`), script anti-flash, persiste en `localStorage` y arranca siguiendo al sistema; Chart.js theme-aware vía prop.
 - **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen.
+- **Vista global por períodos (multi-resumen)** — hoy el dashboard analiza un solo resumen. Se quiere **agregar todos los consumos de un período (p. ej. un mes) aunque estén repartidos entre varios PDF/CSV** (mismo usuario). Implica: filtro por rango de fechas, **resumen general consolidado** (totales, categorías, comercios, balance) sobre todas las transacciones del usuario en el período, y que el dashboard permita "todos los resúmenes" como selección además de uno puntual.
+- **Filtros en el dashboard** — sobre la tabla/gráficos: **fecha** (desde/hasta), **categoría** (multi-select), **moneda** (ARS/USD), **comercio** (texto/búsqueda) y resumen (uno/varios). Mejor sumar de más y luego quitar si sobra.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 
 ## ⏸️ En hold (refactor / limpieza — posponer hasta estabilizar)

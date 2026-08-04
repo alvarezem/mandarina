@@ -25,7 +25,10 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 
 - **Deploy Fase 1 (Vercel)** — frontend en producción en **https://fimplify.vercel.app** (`vercel` CLI, proyecto `fimplify`, env vars `REACT_APP_*` en Production). Fix: `loadSummaries` memoizada con `useCallback` para pasar el build con `CI=true`.
 - **Deploy Fase 2 (Cloudflare DNS)** — **en pausa**: requiere dominio propio (cuenta Cloudflare ya disponible; registrar dominio o usar uno existente).
-- **Pulido visual** — la app funciona pero la UI quedó básica. **TailwindCSS adoptado** (sale del hold) vía **CLI** (`@tailwindcss/cli` → `src/index.generated.css`, sin CRACO; evita la detección flakey de fuentes del plugin PostCSS bajo webpack). Primer pase Tailwind en **Auth + Dashboard** (cards, charts con theme, tabla). Quedan para segunda pasada: layout/sidebar/header, `UploadSummaries` y responsive completo.
+- **Pulido visual** — UI básica → rediseño completo con **TailwindCSS** (adoptado, sale del hold) vía **CLI** (`@tailwindcss/cli` → `src/index.generated.css`, sin CRACO; evita la detección flakey de fuentes del plugin PostCSS bajo webpack).
+  - **1er pase**: Auth + Dashboard (cards, charts con theme, tabla).
+  - **2do pase**: layout + sidebar + `UploadSummaries` + responsive — header sticky con blur, drawer móvil (`<lg`), drop zone de subida auto-subida, pills de status, `App.css` eliminado (todo Tailwind).
+- **Tema claro/oscuro** — botón de toggle en el header con tokens CSS y modo oscuro.
 - **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 
@@ -35,6 +38,6 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 - `frontend/src/App.test.js` — boilerplate de CRA sin uso.
 - `frontend/src/logo.svg` — imagen sin uso (la UI actual no la renderiza).
 - `frontend/src/reportWebVitals.js` + llamada en `index.js` — no requerido.
-- `frontend/src/index.css` y partes de `App.css` — estilos CRA residuales (repasar junto con la segunda pasada del rediseño; index.css ahora es el entry de Tailwind).
+- `frontend/src/index.css` — ahora es el entry de Tailwind (imports + tokens); solo contiene `body` base.
 - `backend/package.json` — verificar si `@supabase/server` se usa; si no, quitar.
 - `parse-summary` — el archivo concentra parseo + categorías + análisis; modularizar cuando la feature-set se estabilice.

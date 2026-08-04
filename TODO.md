@@ -29,14 +29,15 @@ Lista viva del proyecto. Se actualiza en cada iteración.
   - **1er pase**: Auth + Dashboard (cards, charts con theme, tabla).
   - **2do pase**: layout + sidebar + `UploadSummaries` + responsive — header sticky con blur, drawer móvil (`<lg`), drop zone de subida auto-subida, pills de status, `App.css` eliminado (todo Tailwind).
   - **Tema claro/oscuro**: toggle sol/luna (`ThemeToggle.js`) en header y pantalla Auth; dark mode por clase (`@custom-variant dark`), script anti-flash, persiste en `localStorage` y arranca siguiendo al sistema; Chart.js theme-aware vía prop.
-- **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen.
+- **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen. _(movido a En hold 🔴 IMPORTANTE)_
 - **Vista global por períodos (multi-resumen)** — hoy el dashboard analiza un solo resumen. Se quiere **agregar todos los consumos de un período (p. ej. un mes) aunque estén repartidos entre varios PDF/CSV** (mismo usuario). Implica: filtro por rango de fechas, **resumen general consolidado** (totales, categorías, comercios, balance) sobre todas las transacciones del usuario en el período, y que el dashboard permita "todos los resúmenes" como selección además de uno puntual.
 - **Filtros en el dashboard** — sobre la tabla/gráficos: **fecha** (desde/hasta), **categoría** (multi-select), **moneda** (ARS/USD), **comercio** (texto/búsqueda) y resumen (uno/varios). Mejor sumar de más y luego quitar si sobra.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 
 ## ⏸️ En hold (refactor / limpieza — posponer hasta estabilizar)
 
-- **Conversión PDF→Markdown (Microsoft MarkItDown)** — evaluar `markitdown` para convertir el PDF a Markdown antes de parsear y comparar si simplifica el parser posicional actual de `unpdf`. Nota: es Python (librería/CLI o REST API `api.markitdown.ai` con key), no corre nativo en Deno — evaluar vía REST o como herramienta de desarrollo, no en la edge function.
+- 🔴 **IMPORTANTE — Mapeo de columnas/formatos (nuevos bancos)** — el parser heurístico de CSV/XLSX (`HEADER_ALIASES`, `findColumns`) y el posicional x,y del PDF (layout fijo BBVA) están afinados solo para las muestras actuales (MercadoPago CSV + BBVA Visa/Mastercard). Cuando se agreguen más bancos habrá que: ampliar aliases (cada banco usa otros nombres/orden, a veces varios montos: débito/crédito, PESOS/DÓLARES, saldo), elegir bien la columna de monto y **generalizar el parser de PDF** (auto-detectar columnas por cluster de coordenadas x o por header). En hold por decisión del usuario: por ahora no agrega más bancos.
+- **Conversión PDF→Markdown (Microsoft MarkItDown)** — **EVALUADO → NO recomendado** para estos casos. Motivo: su conversión de PDF por defecto (`pdfminer.six`) pierde estructura/tablas y rinde mal en tablas multi-columna densas; los resúmenes de banco son justamente tablas posicionales con columnas PESOS/DÓLARES que el parser actual (`unpdf` + x,y) ya resuelve bien. Además descarta las coordenadas x,y (señal clave para separar columnas) y es Python (no corre en Deno; REST = dependencia externa, latencia y enviar data financiera a un tercero). El camino correcto es el de arriba: generalizar el parser posicional, no convertir a Markdown.
 - `frontend/src/App.test.js` — boilerplate de CRA sin uso.
 - `frontend/src/logo.svg` — imagen sin uso (la UI actual no la renderiza).
 - `frontend/src/reportWebVitals.js` + llamada en `index.js` — no requerido.

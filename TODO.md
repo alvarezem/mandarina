@@ -15,6 +15,7 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 - **Dashboard visual** — UI estilo Notion con Chart.js (`chart.js` + `react-chartjs-2`): layout sidebar + panel principal, cards de métricas, línea `balanceTrend`, doughnut `byCategory`, barras `byMerchant`, tabla de transacciones. Restyling `index.css` + `App.css`.
 - **Moneda por transacción** — `0005_currency.sql`: columna `currency` (ARS/USD) en `transactions`. `buildAnalysis` separa totales/agregados ARS y un bloque USD; dashboard muestra card "Gastos USD" + columna de moneda con formateo por moneda.
 - **Parseo PDF (BBVA VISA + MASTERCARD)** — extracción posicional con `unpdf` (x,y), tablas de detalle `FECHA/DESCRIPCIÓN/PESOS/DÓLARES` por coordenadas, fechas `DD-MMM-YY`→ISO, montos negativos (gasto), categorías Impuestos/Pagos/Suscripciones. Verificado e2e: VISA ARS `-534.577,35` (7 movs), MASTERCARD ARS `-33.122,53` + USD `-17,61` (11 movs).
+- **GitHub** — repo `alvarezem/fimplify` (privado) creado vía `gh` CLI; `.gitignore` raíz (ignora `examples/` con datos financieros reales); `README.md` del proyecto; commit `10334cc` y push de `master` a `origin`.
 
 ## 🔄 En progreso
 
@@ -22,7 +23,7 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 
 ## 📋 Pendiente (roadmap)
 
-- **Deploy** — Vercel (frontend) + DNS Cloudflare (requiere dominio).
+- **Deploy** — Vercel (frontend) + DNS Cloudflare (requiere dominio). Repo listo en GitHub (privado) para conectar con Vercel.
 - **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 

@@ -28,7 +28,7 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 - **Pulido visual** — UI básica → rediseño completo con **TailwindCSS** (adoptado, sale del hold) vía **CLI** (`@tailwindcss/cli` → `src/index.generated.css`, sin CRACO; evita la detección flakey de fuentes del plugin PostCSS bajo webpack).
   - **1er pase**: Auth + Dashboard (cards, charts con theme, tabla).
   - **2do pase**: layout + sidebar + `UploadSummaries` + responsive — header sticky con blur, drawer móvil (`<lg`), drop zone de subida auto-subida, pills de status, `App.css` eliminado (todo Tailwind).
-- **Tema claro/oscuro** — botón de toggle en el header con tokens CSS y modo oscuro.
+  - **Tema claro/oscuro**: toggle sol/luna (`ThemeToggle.js`) en header y pantalla Auth; dark mode por clase (`@custom-variant dark`), script anti-flash, persiste en `localStorage` y arranca siguiendo al sistema; Chart.js theme-aware vía prop.
 - **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 

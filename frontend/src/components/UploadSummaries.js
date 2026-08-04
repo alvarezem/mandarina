@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 
 const STATUS_LABEL = {
@@ -14,11 +14,7 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    loadSummaries()
-  }, [])
-
-  const loadSummaries = async () => {
+  const loadSummaries = useCallback(async () => {
     const { data, error } = await supabase
       .from('card_summaries')
       .select('*')
@@ -29,7 +25,11 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
       setFiles(data)
       if (data.length > 0 && !selectedId) onSelect(data[0].id)
     }
-  }
+  }, [selectedId, onSelect])
+
+  useEffect(() => {
+    loadSummaries()
+  }, [loadSummaries])
 
   const parse = async (summaryId) => {
     try {

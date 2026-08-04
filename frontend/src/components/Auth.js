@@ -17,27 +17,31 @@ export default function Auth() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Fimplify</h1>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        required
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-        required
-      />
-      <button type="submit">{isSignUp ? 'Crear cuenta' : 'Iniciar sesión'}</button>
-      <button type="button" onClick={() => setIsSignUp(!isSignUp)}>
-        {isSignUp ? 'Ya tengo cuenta' : 'Crear cuenta'}
-      </button>
-      {error && <p>{error}</p>}
-    </form>
+    <div className="auth-screen">
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <h1>Fimplify</h1>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          required
+        />
+        <button type="submit" className="primary">
+          {isSignUp ? 'Crear cuenta' : 'Iniciar sesión'}
+        </button>
+        <button type="button" className="ghost" onClick={() => setIsSignUp(!isSignUp)}>
+          {isSignUp ? 'Ya tengo cuenta' : 'Crear cuenta'}
+        </button>
+        {error && <p className="error-text">{error}</p>}
+      </form>
+    </div>
   )
 }

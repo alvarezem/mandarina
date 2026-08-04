@@ -1,0 +1,9 @@
+# Datos financieros personales — no subir al repo
+examples/
+
+# Sistema operativo / editor
+.DS_Store
+*.local
+*.swp
+.idea/
+.vscode/

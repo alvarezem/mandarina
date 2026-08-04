@@ -51,28 +51,28 @@ const PALETTE = [
   '#14b8a6',
 ]
 
-function Card({ label, value, sub, valueClass = 'text-slate-900' }) {
+function Card({ label, value, sub, valueClass = 'text-slate-900 dark:text-slate-100' }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {label}
       </span>
       <div className={`mt-1 text-2xl font-bold tabular-nums ${valueClass}`}>{value}</div>
-      {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
+      {sub && <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{sub}</div>}
     </div>
   )
 }
 
 function EmptyState({ title, hint }) {
   return (
-    <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center">
-      <p className="text-sm font-medium text-slate-600">{title}</p>
-      {hint && <p className="mt-1 text-sm text-slate-400">{hint}</p>}
+    <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center dark:border-slate-700 dark:bg-slate-900">
+      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{title}</p>
+      {hint && <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">{hint}</p>}
     </div>
   )
 }
 
-export default function Dashboard({ summaryId }) {
+export default function Dashboard({ summaryId, dark }) {
   const [analysis, setAnalysis] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(false)
@@ -112,13 +112,13 @@ export default function Dashboard({ summaryId }) {
   }
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600" />
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600 dark:border-slate-600 dark:border-t-teal-500" />
         Cargando…
       </div>
     )
   }
-  if (error) return <p className="text-sm text-red-600">{error}</p>
+  if (error) return <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
   if (!analysis) {
     return (
       <EmptyState
@@ -129,6 +129,11 @@ export default function Dashboard({ summaryId }) {
   }
 
   const { totals, maxExpense, maxCredit, byCategory, byMerchant, balanceTrend, usd } = analysis
+
+  const isDark = dark
+  const tickColor = isDark ? '#64748b' : '#94a3b8'
+  const gridColor = isDark ? '#1e293b' : '#f1f5f9'
+  const axisLabelColor = isDark ? '#cbd5e1' : '#475569'
 
   const lineGradient = (context) => {
     const { ctx, chartArea } = context.chart
@@ -190,7 +195,7 @@ export default function Dashboard({ summaryId }) {
   }
 
   const axisTicks = (currency = 'ARS') => ({
-    color: '#94a3b8',
+    color: tickColor,
     font: { size: 11 },
     callback: (value) => fmtCompact(value, currency),
   })
@@ -206,8 +211,8 @@ export default function Dashboard({ summaryId }) {
       },
     },
     scales: {
-      x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } },
-      y: { grid: { color: '#f1f5f9' }, ticks: axisTicks() },
+      x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 } } },
+      y: { grid: { color: gridColor }, ticks: axisTicks() },
     },
   }
 
@@ -217,7 +222,7 @@ export default function Dashboard({ summaryId }) {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: { color: '#475569', boxWidth: 10, boxHeight: 10, font: { size: 11 } },
+        labels: { color: axisLabelColor, boxWidth: 10, boxHeight: 10, font: { size: 11 } },
       },
       tooltip: {
         callbacks: {
@@ -240,59 +245,59 @@ export default function Dashboard({ summaryId }) {
     },
     scales: {
       x: {
-        grid: { color: '#f1f5f9' },
+        grid: { color: gridColor },
         ticks: axisTicks(),
       },
-      y: { grid: { display: false }, ticks: { color: '#475569', font: { size: 11 } } },
+      y: { grid: { display: false }, ticks: { color: axisLabelColor, font: { size: 11 } } },
     },
   }
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-        <Card label="Créditos" value={fmt(totals.credits)} valueClass="text-emerald-600" />
-        <Card label="Débitos" value={fmt(totals.debits)} valueClass="text-red-600" />
+        <Card label="Créditos" value={fmt(totals.credits)} valueClass="text-emerald-600 dark:text-emerald-400" />
+        <Card label="Débitos" value={fmt(totals.debits)} valueClass="text-red-600 dark:text-red-400" />
         <Card label="Neto" value={fmt(totals.net)} />
         <Card label="Movimientos" value={totals.txCount} />
         <Card
           label="Mayor gasto"
           value={fmt(maxExpense.amount)}
-          valueClass="text-red-600"
+          valueClass="text-red-600 dark:text-red-400"
           sub={maxExpense.merchant}
         />
         <Card
           label="Mayor ingreso"
           value={fmt(maxCredit.amount)}
-          valueClass="text-emerald-600"
+          valueClass="text-emerald-600 dark:text-emerald-400"
           sub={maxCredit.merchant}
         />
         {usd && (
           <Card
             label="Gastos USD"
             value={fmt(usd.totals.debits, 'USD')}
-            valueClass="text-red-600"
+            valueClass="text-red-600 dark:text-red-400"
             sub={`${usd.totals.txCount} movimientos`}
           />
         )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-slate-700">Balance acumulado</h3>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Balance acumulado</h3>
           <div className="h-64">
             <Line data={balanceData} options={lineOptions} />
           </div>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-slate-700">Gasto por categoría</h3>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gasto por categoría</h3>
           <div className="h-64">
             <Doughnut data={categoryData} options={categoryOptions} />
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-slate-700">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
           Top comercios con mayor gasto
         </h3>
         <div className="h-72">
@@ -300,48 +305,48 @@ export default function Dashboard({ summaryId }) {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+            <thead className="bg-slate-50 dark:bg-slate-800/50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Fecha
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Descripción
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Categoría
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Moneda
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Monto
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
               {transactions.map((t) => (
-                <tr key={t.id} className="transition hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm text-slate-600 tabular-nums">{t.date}</td>
-                  <td className="px-4 py-3 text-sm text-slate-800">{t.merchant}</td>
-                  <td className="px-4 py-3 text-sm text-slate-500">{t.category ?? '—'}</td>
+                <tr key={t.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                  <td className="px-4 py-3 text-sm text-slate-600 tabular-nums dark:text-slate-400">{t.date}</td>
+                  <td className="px-4 py-3 text-sm text-slate-800 dark:text-slate-200">{t.merchant}</td>
+                  <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{t.category ?? '—'}</td>
                   <td className="px-4 py-3">
                     {t.currency === 'USD' ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
                         USD
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         ARS
                       </span>
                     )}
                   </td>
                   <td
                     className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${
-                      t.amount < 0 ? 'text-red-600' : 'text-emerald-600'
+                      t.amount < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'
                     }`}
                   >
                     {fmt(t.amount, t.currency)}

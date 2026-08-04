@@ -2,10 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 
 const STATUS = {
-  pending: { label: 'Pendiente', className: 'bg-slate-100 text-slate-600' },
-  parsing: { label: 'Procesando…', className: 'bg-amber-100 text-amber-700' },
-  done: { label: 'Procesado', className: 'bg-emerald-100 text-emerald-700' },
-  error: { label: 'Error', className: 'bg-red-100 text-red-700' },
+  pending: { label: 'Pendiente', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
+  parsing: { label: 'Procesando…', className: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300' },
+  done: { label: 'Procesado', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' },
+  error: { label: 'Error', className: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300' },
 }
 
 export default function UploadSummaries({ session, selectedId, onSelect }) {
@@ -84,10 +84,10 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="group flex w-full flex-col items-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-center transition hover:border-teal-500 hover:bg-teal-50/50 disabled:opacity-60"
+          className="group flex w-full flex-col items-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-center transition hover:border-teal-500 hover:bg-teal-50/50 disabled:opacity-60 dark:border-slate-700 dark:hover:bg-teal-950/30"
         >
           <svg
-            className="mb-1 h-6 w-6 text-slate-400 transition group-hover:text-teal-600"
+            className="mb-1 h-6 w-6 text-slate-400 transition group-hover:text-teal-600 dark:text-slate-500 dark:group-hover:text-teal-400"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.6}
@@ -99,10 +99,10 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
               d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
             />
           </svg>
-          <span className="text-sm font-medium text-slate-700">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {uploading ? 'Subiendo…' : 'Subir resumen'}
           </span>
-          <span className="text-xs text-slate-400">PDF, CSV o XLSX</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">PDF, CSV o XLSX</span>
         </button>
         <input
           ref={inputRef}
@@ -117,19 +117,21 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
       </div>
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/50 dark:text-red-400">
+          {error}
+        </p>
       )}
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Resúmenes
           </h2>
-          <span className="text-xs text-slate-400">{files.length > 0 ? countLabel : ''}</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">{files.length > 0 ? countLabel : ''}</span>
         </div>
 
         {files.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">
+          <p className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
             No subiste resúmenes todavía.
           </p>
         ) : (
@@ -143,12 +145,12 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
                     onClick={() => onSelect(f.id)}
                     className={`w-full rounded-lg p-2.5 text-left transition ${
                       selectedId === f.id
-                        ? 'bg-teal-50 ring-1 ring-teal-600/20'
-                        : 'hover:bg-slate-50'
+                        ? 'bg-teal-50 ring-1 ring-teal-600/20 dark:bg-teal-950/40 dark:ring-teal-500/30'
+                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-slate-800">
+                      <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
                         {f.file_name}
                       </span>
                       <span
@@ -161,7 +163,7 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
                       </span>
                     </div>
                     {f.status === 'error' && f.error && (
-                      <p className="mt-1 truncate text-xs text-red-600">{f.error}</p>
+                      <p className="mt-1 truncate text-xs text-red-600 dark:text-red-400">{f.error}</p>
                     )}
                   </button>
                 </li>

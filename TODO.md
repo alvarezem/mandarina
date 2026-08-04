@@ -25,7 +25,7 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 
 - **Deploy Fase 1 (Vercel)** — frontend en producción en **https://fimplify.vercel.app** (`vercel` CLI, proyecto `fimplify`, env vars `REACT_APP_*` en Production). Fix: `loadSummaries` memoizada con `useCallback` para pasar el build con `CI=true`.
 - **Deploy Fase 2 (Cloudflare DNS)** — **en pausa**: requiere dominio propio (cuenta Cloudflare ya disponible; registrar dominio o usar uno existente).
-- **Pulido visual** — la app funciona pero la UI quedó básica. **TailwindCSS adoptado** (sale del hold) e integrado vía CRACO (CRA 5). Primer pase Tailwind en **Auth + Dashboard**; quedan para segunda pasada: layout/sidebar/header, `UploadSummaries` y tabla, responsive completo.
+- **Pulido visual** — la app funciona pero la UI quedó básica. **TailwindCSS adoptado** (sale del hold) vía **CLI** (`@tailwindcss/cli` → `src/index.generated.css`, sin CRACO; evita la detección flakey de fuentes del plugin PostCSS bajo webpack). Primer pase Tailwind en **Auth + Dashboard** (cards, charts con theme, tabla). Quedan para segunda pasada: layout/sidebar/header, `UploadSummaries` y responsive completo.
 - **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 

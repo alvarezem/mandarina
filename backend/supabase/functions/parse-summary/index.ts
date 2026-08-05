@@ -2,6 +2,7 @@ import { parse as parseCsv } from 'jsr:@std/csv'
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { getDocumentProxy, extractTextItems } from 'https://esm.sh/unpdf@1.8.0'
+import { categorize } from '../_shared/categorize.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -123,23 +124,6 @@ Deno.serve(async (req) => {
   await setStatus('done')
   return json({ ok: true, count: transactions.length }, 200, corsHeaders)
 })
-
-const CATEGORY_RULES = [
-  [/impuesto|iibb|iva rg|db\.rg|cr\.rg/i, 'Impuestos'],
-  [/rendimiento/i, 'Inversiones'],
-  [/su pago|pago en pesos|pago en usd/i, 'Pagos'],
-  [/transferencia recibida/i, 'Ingresos'],
-  [/transferencia enviada/i, 'Transferencias'],
-  [/pago con qr/i, 'Compras'],
-  [/pedidosya/i, 'Delivery'],
-  [/google|apple|youtube|spotify|netflix|suscripcion|streaming/i, 'Suscripciones'],
-  [/natury|naturgy|energia|agua|internet|telefon|servicio/i, 'Servicios'],
-]
-
-function categorize(merchant) {
-  const rule = CATEGORY_RULES.find(([re]) => re.test(merchant))
-  return rule ? rule[1] : 'Otros'
-}
 
 function computeTotals(txs) {
   let credits = 0

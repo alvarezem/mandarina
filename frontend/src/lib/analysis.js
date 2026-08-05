@@ -1,3 +1,5 @@
+const EXCLUDED_CATEGORIES = ['Pagos']
+
 function computeTotals(txs) {
   let credits = 0
   let debits = 0
@@ -26,8 +28,9 @@ function aggregate(txs, kind) {
 }
 
 function buildAnalysis(txs) {
-  const ars = txs.filter((t) => t.currency !== 'USD')
-  const usd = txs.filter((t) => t.currency === 'USD')
+  const relevant = txs.filter((t) => !EXCLUDED_CATEGORIES.includes(t.category))
+  const ars = relevant.filter((t) => t.currency !== 'USD')
+  const usd = relevant.filter((t) => t.currency === 'USD')
 
   const dates = ars.map((t) => t.date).sort()
   const from = dates[0]
@@ -64,6 +67,12 @@ function buildAnalysis(txs) {
     return { date: d.date, runningBalance: Math.round(running * 100) / 100 }
   })
 
+  let runningExpense = 0
+  const expenseTrend = byDaySorted.map((d) => {
+    runningExpense += Math.abs(d.debits)
+    return { date: d.date, accumulated: Math.round(runningExpense * 100) / 100 }
+  })
+
   const result = {
     period: { from, to, days },
     totals,
@@ -75,6 +84,8 @@ function buildAnalysis(txs) {
     byCategory: aggregate(ars, 'category').sort((a, b) => b.total - a.total),
     byDay: byDaySorted,
     balanceTrend,
+    expenseTrend,
+    excludedCount: txs.length - relevant.length,
   }
 
   if (usd.length > 0) {
@@ -87,4 +98,4 @@ function buildAnalysis(txs) {
   return result
 }
 
-export { computeTotals, aggregate, buildAnalysis }
+export { computeTotals, aggregate, buildAnalysis, EXCLUDED_CATEGORIES }

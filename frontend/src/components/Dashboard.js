@@ -13,7 +13,8 @@ import {
 } from 'chart.js'
 import { Line, Doughnut, Bar } from 'react-chartjs-2'
 import supabase from '../lib/supabaseClient'
-import { buildAnalysis } from '../lib/analysis'
+import { buildAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
+import FiltersBar from './FiltersBar'
 
 ChartJS.register(
   ArcElement,
@@ -50,22 +51,6 @@ const PALETTE = [
   '#0ea5e9',
   '#94a3b8',
   '#14b8a6',
-]
-
-const PERIODS = [
-  { key: 'thisMonth', label: 'Este mes' },
-  { key: 'lastMonth', label: 'Mes pasado' },
-  { key: 'last3m', label: 'Últimos 3 meses' },
-  { key: 'last12m', label: 'Últimos 12 meses' },
-  { key: 'thisYear', label: 'Este año' },
-  { key: 'todo', label: 'Todo' },
-  { key: 'custom', label: 'Personalizado' },
-]
-
-const CURRENCIES = [
-  { key: 'all', label: 'Ambas' },
-  { key: 'ARS', label: 'ARS' },
-  { key: 'USD', label: 'USD' },
 ]
 
 function parseYmd(s) {
@@ -125,14 +110,6 @@ function EmptyState({ title, hint }) {
   )
 }
 
-const chipBase =
-  'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition'
-
-const chipActive =
-  'border-teal-600 bg-teal-600 text-white'
-const chipInactive =
-  'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-
 export default function Dashboard({ summaryId, dark, refreshKey }) {
   const [allTx, setAllTx] = useState([])
   const [loading, setLoading] = useState(true)
@@ -186,20 +163,26 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
     return txs
   }, [allTx, summaryId, period, customFrom, customTo])
 
-  const categoryOptions = useMemo(
-    () => [...new Set(base.map((t) => t.category).filter(Boolean))].sort(),
+  const working = useMemo(
+    () => base.filter((t) => !EXCLUDED_CATEGORIES.includes(t.category)),
     [base],
+  )
+  const paymentsCount = base.length - working.length
+
+  const categoryOptions = useMemo(
+    () => [...new Set(working.map((t) => t.category).filter(Boolean))].sort(),
+    [working],
   )
 
   const filtered = useMemo(() => {
-    let txs = base
+    let txs = working
     if (currency === 'ARS') txs = txs.filter((t) => t.currency !== 'USD')
     if (currency === 'USD') txs = txs.filter((t) => t.currency === 'USD')
     if (categories.length) txs = txs.filter((t) => categories.includes(t.category))
     const q = query.trim().toLowerCase()
     if (q) txs = txs.filter((t) => t.merchant.toLowerCase().includes(q))
     return txs
-  }, [base, currency, categories, query])
+  }, [working, currency, categories, query])
 
   const analysis = useMemo(() => buildAnalysis(filtered), [filtered])
 
@@ -227,87 +210,28 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Período
-          </span>
-          {PERIODS.map((p) => (
-            <button
-              key={p.key}
-              type="button"
-              onClick={() => setPeriod(p.key)}
-              className={`${chipBase} ${period === p.key ? chipActive : chipInactive}`}
-            >
-              {p.label}
-            </button>
-          ))}
-          {period === 'custom' && (
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={customFrom}
-                onChange={(e) => setCustomFrom(e.target.value)}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              />
-              <span className="text-xs text-slate-400">a</span>
-              <input
-                type="date"
-                value={customTo}
-                onChange={(e) => setCustomTo(e.target.value)}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 flex flex-col gap-3 border-t border-slate-100 pt-3 dark:border-slate-800 lg:flex-row lg:items-center">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Categoría
-            </span>
-            {categoryOptions.length === 0 && (
-              <span className="text-xs text-slate-400">(sin categorías en el período)</span>
-            )}
-            {categoryOptions.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => toggleCategory(cat)}
-                className={`${chipBase} ${
-                  categories.includes(cat) ? chipActive : chipInactive
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 lg:ml-auto">
-            <div className="flex overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-              {CURRENCIES.map((c) => (
-                <button
-                  key={c.key}
-                  type="button"
-                  onClick={() => setCurrency(c.key)}
-                  className={`px-3 py-1 text-xs font-medium transition ${
-                    currency === c.key
-                      ? 'bg-teal-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar comercio…"
-              className="w-40 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
-            />
-          </div>
-        </div>
+        <FiltersBar
+          period={period}
+          onPeriod={setPeriod}
+          customFrom={customFrom}
+          customTo={customTo}
+          onCustomFrom={setCustomFrom}
+          onCustomTo={setCustomTo}
+          categoryOptions={categoryOptions}
+          categories={categories}
+          onToggleCategory={toggleCategory}
+          onClearCategories={() => setCategories([])}
+          currency={currency}
+          onCurrency={setCurrency}
+          query={query}
+          onQuery={setQuery}
+        />
+        {paymentsCount > 0 && (
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            {paymentsCount} {paymentsCount === 1 ? 'pago' : 'pagos'} de tarjeta excluido
+            {paymentsCount === 1 ? '' : 's'} de los totales.
+          </p>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -350,9 +274,9 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Balance acumulado</h3>
+              <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gastos acumulados</h3>
               <div className="h-64">
-                <Line data={lineData(analysis.balanceTrend)} options={lineOptions(dark)} />
+                <Line data={lineData(analysis.expenseTrend)} options={lineOptions(dark)} />
               </div>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -422,7 +346,7 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
   )
 }
 
-function lineData(balanceTrend) {
+function lineData(expenseTrend) {
   const gradient = (context) => {
     const { ctx, chartArea } = context.chart
     if (!chartArea) return 'rgba(13,148,136,0.15)'
@@ -432,11 +356,11 @@ function lineData(balanceTrend) {
     return g
   }
   return {
-    labels: balanceTrend.map((d) => d.date),
+    labels: expenseTrend.map((d) => d.date),
     datasets: [
       {
-        label: 'Balance acumulado',
-        data: balanceTrend.map((d) => d.runningBalance),
+        label: 'Gastos acumulados',
+        data: expenseTrend.map((d) => d.accumulated),
         borderColor: '#0d9488',
         backgroundColor: gradient,
         tension: 0.35,
@@ -495,12 +419,12 @@ function lineOptions(dark) {
     plugins: {
       legend: { display: false },
       tooltip: {
-        callbacks: { label: (ctx) => ` Balance: ${fmt(ctx.parsed.y)}` },
+        callbacks: { label: (ctx) => ` Gasto acumulado: ${fmt(ctx.parsed.y)}` },
       },
     },
     scales: {
       x: { grid: { display: false }, ticks: { color: dark ? '#64748b' : '#94a3b8', font: { size: 11 } } },
-      y: { grid: { color: dark ? '#1e293b' : '#f1f5f9' }, ticks: axisTicks(dark) },
+      y: { suggestedMin: 0, grid: { color: dark ? '#1e293b' : '#f1f5f9' }, ticks: axisTicks(dark) },
     },
   }
 }

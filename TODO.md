@@ -16,6 +16,8 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 - **Moneda por transacción** — `0005_currency.sql`: columna `currency` (ARS/USD) en `transactions`. `buildAnalysis` separa totales/agregados ARS y un bloque USD; dashboard muestra card "Gastos USD" + columna de moneda con formateo por moneda.
 - **Parseo PDF (BBVA VISA + MASTERCARD)** — extracción posicional con `unpdf` (x,y), tablas de detalle `FECHA/DESCRIPCIÓN/PESOS/DÓLARES` por coordenadas, fechas `DD-MMM-YY`→ISO, montos negativos (gasto), categorías Impuestos/Pagos/Suscripciones. Verificado e2e: VISA ARS `-534.577,35` (7 movs), MASTERCARD ARS `-33.122,53` + USD `-17,61` (11 movs).
 - **GitHub** — repo `alvarezem/fimplify` (privado) creado vía `gh` CLI; `.gitignore` raíz (ignora `examples/` con datos financieros reales); `README.md` del proyecto; commit `10334cc` y push de `master` a `origin`.
+- **Vista global por períodos (multi-resumen) + filtros** — el dashboard computa todo client-side desde las transacciones del usuario (`lib/analysis.js`, port de `buildAnalysis`); **"Todos los resúmenes"** por defecto (drill-down a un resumen individual); columna "Resumen" (archivo) en la tabla global; refresco tras subir vía `onDataChanged`/`refreshKey`. El backend no cambió; `consumption_analyses` sigue en DB pero el dashboard ya no la lee.
+- **Mejoras al dashboard** — pagos de tarjeta (categoría `Pagos`) **excluidos de todos los totales/charts/tabla** con aviso de cuántos se excluyeron (`EXCLUDED_CATEGORIES` en `lib/analysis.js`); chart de línea ahora **"Gastos acumulados"** (|débitos| acumulados, eje ≥0, `expenseTrend`) en vez de balance; **filtros como dropdowns** custom compactos (`Dropdown.js` + `FiltersBar.js`: Período con rango custom, Categorías multi-select con checkboxes, Moneda, búsqueda de comercio).
 
 ## 🔄 En progreso
 
@@ -30,7 +32,6 @@ Lista viva del proyecto. Se actualiza en cada iteración.
   - **2do pase**: layout + sidebar + `UploadSummaries` + responsive — header sticky con blur, drawer móvil (`<lg`), drop zone de subida auto-subida, pills de status, `App.css` eliminado (todo Tailwind).
   - **Tema claro/oscuro**: toggle sol/luna (`ThemeToggle.js`) en header y pantalla Auth; dark mode por clase (`@custom-variant dark`), script anti-flash, persiste en `localStorage` y arranca siguiendo al sistema; Chart.js theme-aware vía prop.
 - **Mapeo de columnas** — afinar con más muestras reales de banco si aparecen. _(movido a En hold 🔴 IMPORTANTE)_
-- **Vista global por períodos (multi-resumen) + filtros** — ✅ implementado. El dashboard computa todo client-side desde las transacciones del usuario (`lib/analysis.js`, port de `buildAnalysis`), con **"Todos los resúmenes"** como selección por defecto (drill-down a un resumen individual). **Filtros**: período (chips + rango custom; default "Todo", auto "últimos 12 meses" si la data abarca más de un año), categorías (multi-chips), moneda (Ambas/ARS/USD, afecta solo tabla+gráficos), búsqueda de comercio; columna "Resumen" (archivo) en la tabla global. El backend no cambió; `consumption_analyses` sigue en DB pero el dashboard ya no la lee.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 
 ## ⏸️ En hold (refactor / limpieza — posponer hasta estabilizar)

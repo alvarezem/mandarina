@@ -7,3 +7,5 @@ examples/
 *.swp
 .idea/
 .vscode/
+.vercel
+.env*

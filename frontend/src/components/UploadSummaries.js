@@ -8,7 +8,7 @@ const STATUS = {
   error: { label: 'Error', className: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300' },
 }
 
-export default function UploadSummaries({ session, selectedId, onSelect }) {
+export default function UploadSummaries({ session, selectedId, onSelect, onDataChanged }) {
   const inputRef = useRef(null)
   const [files, setFiles] = useState([])
   const [uploading, setUploading] = useState(false)
@@ -23,9 +23,8 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
       setError(error.message)
     } else {
       setFiles(data)
-      if (data.length > 0 && !selectedId) onSelect(data[0].id)
     }
-  }, [selectedId, onSelect])
+  }, [])
 
   useEffect(() => {
     loadSummaries()
@@ -72,6 +71,7 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
     } else {
       await loadSummaries()
       await parse(summary.id)
+      onDataChanged?.()
     }
   }
 
@@ -136,6 +136,26 @@ export default function UploadSummaries({ session, selectedId, onSelect }) {
           </p>
         ) : (
           <ul className="flex flex-col gap-1.5">
+            <li>
+              <button
+                type="button"
+                onClick={() => onSelect(null)}
+                className={`w-full rounded-lg p-2.5 text-left transition ${
+                  selectedId === null
+                    ? 'bg-teal-50 ring-1 ring-teal-600/20 dark:bg-teal-950/40 dark:ring-teal-500/30'
+                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+                    Todos los resúmenes
+                  </span>
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-medium text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                    {files.length}
+                  </span>
+                </div>
+              </button>
+            </li>
             {files.map((f) => {
               const status = STATUS[f.status] ?? STATUS.pending
               return (

@@ -23,6 +23,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [dark, setDark] = useState(() => {
     const stored = localStorage.getItem('fimplify-theme')
     if (stored) return stored === 'dark'
@@ -57,7 +58,12 @@ function App() {
   }
 
   const sidebar = (
-    <UploadSummaries session={session} selectedId={selectedId} onSelect={selectSummary} />
+    <UploadSummaries
+      session={session}
+      selectedId={selectedId}
+      onSelect={selectSummary}
+      onDataChanged={() => setRefreshKey((k) => k + 1)}
+    />
   )
 
   return (
@@ -103,7 +109,7 @@ function App() {
         </aside>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <Dashboard summaryId={selectedId} dark={dark} />
+          <Dashboard summaryId={selectedId} dark={dark} refreshKey={refreshKey} />
         </main>
       </div>
 

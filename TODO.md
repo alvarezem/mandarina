@@ -20,6 +20,7 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 - **Mejoras al dashboard** — pagos de tarjeta (categoría `Pagos`) **excluidos de todos los totales/charts/tabla** con aviso de cuántos se excluyeron (`EXCLUDED_CATEGORIES` en `lib/analysis.js`); chart de línea ahora **"Gastos acumulados"** (|débitos| acumulados, eje ≥0, `expenseTrend`) en vez de balance; **filtros como dropdowns** custom compactos (`Dropdown.js` + `FiltersBar.js`: Período con rango custom, Categorías multi-select con checkboxes, Moneda, búsqueda de comercio).
 - **Categorización ampliada + backfill** — reglas movidas a `backend/supabase/functions/_shared/categorize.ts` (fuente única, comentario de sync con SQL); nuevas categorías **Seguros, Combustible, Telecom, Supermercados, Entretenimiento, Gastronomía, Transporte, Farmacias, Educación, Gimnasio, Salud** (keywords afinadas con los merchants reales de la DB); migration `0006_reclassify.sql` actualizó las txs existentes (CASE idéntico a TS); edge function `parse-summary` redeployada; verificado con 25 merchants reales sin regresiones.
 - **Quitar "Créditos"** — eliminadas las cards **Créditos**, **Neto** y **Mayor ingreso** (los créditos de tarjeta no aportan) y la lógica muerta en `lib/analysis.js` (`maxCredit`, `avgPerDay`, `balanceTrend`). Nuevas cards de mayor gasto por moneda: **"Mayor gasto ARS"** + **"Mayor gasto USD"** (con `usd.maxExpense`, comercio en `sub`).
+- **Orden del detalle + clic en gráficos** — tabla con **headers clicables** ▲/▼: Fecha y Monto de mayor/menor, Descripción alfabética, Categoría alfabética y agrupada (`SortableTh` + estado `sort` en `Dashboard.js`, aplicado solo a las filas). **Clic en los gráficos** filtra el detalle y hace scroll a la tabla: doughnut→categoría (toggle si ya está sola), barras→comercio (vía buscador), línea→ese día (período custom). Captions de ayuda bajo cada chart.
 
 ## 🔄 En progreso
 
@@ -38,7 +39,6 @@ Lista viva del proyecto. Se actualiza en cada iteración.
 - **Toggle del panel lateral** — botón en `lg+` para esconder/mostrar el `aside` (`App.js:107`), estado persistido en localStorage; convive con el drawer móvil actual (`App.js:116`).
 - **Agregar tests** — Jest + React Testing Library (CRA ya trae la infra; `App.test.js` actual es boilerplate). Cubrir `lib/analysis.js`, filtros del dashboard, UploadSummaries, auth.
 - **Test de responsive** — con Jest/RTL + mock de `matchMedia`: verificar drawer móvil `<lg`, sidebar colapsable en `lg+`, y que cards/charts/tabla no se desborden en viewport angosto.
-- **Ordenar detalle de transacciones** — poder ordenar la tabla de detalle por **monto mayor**, **monto menor** y **comercio alfabético** (además del orden por fecha actual); vía headers clicables o dropdown de orden en la tabla de `Dashboard.js`.
 
 ## ⏸️ En hold (refactor / limpieza — posponer hasta estabilizar)
 

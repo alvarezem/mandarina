@@ -110,6 +110,30 @@ function EmptyState({ title, hint }) {
   )
 }
 
+function SortableTh({ label, sortKey, sort, onSort, align = 'left' }) {
+  const active = sort.key === sortKey
+  return (
+    <th
+      className={`px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 ${
+        align === 'right' ? 'text-right' : 'text-left'
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`inline-flex items-center gap-1 transition ${
+          active
+            ? 'text-teal-600 dark:text-teal-400'
+            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+        }`}
+      >
+        {label}
+        {active && <span className="text-[10px]">{sort.dir === 'asc' ? '▲' : '▼'}</span>}
+      </button>
+    </th>
+  )
+}
+
 export default function Dashboard({ summaryId, dark, refreshKey }) {
   const [allTx, setAllTx] = useState([])
   const [loading, setLoading] = useState(true)
@@ -120,6 +144,8 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
   const [categories, setCategories] = useState([])
   const [currency, setCurrency] = useState('all')
   const [query, setQuery] = useState('')
+  const [sort, setSort] = useState({ key: 'date', dir: 'desc' })
+  const tableRef = useRef(null)
   const autoApplied = useRef(false)
 
   useEffect(() => {
@@ -186,8 +212,32 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
 
   const analysis = useMemo(() => buildAnalysis(filtered), [filtered])
 
+  const SORT_DEFAULTS = { date: 'desc', amount: 'asc', merchant: 'asc', category: 'asc' }
+
+  const onSort = (key) =>
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULTS[key] }))
+
+  const sorted = useMemo(() => {
+    const arr = [...filtered]
+    const { key, dir } = sort
+    arr.sort((a, b) => {
+      let cmp = 0
+      if (key === 'amount') cmp = a.amount - b.amount
+      else if (key === 'date') cmp = a.date.localeCompare(b.date)
+      else if (key === 'category') cmp = (a.category ?? '').localeCompare(b.category ?? '')
+      else cmp = a.merchant.localeCompare(b.merchant)
+      return dir === 'asc' ? cmp : -cmp
+    })
+    return arr
+  }, [filtered, sort])
+
   const toggleCategory = (cat) =>
     setCategories((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]))
+
+  const focusCategory = (cat) =>
+    setCategories((prev) => (prev.length === 1 && prev[0] === cat ? [] : [cat]))
+
+  const scrollToTable = () => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   if (loading) {
     return (
@@ -274,43 +324,72 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gastos acumulados</h3>
               <div className="h-64">
-                <Line data={lineData(analysis.expenseTrend)} options={lineOptions(dark)} />
+                <Line
+                  data={lineData(analysis.expenseTrend)}
+                  options={lineOptions(dark, (date) => {
+                    setPeriod('custom')
+                    setCustomFrom(date)
+                    setCustomTo(date)
+                    scrollToTable()
+                  })}
+                />
               </div>
+              <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+                Clic en un punto filtra el detalle de ese día.
+              </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gasto por categoría</h3>
               <div className="h-64">
-                <Doughnut data={doughnutData(analysis.byCategory)} options={doughnutOptions(dark)} />
+                <Doughnut
+                  data={doughnutData(analysis.byCategory)}
+                  options={doughnutOptions(dark, (cat) => {
+                    focusCategory(cat)
+                    scrollToTable()
+                  })}
+                />
               </div>
+              <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+                Clic en un segmento filtra el detalle por categoría.
+              </p>
             </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              Top comercios con mayor gasto
-            </h3>
-            <div className="h-72">
-              <Bar data={barData(analysis.byMerchant)} options={barOptions(dark)} />
+              <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Top comercios con mayor gasto
+              </h3>
+              <div className="h-72">
+                <Bar
+                  data={barData(analysis.byMerchant)}
+                  options={barOptions(dark, (merchant) => {
+                    setQuery(merchant)
+                    scrollToTable()
+                  })}
+                />
+              </div>
+              <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+                Clic en una barra filtra el detalle por comercio.
+              </p>
             </div>
-          </div>
 
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div ref={tableRef} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                 <thead className="bg-slate-50 dark:bg-slate-800/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Fecha</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Descripción</th>
+                    <SortableTh label="Fecha" sortKey="date" sort={sort} onSort={onSort} />
+                    <SortableTh label="Descripción" sortKey="merchant" sort={sort} onSort={onSort} />
                     {!summaryId && (
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Resumen</th>
                     )}
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Categoría</th>
+                    <SortableTh label="Categoría" sortKey="category" sort={sort} onSort={onSort} />
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Moneda</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Monto</th>
+                    <SortableTh label="Monto" sortKey="amount" sort={sort} onSort={onSort} align="right" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
-                  {filtered.map((t) => (
+                  {sorted.map((t) => (
                     <tr key={t.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-800/60">
                       <td className="px-4 py-3 text-sm text-slate-600 tabular-nums dark:text-slate-400">{t.date}</td>
                       <td className="px-4 py-3 text-sm text-slate-800 dark:text-slate-200">{t.merchant}</td>
@@ -410,10 +489,14 @@ function axisTicks(dark, currency = 'ARS') {
   }
 }
 
-function lineOptions(dark) {
+function lineOptions(dark, onPoint) {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    onClick: (event, elements, chart) => {
+      const [el] = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false)
+      if (el) onPoint(chart.data.labels[el.index])
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -427,11 +510,15 @@ function lineOptions(dark) {
   }
 }
 
-function doughnutOptions(dark) {
+function doughnutOptions(dark, onSlice) {
   return {
     responsive: true,
     maintainAspectRatio: false,
     cutout: '62%',
+    onClick: (event, elements, chart) => {
+      const [el] = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false)
+      if (el) onSlice(chart.data.labels[el.index])
+    },
     plugins: {
       legend: {
         position: 'bottom',
@@ -444,11 +531,15 @@ function doughnutOptions(dark) {
   }
 }
 
-function barOptions(dark) {
+function barOptions(dark, onBar) {
   return {
     responsive: true,
     maintainAspectRatio: false,
     indexAxis: 'y',
+    onClick: (event, elements, chart) => {
+      const [el] = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false)
+      if (el) onBar(chart.data.labels[el.index])
+    },
     plugins: {
       legend: { display: false },
       tooltip: {

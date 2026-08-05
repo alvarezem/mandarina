@@ -119,17 +119,19 @@ function App() {
         </aside>
 
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8">
-          {view === 'costos' ? (
-            <Dashboard
-              summaryId={selectedId}
-              dark={dark}
-              refreshKey={refreshKey}
-              resetKey={resetKey}
-              onSummarySelect={selectSummary}
-            />
-          ) : (
-            <ComingSoon title="Inversiones" />
-          )}
+          <div key={view} className="animate-fade-in-up">
+            {view === 'costos' ? (
+              <Dashboard
+                summaryId={selectedId}
+                dark={dark}
+                refreshKey={refreshKey}
+                resetKey={resetKey}
+                onSummarySelect={selectSummary}
+              />
+            ) : (
+              <ComingSoon title="Inversiones" />
+            )}
+          </div>
         </main>
       </div>
 
@@ -187,11 +189,11 @@ function App() {
       {mobileSummariesOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+            className="animate-fade-in fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
             onClick={() => setMobileSummariesOpen(false)}
             aria-hidden="true"
           />
-          <aside className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85%] overflow-y-auto bg-white p-4 shadow-xl dark:bg-slate-900 lg:hidden">
+          <aside className="animate-slide-in-left fixed inset-y-0 left-0 z-50 w-80 max-w-[85%] overflow-y-auto bg-white p-4 shadow-xl dark:bg-slate-900 lg:hidden">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Resúmenes</span>
               <button

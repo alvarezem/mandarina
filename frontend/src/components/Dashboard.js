@@ -91,12 +91,21 @@ function fileOf(t) {
 
 function Card({ label, value, sub, valueClass = 'text-slate-900 dark:text-slate-100' }) {
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-md shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
+    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-md shadow-slate-200/50 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-teal-500/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20 dark:hover:shadow-teal-500/10">
       <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {label}
       </span>
       <div className={`mt-1 text-2xl font-bold tabular-nums ${valueClass}`}>{value}</div>
       {sub && <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{sub}</div>}
+    </div>
+  )
+}
+
+function CardSkeleton() {
+  return (
+    <div className="animate-pulse rounded-xl border border-slate-200/80 bg-white p-4 shadow-md shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
+      <div className="h-3 w-20 rounded bg-slate-200 dark:bg-slate-800" />
+      <div className="mt-3 h-7 w-28 rounded bg-slate-200 dark:bg-slate-800" />
     </div>
   )
 }
@@ -284,9 +293,10 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600 dark:border-slate-600 dark:border-t-teal-500" />
-        Cargando…
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <CardSkeleton key={i} />
+        ))}
       </div>
     )
   }
@@ -340,36 +350,51 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-            <Card label="Débitos" value={fmt(analysis.totals.debits)} valueClass="text-red-600 dark:text-red-400" />
-            <Card label="Movimientos" value={analysis.totals.txCount} />
-            {analysis.maxExpense && (
-              <Card
-                label="Mayor gasto ARS"
-                value={fmt(analysis.maxExpense.amount)}
-                valueClass="text-red-600 dark:text-red-400"
-                sub={analysis.maxExpense.merchant}
-              />
-            )}
-            {analysis.usd?.maxExpense && (
-              <Card
-                label="Mayor gasto USD"
-                value={fmt(analysis.usd.maxExpense.amount, 'USD')}
-                valueClass="text-red-600 dark:text-red-400"
-                sub={analysis.usd.maxExpense.merchant}
-              />
-            )}
-            {analysis.usd && (
-              <Card
-                label="Gastos USD"
-                value={fmt(analysis.usd.totals.debits, 'USD')}
-                valueClass="text-red-600 dark:text-red-400"
-                sub={`${analysis.usd.totals.txCount} movimientos`}
-              />
-            )}
+            {[
+              { label: 'Débitos', value: fmt(analysis.totals.debits), valueClass: 'text-red-600 dark:text-red-400' },
+              { label: 'Movimientos', value: analysis.totals.txCount },
+              ...(analysis.maxExpense
+                ? [
+                    {
+                      label: 'Mayor gasto ARS',
+                      value: fmt(analysis.maxExpense.amount),
+                      valueClass: 'text-red-600 dark:text-red-400',
+                      sub: analysis.maxExpense.merchant,
+                    },
+                  ]
+                : []),
+              ...(analysis.usd?.maxExpense
+                ? [
+                    {
+                      label: 'Mayor gasto USD',
+                      value: fmt(analysis.usd.maxExpense.amount, 'USD'),
+                      valueClass: 'text-red-600 dark:text-red-400',
+                      sub: analysis.usd.maxExpense.merchant,
+                    },
+                  ]
+                : []),
+              ...(analysis.usd
+                ? [
+                    {
+                      label: 'Gastos USD',
+                      value: fmt(analysis.usd.totals.debits, 'USD'),
+                      valueClass: 'text-red-600 dark:text-red-400',
+                      sub: `${analysis.usd.totals.txCount} movimientos`,
+                    },
+                  ]
+                : []),
+            ].map((c, i) => (
+              <div key={c.label} className="animate-fade-in-up" style={{ animationDelay: `${i * 60}ms` }}>
+                <Card {...c} />
+              </div>
+            ))}
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div
+              className="animate-fade-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              style={{ animationDelay: '80ms' }}
+            >
               <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gastos acumulados</h3>
               <div className="h-64">
                 <Line
@@ -386,7 +411,10 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
                 Clic en un punto filtra el detalle de ese día.
               </p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div
+              className="animate-fade-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              style={{ animationDelay: '140ms' }}
+            >
               <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gasto por categoría</h3>
               <div className="h-64">
                 <Doughnut
@@ -403,7 +431,10 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div
+            className="animate-fade-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            style={{ animationDelay: '200ms' }}
+          >
               <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Top comercios con mayor gasto
               </h3>
@@ -421,7 +452,11 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
               </p>
             </div>
 
-          <div ref={tableRef} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div
+            ref={tableRef}
+            className="animate-fade-in overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            style={{ animationDelay: '260ms' }}
+          >
             <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Detalle</h3>
             </div>

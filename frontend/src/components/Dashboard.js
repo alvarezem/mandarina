@@ -242,24 +242,22 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-            <Card label="Créditos" value={fmt(analysis.totals.credits)} valueClass="text-emerald-600 dark:text-emerald-400" />
             <Card label="Débitos" value={fmt(analysis.totals.debits)} valueClass="text-red-600 dark:text-red-400" />
-            <Card label="Neto" value={fmt(analysis.totals.net)} />
             <Card label="Movimientos" value={analysis.totals.txCount} />
             {analysis.maxExpense && (
               <Card
-                label="Mayor gasto"
+                label="Mayor gasto ARS"
                 value={fmt(analysis.maxExpense.amount)}
                 valueClass="text-red-600 dark:text-red-400"
                 sub={analysis.maxExpense.merchant}
               />
             )}
-            {analysis.maxCredit && (
+            {analysis.usd?.maxExpense && (
               <Card
-                label="Mayor ingreso"
-                value={fmt(analysis.maxCredit.amount)}
-                valueClass="text-emerald-600 dark:text-emerald-400"
-                sub={analysis.maxCredit.merchant}
+                label="Mayor gasto USD"
+                value={fmt(analysis.usd.maxExpense.amount, 'USD')}
+                valueClass="text-red-600 dark:text-red-400"
+                sub={analysis.usd.maxExpense.merchant}
               />
             )}
             {analysis.usd && (

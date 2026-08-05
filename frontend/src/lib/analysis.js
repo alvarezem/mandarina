@@ -41,10 +41,8 @@ function buildAnalysis(txs) {
   )
 
   const totals = computeTotals(ars)
-  totals.avgPerDay = Math.round((totals.net * 100) / days) / 100
 
   let maxExpense = null
-  let maxCredit = null
   const byDay = new Map()
   for (const tx of ars) {
     const d = byDay.get(tx.date) || { date: tx.date, credits: 0, debits: 0 }
@@ -55,17 +53,9 @@ function buildAnalysis(txs) {
     if (maxExpense === null || tx.amount < maxExpense.amount) {
       maxExpense = { amount: tx.amount, merchant: tx.merchant, date: tx.date }
     }
-    if (maxCredit === null || tx.amount > maxCredit.amount) {
-      maxCredit = { amount: tx.amount, merchant: tx.merchant, date: tx.date }
-    }
   }
 
   const byDaySorted = [...byDay.values()].sort((a, b) => a.date.localeCompare(b.date))
-  let running = 0
-  const balanceTrend = byDaySorted.map((d) => {
-    running += d.credits + d.debits
-    return { date: d.date, runningBalance: Math.round(running * 100) / 100 }
-  })
 
   let runningExpense = 0
   const expenseTrend = byDaySorted.map((d) => {
@@ -77,21 +67,26 @@ function buildAnalysis(txs) {
     period: { from, to, days },
     totals,
     maxExpense,
-    maxCredit,
     byMerchant: aggregate(ars, 'merchant')
       .sort((a, b) => Math.abs(b.total) - Math.abs(a.total))
       .slice(0, 10),
     byCategory: aggregate(ars, 'category').sort((a, b) => b.total - a.total),
     byDay: byDaySorted,
-    balanceTrend,
     expenseTrend,
     excludedCount: txs.length - relevant.length,
   }
 
   if (usd.length > 0) {
+    let usdMaxExpense = null
+    for (const tx of usd) {
+      if (usdMaxExpense === null || tx.amount < usdMaxExpense.amount) {
+        usdMaxExpense = { amount: tx.amount, merchant: tx.merchant, date: tx.date }
+      }
+    }
     result.usd = {
       totals: computeTotals(usd),
       byCategory: aggregate(usd, 'category').sort((a, b) => b.total - a.total),
+      maxExpense: usdMaxExpense,
     }
   }
 

@@ -114,7 +114,7 @@ function SortableTh({ label, sortKey, sort, onSort, align = 'left' }) {
   const active = sort.key === sortKey
   return (
     <th
-      className={`px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 ${
+      className={`px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 dark:text-slate-400 ${
         align === 'right' ? 'text-right' : 'text-left'
       }`}
     >
@@ -134,7 +134,7 @@ function SortableTh({ label, sortKey, sort, onSort, align = 'left' }) {
   )
 }
 
-export default function Dashboard({ summaryId, dark, refreshKey }) {
+export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSummarySelect }) {
   const [allTx, setAllTx] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -177,6 +177,15 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
     }
   }, [refreshKey])
 
+  useEffect(() => {
+    setPeriod('todo')
+    setCustomFrom('')
+    setCustomTo('')
+    setCategories([])
+    setCurrency('all')
+    setQuery('')
+  }, [resetKey])
+
   const base = useMemo(() => {
     let txs = allTx
     if (summaryId) txs = txs.filter((t) => t.summary_id === summaryId)
@@ -200,6 +209,37 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
     [working],
   )
 
+  const summaryOptions = useMemo(() => {
+    const seen = new Map()
+    for (const t of allTx) {
+      if (!t.summary_id) continue
+      const name = fileOf(t)
+      if (name && !seen.has(t.summary_id)) seen.set(t.summary_id, name)
+    }
+    return [...seen.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [allTx])
+
+  const hasActiveFilters =
+    period !== 'todo' ||
+    Boolean(customFrom) ||
+    Boolean(customTo) ||
+    categories.length > 0 ||
+    currency !== 'all' ||
+    query.trim() !== '' ||
+    summaryId !== null
+
+  const clearFilters = () => {
+    setPeriod('todo')
+    setCustomFrom('')
+    setCustomTo('')
+    setCategories([])
+    setCurrency('all')
+    setQuery('')
+    onSummarySelect?.(null)
+  }
+
   const filtered = useMemo(() => {
     let txs = working
     if (currency === 'ARS') txs = txs.filter((t) => t.currency !== 'USD')
@@ -212,7 +252,7 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
 
   const analysis = useMemo(() => buildAnalysis(filtered), [filtered])
 
-  const SORT_DEFAULTS = { date: 'desc', amount: 'asc', merchant: 'asc', category: 'asc' }
+  const SORT_DEFAULTS = { date: 'desc', amount: 'asc', merchant: 'asc', category: 'asc', currency: 'asc', summary: 'asc' }
 
   const onSort = (key) =>
     setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULTS[key] }))
@@ -222,10 +262,13 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
     const { key, dir } = sort
     arr.sort((a, b) => {
       let cmp = 0
+      const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
       if (key === 'amount') cmp = a.amount - b.amount
-      else if (key === 'date') cmp = a.date.localeCompare(b.date)
-      else if (key === 'category') cmp = (a.category ?? '').localeCompare(b.category ?? '')
-      else cmp = a.merchant.localeCompare(b.merchant)
+      else if (key === 'date') cmp = cmpStr(a.date, b.date)
+      else if (key === 'category') cmp = cmpStr(a.category, b.category)
+      else if (key === 'currency') cmp = cmpStr(a.currency, b.currency)
+      else if (key === 'summary') cmp = cmpStr(fileOf(a), fileOf(b))
+      else cmp = cmpStr(a.merchant, b.merchant)
       return dir === 'asc' ? cmp : -cmp
     })
     return arr
@@ -267,6 +310,9 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
           customTo={customTo}
           onCustomFrom={setCustomFrom}
           onCustomTo={setCustomTo}
+          summaryOptions={summaryOptions}
+          summaryId={summaryId}
+          onSummarySelect={onSummarySelect}
           categoryOptions={categoryOptions}
           categories={categories}
           onToggleCategory={toggleCategory}
@@ -275,6 +321,8 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
           onCurrency={setCurrency}
           query={query}
           onQuery={setQuery}
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={clearFilters}
         />
         {paymentsCount > 0 && (
           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
@@ -374,6 +422,9 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
             </div>
 
           <div ref={tableRef} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Detalle</h3>
+            </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                 <thead className="bg-slate-50 dark:bg-slate-800/50">
@@ -381,10 +432,10 @@ export default function Dashboard({ summaryId, dark, refreshKey }) {
                     <SortableTh label="Fecha" sortKey="date" sort={sort} onSort={onSort} />
                     <SortableTh label="Descripción" sortKey="merchant" sort={sort} onSort={onSort} />
                     {!summaryId && (
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Resumen</th>
+                      <SortableTh label="Resumen" sortKey="summary" sort={sort} onSort={onSort} />
                     )}
                     <SortableTh label="Categoría" sortKey="category" sort={sort} onSort={onSort} />
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Moneda</th>
+                    <SortableTh label="Moneda" sortKey="currency" sort={sort} onSort={onSort} />
                     <SortableTh label="Monto" sortKey="amount" sort={sort} onSort={onSort} align="right" />
                   </tr>
                 </thead>

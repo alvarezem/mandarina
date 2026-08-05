@@ -43,6 +43,9 @@ export default function FiltersBar({
   customTo,
   onCustomFrom,
   onCustomTo,
+  summaryOptions,
+  summaryId,
+  onSummarySelect,
   categoryOptions,
   categories,
   onToggleCategory,
@@ -51,6 +54,8 @@ export default function FiltersBar({
   onCurrency,
   query,
   onQuery,
+  hasActiveFilters,
+  onClearFilters,
 }) {
   const periodSummary = PERIODS.find((p) => p.key === period)?.label ?? 'Todo'
   const categorySummary =
@@ -83,6 +88,27 @@ export default function FiltersBar({
               className="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             />
           </div>
+        )}
+      </Dropdown>
+
+      <Dropdown label="Resumen" summary={summaryOptions.find((s) => s.id === summaryId)?.name ?? 'Todos los resúmenes'}>
+        <button
+          type="button"
+          onClick={() => onSummarySelect(null)}
+          className={`${itemBase} ${summaryId === null ? itemActive : itemInactive}`}
+        >
+          <Check on={summaryId === null} />
+          Todos los resúmenes
+        </button>
+        {summaryOptions.length === 0 ? (
+          <p className="px-3 py-1.5 text-xs text-slate-400">(sin resúmenes)</p>
+        ) : (
+          summaryOptions.map((s) => (
+            <button key={s.id} type="button" onClick={() => onSummarySelect(s.id)} className={`${itemBase} ${summaryId === s.id ? itemActive : itemInactive}`}>
+              <Check on={summaryId === s.id} />
+              {s.name}
+            </button>
+          ))
         )}
       </Dropdown>
 
@@ -143,6 +169,19 @@ export default function FiltersBar({
           className="w-44 rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-3 text-xs text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500"
         />
       </div>
+
+      {hasActiveFilters && (
+        <button
+          type="button"
+          onClick={onClearFilters}
+          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        >
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Limpiar filtros
+        </button>
+      )}
     </div>
   )
 }

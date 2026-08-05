@@ -34,7 +34,8 @@ frontend/
     components/          # Auth, UploadSummaries, Dashboard
     lib/supabaseClient.js
 examples/                # Muestras reales de usuario (ignoradas por git)
-TODO.md                  # Lista viva del proyecto
+TODO.md                  # Roadmap y pendientes
+DONE.md                  # Historial de lo completado
 ```
 
 ## Desarrollo

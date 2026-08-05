@@ -1,20 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import supabase from './lib/supabaseClient'
 import Auth from './components/Auth'
 import UploadSummaries from './components/UploadSummaries'
 import Dashboard from './components/Dashboard'
 import ThemeToggle from './components/ThemeToggle'
 
-function Brand() {
+function Brand({ onClick }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <a
+      href="/"
+      onClick={onClick}
+      className="flex items-center gap-2.5 transition hover:opacity-80"
+      aria-label="Volver al inicio"
+    >
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-600 text-base font-bold text-white">
         F
       </div>
       <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
         Fimplify
       </span>
-    </div>
+    </a>
   )
 }
 
@@ -23,7 +28,12 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem('fimplify-sidebar') === 'collapsed',
+  )
   const [refreshKey, setRefreshKey] = useState(0)
+  const [resetKey, setResetKey] = useState(0)
+  const mainRef = useRef(null)
   const [dark, setDark] = useState(() => {
     const stored = localStorage.getItem('fimplify-theme')
     if (stored) return stored === 'dark'
@@ -34,6 +44,10 @@ function App() {
     document.documentElement.classList.toggle('dark', dark)
     localStorage.setItem('fimplify-theme', dark ? 'dark' : 'light')
   }, [dark])
+
+  useEffect(() => {
+    localStorage.setItem('fimplify-sidebar', sidebarCollapsed ? 'collapsed' : 'open')
+  }, [sidebarCollapsed])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -55,6 +69,14 @@ function App() {
   const selectSummary = (id) => {
     setSelectedId(id)
     setSidebarOpen(false)
+  }
+
+  const goHome = (e) => {
+    e.preventDefault()
+    setSelectedId(null)
+    setSidebarOpen(false)
+    setResetKey((k) => k + 1)
+    mainRef.current?.scrollTo({ top: 0 })
   }
 
   const sidebar = (
@@ -86,7 +108,44 @@ function App() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
           </button>
-          <Brand />
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed((c) => !c)}
+            aria-label={sidebarCollapsed ? 'Mostrar panel lateral' : 'Ocultar panel lateral'}
+            aria-pressed={!sidebarCollapsed}
+            className="hidden rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 lg:block"
+          >
+            {sidebarCollapsed ? (
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5M15.75 4.5v15"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5M9 4.5v15"
+                />
+              </svg>
+            )}
+          </button>
+          <Brand onClick={goHome} />
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle dark={dark} onToggle={() => setDark((d) => !d)} />
@@ -104,12 +163,18 @@ function App() {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 lg:block">
+        <aside className={`${sidebarCollapsed ? 'hidden' : 'hidden w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 lg:block'}`}>
           {sidebar}
         </aside>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <Dashboard summaryId={selectedId} dark={dark} refreshKey={refreshKey} />
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <Dashboard
+            summaryId={selectedId}
+            dark={dark}
+            refreshKey={refreshKey}
+            resetKey={resetKey}
+            onSummarySelect={selectSummary}
+          />
         </main>
       </div>
 

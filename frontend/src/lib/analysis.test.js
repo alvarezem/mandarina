@@ -1,0 +1,104 @@
+import { computeTotals, aggregate, buildAnalysis, EXCLUDED_CATEGORIES } from './analysis'
+
+const tx = (overrides) => ({
+  id: 't1',
+  date: '2026-07-01',
+  merchant: 'MERCADO LIBRE',
+  category: 'Compras',
+  currency: 'ARS',
+  amount: -1500,
+  summary_id: 's1',
+  ...overrides,
+})
+
+describe('computeTotals', () => {
+  it('separa créditos, débitos y neto', () => {
+    const t = computeTotals([
+      tx({ amount: -100 }),
+      tx({ amount: -25.5 }),
+      tx({ amount: 40 }),
+    ])
+    expect(t).toEqual({ credits: 40, debits: -125.5, net: -85.5, txCount: 3 })
+  })
+})
+
+describe('aggregate', () => {
+  it('agrupa por merchant', () => {
+    const r = aggregate(
+      [tx({ merchant: 'A', amount: -10 }), tx({ merchant: 'A', amount: -5 }), tx({ merchant: 'B', amount: -3 })],
+      'merchant',
+    )
+    expect(r).toHaveLength(2)
+    const a = r.find((e) => e.merchant === 'A')
+    expect(a).toMatchObject({ count: 2, total: -15 })
+  })
+
+  it('agrupa por category', () => {
+    const r = aggregate(
+      [tx({ category: 'Compras', amount: -10 }), tx({ category: 'Compras', amount: -5 })],
+      'category',
+    )
+    expect(r[0]).toMatchObject({ category: 'Compras', count: 2, total: -15 })
+  })
+})
+
+describe('buildAnalysis', () => {
+  it('excluye la categoría Pagos de todos los agregados', () => {
+    const r = buildAnalysis([
+      tx({ amount: -100 }),
+      tx({ amount: -50, category: 'Pagos' }),
+      tx({ amount: -30, category: 'Pagos' }),
+    ])
+    expect(r.excludedCount).toBe(2)
+    expect(r.totals.debits).toBe(-100)
+    expect(r.totals.txCount).toBe(1)
+  })
+
+  it('calcula período, mayor gasto y tendencia acumulada', () => {
+    const r = buildAnalysis([
+      tx({ id: 'a', date: '2026-07-01', amount: -100 }),
+      tx({ id: 'b', date: '2026-07-03', amount: -50 }),
+    ])
+    expect(r.period.from).toBe('2026-07-01')
+    expect(r.period.to).toBe('2026-07-03')
+    expect(r.period.days).toBe(3)
+    expect(r.maxExpense).toMatchObject({ amount: -100, merchant: 'MERCADO LIBRE' })
+    expect(r.byDay).toHaveLength(2)
+    expect(r.expenseTrend).toEqual([
+      { date: '2026-07-01', accumulated: 100 },
+      { date: '2026-07-03', accumulated: 150 },
+    ])
+  })
+
+  it('separa un bloque USD cuando hay transacciones en esa moneda', () => {
+    const r = buildAnalysis([
+      tx({ amount: -100 }),
+      tx({ id: 'u', amount: -17.61, currency: 'USD' }),
+    ])
+    expect(r.totals.debits).toBe(-100)
+    expect(r.usd.totals.debits).toBe(-17.61)
+    expect(r.usd.maxExpense.amount).toBe(-17.61)
+    expect(r.byCategory).toHaveLength(1)
+  })
+
+  it('ordena byMerchant por valor absoluto del total', () => {
+    const r = buildAnalysis([
+      tx({ id: 'a', merchant: 'A', amount: -500 }),
+      tx({ id: 'b', merchant: 'B', amount: -3000 }),
+      tx({ id: 'c', merchant: 'C', amount: -10 }),
+    ])
+    expect(r.byMerchant[0].total).toBe(-3000)
+    expect(r.byMerchant[1].total).toBe(-500)
+  })
+
+  it('no incluye bloque USD si no hay transacciones en esa moneda', () => {
+    const r = buildAnalysis([tx({ amount: -100 })])
+    expect(r.usd).toBeUndefined()
+  })
+})
+
+describe('EXCLUDED_CATEGORIES', () => {
+  it('excluye Pagos', () => {
+    expect(EXCLUDED_CATEGORIES).toContain('Pagos')
+  })
+})

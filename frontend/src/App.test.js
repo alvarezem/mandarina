@@ -46,7 +46,7 @@ function mockApp(txs, summaries = []) {
   )
 }
 
-describe('App responsive', () => {
+describe('App', () => {
   beforeEach(() => {
     localStorage.clear()
     supabase.auth.onAuthStateChange.mockReturnValue({
@@ -65,49 +65,56 @@ describe('App responsive', () => {
     expect(await screen.findByRole('button', { name: /Iniciar sesión/i })).toBeInTheDocument()
   })
 
-  it('abre el drawer móvil con el botón hamburguesa (<lg)', async () => {
-    render(<App />)
-    await screen.findByText(EMPTY_STATE)
+  describe('navegación rail (lg+)', () => {
+    it('muestra el rail con logo, Costos activo e Inversiones', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
 
-    const hamburger = screen.getByRole('button', { name: /Abrir resúmenes/i })
-    expect(hamburger.className).toContain('lg:hidden')
+      const rail = screen.getByRole('navigation', { name: 'Navegación' })
+      expect(within(rail).getAllByRole('button', { name: /Ir al inicio/i }).length).toBeGreaterThan(0)
+      expect(within(rail).getByRole('button', { name: 'Costos' }).className).toContain('bg-teal-50')
+      expect(within(rail).getByRole('button', { name: /Inversiones/ })).toBeInTheDocument()
+    })
 
-    await userEvent.click(hamburger)
-    const close = await screen.findByRole('button', { name: 'Cerrar' })
-    const drawer = close.closest('aside')
-    expect(drawer.className).toContain('lg:hidden')
-    expect(within(drawer).getByText('Subir resumen')).toBeInTheDocument()
+    it('navega a Inversiones y muestra el placeholder', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
 
-    await userEvent.click(close)
-    expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
+      const rail = screen.getByRole('navigation', { name: 'Navegación' })
+      await userEvent.click(within(rail).getByRole('button', { name: /Inversiones/ }))
+
+      expect(await screen.findByText('Próximamente.')).toBeInTheDocument()
+      expect(screen.queryByText(EMPTY_STATE)).not.toBeInTheDocument()
+    })
   })
 
-  it('colapsa el sidebar en lg+ y persiste en localStorage', async () => {
-    render(<App />)
-    await screen.findByText(EMPTY_STATE)
+  describe('navegación móvil (<lg)', () => {
+    it('abre el panel de resúmenes desde la bottom nav', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
 
-    const toggle = screen.getByRole('button', { name: /Ocultar panel lateral/i })
-    expect(toggle.className).toContain('lg:block')
+      const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
+      expect(bottom.className).toContain('lg:hidden')
 
-    const aside = screen.getByRole('complementary')
-    expect(aside.className).toContain('lg:block')
+      await userEvent.click(within(bottom).getByRole('button', { name: 'Resúmenes' }))
+      const close = await screen.findByRole('button', { name: 'Cerrar' })
+      const drawer = close.closest('aside')
+      expect(drawer.className).toContain('lg:hidden')
+      expect(within(drawer).getByText('Subir resumen')).toBeInTheDocument()
 
-    await userEvent.click(toggle)
-    expect(localStorage.getItem('fimplify-sidebar')).toBe('collapsed')
-    expect(screen.getByRole('button', { name: /Mostrar panel lateral/i })).toBeInTheDocument()
-    expect(screen.getByRole('complementary').className).toBe('hidden')
+      await userEvent.click(close)
+      expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
+    })
 
-    await userEvent.click(screen.getByRole('button', { name: /Mostrar panel lateral/i }))
-    expect(localStorage.getItem('fimplify-sidebar')).toBe('open')
-    expect(screen.getByRole('complementary').className).toContain('lg:block')
-  })
+    it('cambia de vista desde la bottom nav', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
 
-  it('inicia con el sidebar colapsado si localStorage lo indica', async () => {
-    localStorage.setItem('fimplify-sidebar', 'collapsed')
-    render(<App />)
-    await screen.findByText(EMPTY_STATE)
-    expect(screen.getByRole('button', { name: /Mostrar panel lateral/i })).toBeInTheDocument()
-    expect(screen.getByRole('complementary').className).toBe('hidden')
+      const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
+      await userEvent.click(within(bottom).getByRole('button', { name: 'Inversiones' }))
+
+      expect(await screen.findByText('Próximamente.')).toBeInTheDocument()
+    })
   })
 
   it('mantiene la tabla y las cards en contenedores con scroll/grilla responsive (sin desborde)', async () => {

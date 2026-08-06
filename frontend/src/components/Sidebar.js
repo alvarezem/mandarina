@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 export const NAV_ITEMS = [
   {
     key: 'costos',
@@ -45,27 +43,17 @@ export const NAV_ITEMS = [
 
 export function Logo({ className = '' }) {
   return (
-    <div
-      className={`flex items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 font-bold text-white shadow-md shadow-teal-500/30 ${className}`}
-    >
-      F
-    </div>
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="12" cy="13.5" r="7.5" fill="#f97316" />
+      <circle cx="9.7" cy="11" r="1.7" fill="#fdba74" opacity="0.65" />
+      <circle cx="14.1" cy="15.3" r="1.1" fill="#fdba74" opacity="0.55" />
+      <path d="M12 6.6C10 4.2 7.4 4.6 6.6 5.8 7.8 7.6 10.4 7.2 12 6.6Z" fill="#22c55e" />
+      <path d="M12 6.6C14 4.2 16.6 4.6 17.4 5.8 16.2 7.6 13.6 7.2 12 6.6Z" fill="#22c55e" />
+    </svg>
   )
 }
 
-export default function Sidebar({ view, onNavigate, onGoHome }) {
-  const [expanded, setExpanded] = useState(() => {
-    const stored = localStorage.getItem('fimplify-rail-expanded')
-    return stored ? stored === 'true' : true
-  })
-
-  const toggle = () => {
-    setExpanded((prev) => {
-      localStorage.setItem('fimplify-rail-expanded', String(!prev))
-      return !prev
-    })
-  }
-
+export default function Sidebar({ view, onNavigate, expanded }) {
   return (
     <nav
       aria-label="Navegación"
@@ -73,23 +61,6 @@ export default function Sidebar({ view, onNavigate, onGoHome }) {
         expanded ? 'w-52 items-stretch px-3' : 'w-16'
       }`}
     >
-      <button
-        type="button"
-        onClick={onGoHome}
-        aria-label="Ir al inicio"
-        title="Fimplify"
-        className="mb-2 flex items-center justify-center rounded-lg transition hover:opacity-85"
-      >
-        {expanded ? (
-          <span className="flex items-center gap-2">
-            <Logo className="h-8 w-8 text-base" />
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">fimplify</span>
-          </span>
-        ) : (
-          <Logo className="h-8 w-8 text-base" />
-        )}
-      </button>
-
       {NAV_ITEMS.map((item) => {
         const active = view === item.key
         return (
@@ -104,7 +75,7 @@ export default function Sidebar({ view, onNavigate, onGoHome }) {
               expanded ? 'w-full px-3 justify-start' : 'w-10 justify-center'
             } ${
               active
-                ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-600/20 dark:bg-teal-950/40 dark:text-teal-300 dark:ring-teal-500/30'
+                ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-600/20 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-500/30'
                 : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
             }`}
           >
@@ -122,25 +93,6 @@ export default function Sidebar({ view, onNavigate, onGoHome }) {
           </button>
         )
       })}
-
-      <button
-        type="button"
-        onClick={toggle}
-        aria-label={expanded ? 'Colapsar barra' : 'Expandir barra'}
-        title={expanded ? 'Colapsar barra' : 'Expandir barra'}
-        className="mt-auto flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-      >
-        {expanded && <span className="text-xs font-medium">Colapsar</span>}
-        <svg
-          className={`h-4 w-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-        </svg>
-      </button>
     </nav>
   )
 }

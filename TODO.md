@@ -1,4 +1,4 @@
-# TODO Fimplify
+# TODO Mandarine
 
 Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archiva en `DONE.md`.
 
@@ -8,8 +8,11 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 ## 📋 Pendiente (roadmap)
 
+- **Infra del rebrand** — dominio `mandarine.app` (DNS Cloudflare; ya hay cuenta), renombrar repo `alvarezem/fimplify` y proyecto Vercel, y redirect de `fimplify.vercel.app` → Mandarine.
+- **Móvil (`<lg`)** — diferido hasta estabilizar escritorio. La navegación móvil actual (bottom nav con logo central + header con solo título) convive con el nuevo header desktop ([≡] + logo Mandarine están `hidden lg:flex`). Pendiente estilo YouTube mobile: el hamburguesa debería abrir un **drawer deslizante** con Costos/Inversiones/Resúmenes; decidir si reemplaza o convive con la bottom nav.
 - **Deploy Fase 2 (Cloudflare DNS)** — **en pausa**: requiere dominio propio (cuenta Cloudflare ya disponible; registrar dominio o usar uno existente).
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
+- **Asistente IA "Mandi"** — integrar un asistente que responda preguntas sobre el consumo usando el análisis de resúmenes.
 
 ## ⏸️ En hold (refactor / limpieza — posponer hasta estabilizar)
 

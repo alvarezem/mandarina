@@ -29,16 +29,16 @@ export default function Dropdown({ label, summary, children, align = 'right', cl
         aria-expanded={open}
         className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
           open
-            ? 'border-teal-600 bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300'
+            ? 'border-brand-600 bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
             : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
         }`}
       >
         {label}
-        <span className={open ? 'text-teal-600 dark:text-teal-300' : 'text-slate-400'}>
+        <span className={open ? 'text-brand-600 dark:text-brand-300' : 'text-slate-400'}>
           {summary}
         </span>
         <svg
-          className={`h-3 w-3 transition ${open ? 'rotate-180 text-teal-600 dark:text-teal-300' : 'text-slate-400'}`}
+          className={`h-3 w-3 transition ${open ? 'rotate-180 text-brand-600 dark:text-brand-300' : 'text-slate-400'}`}
           fill="none"
           viewBox="0 0 24 24"
           strokeWidth={2}

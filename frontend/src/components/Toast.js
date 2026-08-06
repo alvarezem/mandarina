@@ -7,7 +7,7 @@ const STYLES = {
     'border-emerald-200 bg-slate-50/95 text-emerald-700 dark:border-emerald-900 dark:bg-slate-900/95 dark:text-emerald-300',
   error:
     'border-red-200 bg-slate-50/95 text-red-600 dark:border-red-900 dark:bg-slate-900/95 dark:text-red-400',
-  info: 'border-teal-200 bg-slate-50/95 text-teal-700 dark:border-teal-900 dark:bg-slate-900/95 dark:text-teal-300',
+  info: 'border-brand-200 bg-slate-50/95 text-brand-700 dark:border-brand-900 dark:bg-slate-900/95 dark:text-brand-300',
 }
 
 function Icon({ type }) {
@@ -27,7 +27,7 @@ function Icon({ type }) {
     )
   }
   return (
-    <svg className={`${cls} text-teal-500`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+    <svg className={`${cls} text-brand-500`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
     </svg>
   )

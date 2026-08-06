@@ -19,7 +19,7 @@ const CURRENCIES = [
 const itemBase =
   'flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-xs transition'
 
-const itemActive = 'bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300'
+const itemActive = 'bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
 const itemInactive = 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
 
 function Check({ on }) {
@@ -27,7 +27,7 @@ function Check({ on }) {
     <span
       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
         on
-          ? 'border-teal-600 bg-teal-600 text-white'
+          ? 'border-brand-600 bg-brand-600 text-white'
           : 'border-slate-300 text-transparent dark:border-slate-600'
       }`}
     >
@@ -121,7 +121,7 @@ export default function FiltersBar({
             <button
               type="button"
               onClick={onClearCategories}
-              className="text-[11px] font-medium text-teal-600 hover:underline dark:text-teal-400"
+              className="text-[11px] font-medium text-brand-600 hover:underline dark:text-brand-400"
             >
               Limpiar
             </button>
@@ -166,7 +166,7 @@ export default function FiltersBar({
           value={query}
           onChange={(e) => onQuery(e.target.value)}
           placeholder="Buscar comercio…"
-          className="w-44 rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500"
+          className="w-44 rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-700 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500"
         />
       </div>
 

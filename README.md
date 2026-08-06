@@ -1,6 +1,8 @@
-# Fimplify
+# Mandarine
 
 Aplicación personal para analizar el consumo de tarjetas de crédito. Subí tus resúmenes (CSV, XLSX o PDF) y obtené un dashboard con tus gastos, categorizado y con totales en pesos y dólares.
+
+> El asistente IA del futuro se llama **Mandi**.
 
 ## Funcionalidades
 

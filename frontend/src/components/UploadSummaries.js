@@ -129,13 +129,13 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="group flex w-full flex-col items-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-center transition hover:border-teal-500 hover:bg-teal-50/50 active:scale-[0.98] disabled:opacity-60 dark:border-slate-700 dark:hover:bg-teal-950/30"
+          className="group flex w-full flex-col items-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-center transition hover:border-brand-500 hover:bg-brand-50/50 active:scale-[0.98] disabled:opacity-60 dark:border-slate-700 dark:hover:bg-brand-950/30"
         >
           {uploading ? (
-            <span className="mb-1 h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600 dark:border-slate-600 dark:border-t-teal-500" />
+            <span className="mb-1 h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600 dark:border-slate-600 dark:border-t-brand-500" />
           ) : (
             <svg
-              className="mb-1 h-6 w-6 text-slate-400 transition group-hover:text-teal-600 dark:text-slate-500 dark:group-hover:text-teal-400"
+              className="mb-1 h-6 w-6 text-slate-400 transition group-hover:text-brand-600 dark:text-slate-500 dark:group-hover:text-brand-400"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.6}
@@ -200,7 +200,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                 onClick={() => onSelect(null)}
                 className={`w-full rounded-lg p-2.5 text-left transition ${
                   selectedId === null
-                    ? 'bg-teal-50 ring-1 ring-teal-600/20 dark:bg-teal-950/40 dark:ring-teal-500/30'
+                    ? 'bg-brand-50 ring-1 ring-brand-600/20 dark:bg-brand-950/40 dark:ring-brand-500/30'
                     : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
                 }`}
               >
@@ -208,7 +208,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                   <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
                     Todos los resúmenes
                   </span>
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-medium text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
                     {files.length}
                   </span>
                 </div>
@@ -221,7 +221,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                   <div
                     className={`w-full rounded-lg p-2.5 transition ${
                       selectedId === f.id
-                        ? 'bg-teal-50 ring-1 ring-teal-600/20 dark:bg-teal-950/40 dark:ring-teal-500/30'
+                        ? 'bg-brand-50 ring-1 ring-brand-600/20 dark:bg-brand-950/40 dark:ring-brand-500/30'
                         : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
                     }`}
                   >
@@ -236,7 +236,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                           }}
                           autoFocus
                           aria-label="Nombre del resumen"
-                          className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                          className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                         />
                         <button
                           type="submit"

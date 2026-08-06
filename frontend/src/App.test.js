@@ -66,13 +66,16 @@ describe('App', () => {
   })
 
   describe('navegación rail (lg+)', () => {
-    it('muestra el rail con logo, Costos activo, Inversiones y Resúmenes', async () => {
+    it('muestra header con hamburguesa, logo Mandarine y rail con Costos activo', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
+      expect(screen.getByRole('button', { name: 'Ir al inicio' })).toBeInTheDocument()
+      expect(screen.getByText('Mandarine')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Colapsar barra' })).toBeInTheDocument()
+
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
-      expect(within(rail).getAllByRole('button', { name: /Ir al inicio/i }).length).toBeGreaterThan(0)
-      expect(within(rail).getByRole('button', { name: 'Costos' }).className).toContain('bg-teal-50')
+      expect(within(rail).getByRole('button', { name: 'Costos' }).className).toContain('bg-brand-50')
       expect(within(rail).getByRole('button', { name: /Inversiones/ })).toBeInTheDocument()
       expect(within(rail).getByRole('button', { name: /Resúmenes/ })).toBeInTheDocument()
     })
@@ -100,28 +103,27 @@ describe('App', () => {
       expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
     })
 
-    it('expande y colapsa el rail con el toggle', async () => {
+    it('expande y colapsa el rail con el hamburguesa del header', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
-      expect(within(rail).getByRole('button', { name: 'Colapsar barra' })).toBeInTheDocument()
       expect(rail.className).toContain('w-52')
+      expect(screen.getByRole('button', { name: 'Colapsar barra' })).toBeInTheDocument()
 
-      await userEvent.click(within(rail).getByRole('button', { name: 'Colapsar barra' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Colapsar barra' }))
       expect(rail.className).toContain('w-16')
-      expect(within(rail).getByRole('button', { name: 'Expandir barra' })).toBeInTheDocument()
-      expect(within(rail).queryByText('fimplify')).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Expandir barra' })).toBeInTheDocument()
+      expect(screen.getByText('Mandarine')).toBeInTheDocument()
 
-      await userEvent.click(within(rail).getByRole('button', { name: 'Expandir barra' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Expandir barra' }))
       expect(rail.className).toContain('w-52')
-      expect(within(rail).getByRole('button', { name: 'Colapsar barra' })).toBeInTheDocument()
-      expect(within(rail).getByText('fimplify')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Colapsar barra' })).toBeInTheDocument()
     })
   })
 
   describe('navegación móvil (<lg)', () => {
-    it('muestra el logo de fimplify centrado en la bottom nav', async () => {
+    it('muestra el logo de mandarine centrado en la bottom nav', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 

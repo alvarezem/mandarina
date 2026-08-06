@@ -97,7 +97,7 @@ function CountUp({ value, format }) {
 
 function Card({ label, value, format, sub, valueClass = 'text-slate-900 dark:text-slate-100' }) {
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-md shadow-slate-200/50 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-teal-500/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20 dark:hover:shadow-teal-500/10">
+    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm shadow-slate-200/40 transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20 dark:hover:shadow-black/30">
       <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {label}
       </span>
@@ -111,7 +111,7 @@ function Card({ label, value, format, sub, valueClass = 'text-slate-900 dark:tex
 
 function CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-xl border border-slate-200/80 bg-white p-4 shadow-md shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
+    <div className="animate-pulse rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
       <div className="h-3 w-20 rounded bg-slate-200 dark:bg-slate-800" />
       <div className="mt-3 h-7 w-28 rounded bg-slate-200 dark:bg-slate-800" />
     </div>
@@ -120,7 +120,7 @@ function CardSkeleton() {
 
 function EmptyState({ title, hint }) {
   return (
-    <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center dark:border-slate-700 dark:bg-slate-900">
+    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-16 text-center dark:border-slate-700 dark:bg-slate-900">
       <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{title}</p>
       {hint && <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">{hint}</p>}
     </div>

@@ -4,10 +4,10 @@ const ToastContext = createContext(() => {})
 
 const STYLES = {
   success:
-    'border-emerald-200 bg-white/95 text-emerald-700 dark:border-emerald-900 dark:bg-slate-900/95 dark:text-emerald-300',
+    'border-emerald-200 bg-slate-50/95 text-emerald-700 dark:border-emerald-900 dark:bg-slate-900/95 dark:text-emerald-300',
   error:
-    'border-red-200 bg-white/95 text-red-600 dark:border-red-900 dark:bg-slate-900/95 dark:text-red-400',
-  info: 'border-teal-200 bg-white/95 text-teal-700 dark:border-teal-900 dark:bg-slate-900/95 dark:text-teal-300',
+    'border-red-200 bg-slate-50/95 text-red-600 dark:border-red-900 dark:bg-slate-900/95 dark:text-red-400',
+  info: 'border-teal-200 bg-slate-50/95 text-teal-700 dark:border-teal-900 dark:bg-slate-900/95 dark:text-teal-300',
 }
 
 function Icon({ type }) {
@@ -71,7 +71,7 @@ export default function ToastProvider({ children }) {
           <div
             key={t.id}
             role="status"
-            className={`animate-slide-in-right pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-xl border px-4 py-3 shadow-lg backdrop-blur ${STYLES[t.type]}`}
+            className={`animate-slide-in-right pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-xl border px-4 py-3 shadow-md backdrop-blur ${STYLES[t.type]}`}
           >
             <Icon type={t.type} />
             <span className="text-sm font-medium leading-snug">{t.message}</span>

@@ -21,7 +21,7 @@ export default function Auth({ dark, onToggleTheme }) {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-teal-50/60 px-4 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950/40">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 via-slate-50 to-teal-50/40 px-4 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950/40">
       <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-teal-500/20 blur-3xl dark:bg-teal-500/10" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-emerald-500/15 blur-3xl dark:bg-emerald-500/10" />
 
@@ -31,7 +31,7 @@ export default function Auth({ dark, onToggleTheme }) {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-2xl font-bold text-white shadow-lg shadow-teal-500/30">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-2xl font-bold text-white shadow-md shadow-teal-500/20">
             F
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
@@ -44,7 +44,7 @@ export default function Auth({ dark, onToggleTheme }) {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-slate-200/70 bg-white/90 p-8 shadow-xl shadow-slate-200/60 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/30"
+          className="rounded-2xl border border-slate-200/70 bg-slate-50/95 p-8 shadow-lg shadow-slate-200/50 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/30"
         >
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
             Email
@@ -75,7 +75,7 @@ export default function Auth({ dark, onToggleTheme }) {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-lg bg-gradient-to-r from-teal-500 to-emerald-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/25 transition hover:from-teal-600 hover:to-emerald-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-70"
+            className="w-full rounded-lg bg-gradient-to-r from-teal-500 to-emerald-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-500/20 transition hover:from-teal-600 hover:to-emerald-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-70"
           >
             {submitting ? (
               <span className="flex items-center justify-center gap-2">

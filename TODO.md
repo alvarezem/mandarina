@@ -17,5 +17,5 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 - **Conversión PDF→Markdown (Microsoft MarkItDown)** — **EVALUADO → NO recomendado** para estos casos. Motivo: su conversión de PDF por defecto (`pdfminer.six`) pierde estructura/tablas y rinde mal en tablas multi-columna densas; los resúmenes de banco son justamente tablas posicionales con columnas PESOS/DÓLARES que el parser actual (`unpdf` + x,y) ya resuelve bien. Además descarta las coordenadas x,y (señal clave para separar columnas) y es Python (no corre en Deno; REST = dependencia externa, latencia y enviar data financiera a un tercero). El camino correcto es el de arriba: generalizar el parser posicional, no convertir a Markdown.
 - `frontend/src/logo.svg` — imagen sin uso (la UI actual no la renderiza).
 - `frontend/src/reportWebVitals.js` + llamada en `index.js` — no requerido.
-- `frontend/src/index.css` — ahora es el entry de Tailwind (imports + tokens); solo contiene `body` base.
+- `frontend/src/index.css` — ahora es el entry de Tailwind (imports + `@theme` con tokens de color/animación + keyframes) y `body` base.
 - `parse-summary` — el archivo concentra parseo + categorías + análisis; modularizar cuando la feature-set se estabilice.

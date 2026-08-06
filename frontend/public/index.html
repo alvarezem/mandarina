@@ -7,7 +7,9 @@
       (function () {
         try {
           var stored =
-            localStorage.getItem('mandarine-theme') || localStorage.getItem('fimplify-theme');
+            localStorage.getItem('mandarina-theme') ||
+            localStorage.getItem('mandarine-theme') ||
+            localStorage.getItem('fimplify-theme');
           var dark = stored
             ? stored === 'dark'
             : window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -19,7 +21,7 @@
     <meta name="theme-color" content="#f97316" />
     <meta
       name="description"
-      content="Mandarine — análisis de consumo de tus tarjetas de crédito: subí tu resumen y visualizá tus gastos."
+      content="Mandarina — A tu plata, sacale todo el jugo. Subí tu resumen y analizá el consumo de tus tarjetas de crédito."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -42,7 +44,7 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>Mandarine — Análisis de consumo</title>
+    <title>Mandarina — Análisis de consumo</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

@@ -66,12 +66,12 @@ describe('App', () => {
   })
 
   describe('navegación rail (lg+)', () => {
-    it('muestra header con hamburguesa, logo Mandarine y rail con Costos activo', async () => {
+    it('muestra header con hamburguesa, logo Mandarina y rail con Costos activo', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
       expect(screen.getByRole('button', { name: 'Ir al inicio' })).toBeInTheDocument()
-      expect(screen.getByText('Mandarine')).toBeInTheDocument()
+      expect(screen.getByText('Mandarina')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Colapsar barra' })).toBeInTheDocument()
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
@@ -80,14 +80,14 @@ describe('App', () => {
       expect(within(rail).getByRole('button', { name: /Resúmenes/ })).toBeInTheDocument()
     })
 
-    it('navega a Inversiones y muestra el placeholder', async () => {
+    it('navega a Inversiones y muestra el plan de inversión vacío', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
       await userEvent.click(within(rail).getByRole('button', { name: /Inversiones/ }))
 
-      expect(await screen.findByText('Próximamente.')).toBeInTheDocument()
+      expect(await screen.findByText('Plan de inversión')).toBeInTheDocument()
       expect(screen.queryByText(EMPTY_STATE)).not.toBeInTheDocument()
     })
 
@@ -114,7 +114,7 @@ describe('App', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Colapsar barra' }))
       expect(rail.className).toContain('w-16')
       expect(screen.getByRole('button', { name: 'Expandir barra' })).toBeInTheDocument()
-      expect(screen.getByText('Mandarine')).toBeInTheDocument()
+      expect(screen.getByText('Mandarina')).toBeInTheDocument()
 
       await userEvent.click(screen.getByRole('button', { name: 'Expandir barra' }))
       expect(rail.className).toContain('w-52')
@@ -123,7 +123,7 @@ describe('App', () => {
   })
 
   describe('navegación móvil (<lg)', () => {
-    it('muestra el logo de mandarine centrado en la bottom nav', async () => {
+    it('muestra el logo de mandarina centrado en la bottom nav', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
@@ -154,7 +154,7 @@ describe('App', () => {
       const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
       await userEvent.click(within(bottom).getByRole('button', { name: 'Inversiones' }))
 
-      expect(await screen.findByText('Próximamente.')).toBeInTheDocument()
+      expect(await screen.findByText('Plan de inversión')).toBeInTheDocument()
     })
 
     it('el logo central vuelve al inicio', async () => {
@@ -163,7 +163,7 @@ describe('App', () => {
 
       const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
       await userEvent.click(within(bottom).getByRole('button', { name: 'Inversiones' }))
-      await screen.findByText('Próximamente.')
+      await screen.findByText('Plan de inversión')
 
       await userEvent.click(within(bottom).getByRole('button', { name: 'Inicio' }))
       expect(await screen.findByText(EMPTY_STATE)).toBeInTheDocument()

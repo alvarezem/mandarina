@@ -15,7 +15,6 @@ export const NAV_ITEMS = [
   {
     key: 'inversiones',
     label: 'Inversiones',
-    soon: true,
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
         <path
@@ -46,14 +45,29 @@ export function Logo({ className = '' }) {
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path
         fill="#f97316"
-        d="M12 2.5C17.9 2.5 21.5 6.8 21.5 12c0 5.2-3.6 9.5-9.5 9.5-2.1-4.7-4.7-6.7-7.5-9.5 2.8-2.8 5.4-4.8 7.5-9.5Z"
+        d="M14 4.5C20 6 21.5 12 14 19.5 9.5 17.5 7 14.8 5.2 12 7 9.2 9.5 6.5 14 4.5Z"
       />
       <path
         fill="#fdba74"
-        d="M12 5.6C16.5 5.6 18.7 8.4 18.7 12c0 3.6-2.2 6.4-6.7 6.4-1.7-3.2-3.6-4.7-4.9-6.4 1.3-1.7 3.2-3.2 4.9-6.4Z"
+        d="M14 4.5C17.6 6.2 18.6 12 14 19.5 9.5 17.5 7 14.8 5.2 12 7 9.2 9.5 6.5 14 4.5Z"
       />
-      <path d="M7.9 10.3l3.7-2.9" stroke="#f97316" strokeWidth="0.9" strokeLinecap="round" opacity="0.4" />
-      <path d="M7.7 13.5l3.9 2.8" stroke="#f97316" strokeWidth="0.9" strokeLinecap="round" opacity="0.4" />
+      <path
+        d="M15 9.2C13.1 10 11.5 11 10.1 12"
+        stroke="#f97316"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        opacity="0.45"
+      />
+      <path
+        d="M15 14.8C13.1 14 11.5 13 10.1 12"
+        stroke="#f97316"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        opacity="0.45"
+      />
+      <circle cx="18.4" cy="8.2" r="0.55" fill="#ea580c" opacity="0.7" />
+      <circle cx="19.8" cy="12" r="0.55" fill="#ea580c" opacity="0.7" />
+      <circle cx="18.4" cy="15.8" r="0.55" fill="#ea580c" opacity="0.7" />
     </svg>
   )
 }
@@ -75,7 +89,7 @@ export default function Sidebar({ view, onNavigate, expanded }) {
             onClick={() => onNavigate(item.key)}
             aria-label={item.label}
             aria-current={active ? 'page' : undefined}
-            title={item.soon ? `${item.label} (próximamente)` : item.label}
+            title={item.label}
             className={`relative flex h-10 items-center gap-3 rounded-xl transition active:scale-[0.98] ${
               expanded ? 'w-full px-3 justify-start' : 'w-10 justify-center'
             } ${
@@ -87,13 +101,6 @@ export default function Sidebar({ view, onNavigate, expanded }) {
             {item.icon}
             {expanded && (
               <span className="truncate text-sm font-medium">{item.label}</span>
-            )}
-            {item.soon && (
-              <span
-                className={`absolute h-2 w-2 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900 ${
-                  expanded ? 'right-3 top-1.5' : '-right-0.5 -top-0.5'
-                }`}
-              />
             )}
           </button>
         )

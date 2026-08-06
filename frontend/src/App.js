@@ -3,6 +3,7 @@ import supabase from './lib/supabaseClient'
 import Auth from './components/Auth'
 import UploadSummaries from './components/UploadSummaries'
 import Dashboard from './components/Dashboard'
+import InvestmentPlan from './components/InvestmentPlan'
 import ThemeToggle from './components/ThemeToggle'
 import Sidebar, { Logo, NAV_ITEMS } from './components/Sidebar'
 import ToastProvider, { useToast } from './components/Toast'
@@ -17,28 +18,21 @@ function BootSplash() {
   )
 }
 
-function ComingSoon({ title }) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-16 text-center dark:border-slate-700 dark:bg-slate-900/60">
-      <Logo className="mb-4 h-14 w-14" />
-      <p className="text-lg font-semibold text-slate-800 dark:text-slate-200">{title}</p>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Próximamente.</p>
-    </div>
-  )
-}
-
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [dark, setDark] = useState(() => {
-    const stored = localStorage.getItem('mandarine-theme') ?? localStorage.getItem('fimplify-theme')
+    const stored =
+      localStorage.getItem('mandarina-theme') ??
+      localStorage.getItem('mandarine-theme') ??
+      localStorage.getItem('fimplify-theme')
     if (stored) return stored === 'dark'
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   })
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
-    localStorage.setItem('mandarine-theme', dark ? 'dark' : 'light')
+    localStorage.setItem('mandarina-theme', dark ? 'dark' : 'light')
   }, [dark])
 
   useEffect(() => {
@@ -71,21 +65,23 @@ function AppContent({ session, dark, setDark }) {
   const [resetKey, setResetKey] = useState(0)
   const [railExpanded, setRailExpanded] = useState(() => {
     const stored =
-      localStorage.getItem('mandarine-rail-expanded') ?? localStorage.getItem('fimplify-rail-expanded')
+      localStorage.getItem('mandarina-rail-expanded') ??
+      localStorage.getItem('mandarine-rail-expanded') ??
+      localStorage.getItem('fimplify-rail-expanded')
     return stored ? stored === 'true' : true
   })
   const mainRef = useRef(null)
 
   const toggleRail = () => {
     setRailExpanded((prev) => {
-      localStorage.setItem('mandarine-rail-expanded', String(!prev))
+      localStorage.setItem('mandarina-rail-expanded', String(!prev))
       return !prev
     })
   }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    pushToast({ type: 'info', message: 'Sesión cerrada' })
+    pushToast({ type: 'info', message: '¡Nos vemos!' })
   }
 
   if (!session) return <Auth dark={dark} onToggleTheme={() => setDark((d) => !d)} />
@@ -109,6 +105,10 @@ function AppContent({ session, dark, setDark }) {
 
   const summariesView = (
     <div className="mx-auto max-w-2xl animate-fade-in-up">
+      <div className="mb-4 text-center sm:text-left">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Resúmenes</h1>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Tus números, sin cáscara</p>
+      </div>
       <UploadSummaries
         session={session}
         selectedId={selectedId}
@@ -121,27 +121,29 @@ function AppContent({ session, dark, setDark }) {
   return (
     <div className="flex h-screen flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40 dark:text-slate-100">
       <header className="z-30 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-100/70 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 sm:px-6">
-        <div className="hidden items-center gap-1 lg:flex">
-          <button
-            type="button"
-            onClick={toggleRail}
-            aria-label={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
-            title={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            </svg>
-          </button>
+        <div className="-ml-4 hidden items-center gap-1 lg:flex sm:-ml-6">
+          <div className="flex w-16 shrink-0 items-center justify-center">
+            <button
+              type="button"
+              onClick={toggleRail}
+              aria-label={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
+              title={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+          </div>
           <button
             type="button"
             onClick={goHome}
             aria-label="Ir al inicio"
-            title="Mandarine"
+            title="Mandarina"
             className="flex items-center gap-2 rounded-lg px-1 transition hover:opacity-85"
           >
             <Logo className="h-8 w-8" />
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Mandarine</span>
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Mandarina</span>
           </button>
         </div>
         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 lg:hidden">
@@ -176,7 +178,7 @@ function AppContent({ session, dark, setDark }) {
                 onSummarySelect={selectSummary}
               />
             ) : view === 'inversiones' ? (
-              <ComingSoon title="Inversiones" />
+              <InvestmentPlan session={session} />
             ) : (
               summariesView
             )}

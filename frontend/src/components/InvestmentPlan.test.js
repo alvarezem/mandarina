@@ -116,6 +116,30 @@ describe('InvestmentPlan', () => {
     )
   })
 
+  it('cambia la prioridad de compra con el selector de estrategia', async () => {
+    mockPlan(
+      [
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 40, quantity: 1, manual_price: null, sort_order: 0 },
+        { id: '2', symbol: 'SPY', name: 'SPY', asset_type: 'cedear', currency: 'ARS', target_weight: 30, quantity: 0, manual_price: null, sort_order: 1 },
+        { id: '3', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 30, quantity: 0, manual_price: null, sort_order: 2 },
+      ],
+      { VIST: 1000, SPY: 100, KO: 10 },
+    )
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VIST')
+
+    await userEvent.type(screen.getByRole('spinbutton', { name: /Presupuesto para comprar/i }), '1000')
+
+    const steps = () => screen.getAllByRole('listitem')
+    expect(within(steps()[0]).getByText('SPY')).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Prioridad de compra/i }), 'barato')
+    expect(within(steps()[0]).getByText('KO')).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Prioridad de compra/i }), 'caro')
+    expect(within(steps()[0]).getByText('SPY')).toBeInTheDocument()
+  })
+
   it('muestra el dato compacto de MEP/CCL junto al toggle', async () => {
     mockPlan([], {})
     wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)

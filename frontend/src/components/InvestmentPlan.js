@@ -53,6 +53,15 @@ const SORT_DEFAULTS = {
   buy: 'desc',
 }
 
+const STRATEGY_OPTIONS = [
+  { key: 'faltante', label: 'Mayor faltante ($)' },
+  { key: 'gap', label: 'Mayor faltante (%)' },
+  { key: 'billetera', label: 'Mayor % de cartera' },
+  { key: 'peso', label: 'Mayor peso objetivo' },
+  { key: 'barato', label: 'Más barato' },
+  { key: 'caro', label: 'Más caro' },
+]
+
 export default function InvestmentPlan({
   session,
   display = 'ARS',
@@ -65,6 +74,7 @@ export default function InvestmentPlan({
   const [quotes, setQuotes] = useState({})
   const [rates, setRates] = useState({ MEP: null, CCL: null })
   const [budget, setBudget] = useState('')
+  const [strategy, setStrategy] = useState('faltante')
   const [sort, setSort] = useState({ key: null, dir: 'asc' })
   const [editingId, setEditingId] = useState(null)
   const [draft, setDraft] = useState(newDraft())
@@ -165,7 +175,10 @@ export default function InvestmentPlan({
     return arr
   }, [builtItems, sort])
 
-  const dist = useMemo(() => distribute(Number(budget) || 0, builtItems), [budget, builtItems])
+  const dist = useMemo(
+    () => distribute(Number(budget) || 0, builtItems, strategy),
+    [budget, builtItems, strategy],
+  )
 
   const refreshQuotes = () => {
     const symbols = items.map((i) => i.symbol).filter(Boolean)
@@ -726,6 +739,21 @@ export default function InvestmentPlan({
               Tengo para comprar
             </h2>
             <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              Priorizar por
+              <select
+                value={strategy}
+                onChange={(e) => setStrategy(e.target.value)}
+                aria-label="Prioridad de compra"
+                className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                {STRATEGY_OPTIONS.map((o) => (
+                  <option key={o.key} value={o.key}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <input
                 type="number"
                 value={budget}
@@ -778,7 +806,7 @@ export default function InvestmentPlan({
             )
           ) : (
             <p className="text-sm text-slate-400 dark:text-slate-500">
-              Ingresá cuánto tenés disponible y te ordenamos qué comprar primero (el faltante más grande primero, se recalcula en vivo al comprar).
+              Ingresá cuánto tenés disponible y te ordenamos qué comprar primero según tu prioridad (se recalcula en vivo al comprar).
             </p>
           )}
         </section>

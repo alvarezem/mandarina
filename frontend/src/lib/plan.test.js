@@ -108,6 +108,59 @@ describe('distribute', () => {
   })
 })
 
+describe('distribute estrategias', () => {
+  const symbols = (steps) => steps.map((s) => s.symbol)
+  const plan = () =>
+    buildPlan([
+      item({ symbol: 'AAPL', name: 'AAPL', target_weight: 40, quantity: 2, price: 70 }),
+      item({ symbol: 'MSFT', name: 'MSFT', target_weight: 30, quantity: 0, price: 1000 }),
+      item({ symbol: 'KO', name: 'KO', target_weight: 20, quantity: 10, price: 10 }),
+      item({ symbol: 'GOLD', name: 'GOLD', target_weight: 10, quantity: 19, price: 40 }),
+    ])
+
+  it('default: mayor faltante ($) primero', () => {
+    const { steps } = distribute(1000000, plan())
+    expect(symbols(steps)).toEqual(['AAPL', 'MSFT', 'KO'])
+    expect(steps[0].buy ?? steps[0].amount).toBeGreaterThanOrEqual(steps[1].amount)
+  })
+
+  it('gap: mayor faltante (%) primero', () => {
+    const { steps } = distribute(1000000, plan(), 'gap')
+    expect(symbols(steps)).toEqual(['MSFT', 'AAPL', 'KO'])
+  })
+
+  it('peso: mayor peso objetivo primero', () => {
+    const { steps } = distribute(1000000, plan(), 'peso')
+    expect(symbols(steps)).toEqual(['AAPL', 'MSFT', 'KO'])
+  })
+
+  it('billetera: mayor % de cartera primero', () => {
+    const { steps } = distribute(1000000, plan(), 'billetera')
+    expect(symbols(steps)).toEqual(['AAPL', 'KO', 'MSFT'])
+  })
+
+  it('barato: menor precio por unidad primero', () => {
+    const { steps } = distribute(1000000, plan(), 'barato')
+    expect(symbols(steps)).toEqual(['KO', 'AAPL', 'MSFT'])
+  })
+
+  it('caro: mayor precio por unidad primero', () => {
+    const { steps } = distribute(1000000, plan(), 'caro')
+    expect(symbols(steps)).toEqual(['MSFT', 'AAPL', 'KO'])
+  })
+
+  it('sin precio va al final en barato/caro', () => {
+    const p = buildPlan([
+      item({ symbol: 'AAPL', name: 'AAPL', target_weight: 50, quantity: 0, price: 100 }),
+      item({ symbol: 'CASH', name: 'CASH', target_weight: 30, quantity: 0, price: null }),
+      item({ symbol: 'KO', name: 'KO', target_weight: 20, quantity: 0, price: 50 }),
+      item({ symbol: 'GOLD', name: 'GOLD', target_weight: 0, quantity: 10, price: 1000 }),
+    ])
+    expect(symbols(distribute(1000000, p, 'barato').steps)).toEqual(['KO', 'AAPL', 'CASH'])
+    expect(symbols(distribute(1000000, p, 'caro').steps)).toEqual(['AAPL', 'KO', 'CASH'])
+  })
+})
+
 describe('portfolioChangePct', () => {
   it('pondera el cambio diario por el valor de ayer', () => {
     const items = [

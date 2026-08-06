@@ -72,10 +72,29 @@ export function portfolioChangePct(items) {
   return (now / prev - 1) * 100
 }
 
-export function distribute(budget, builtItems) {
+const STRATEGY_SORTERS = {
+  faltante: (a, b) => b.buy - a.buy,
+  gap: (a, b) => b.gap - a.gap,
+  billetera: (a, b) => b.actualPct - a.actualPct,
+  peso: (a, b) => b.target_weight - a.target_weight,
+  barato: (a, b) => {
+    if (a.price == null && b.price == null) return 0
+    if (a.price == null) return 1
+    if (b.price == null) return -1
+    return a.price - b.price
+  },
+  caro: (a, b) => {
+    if (a.price == null && b.price == null) return 0
+    if (a.price == null) return 1
+    if (b.price == null) return -1
+    return b.price - a.price
+  },
+}
+
+export function distribute(budget, builtItems, strategy = 'faltante') {
   const underweight = builtItems
     .filter((item) => item.buy > 0)
-    .sort((a, b) => b.buy - a.buy)
+    .sort(STRATEGY_SORTERS[strategy] ?? STRATEGY_SORTERS.faltante)
   let remaining = Number(budget) || 0
   const steps = []
   let i = 0

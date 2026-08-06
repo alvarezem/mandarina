@@ -363,7 +363,7 @@ export default function MarketQuotes({
                     <tr className="border-b border-slate-200 dark:border-slate-800">
                       <SortableTh label="Activo" sortKey="symbol" sort={sort} onSort={onSort} />
                       <SortableTh label="Precio" sortKey="price" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
-                      <SortableTh label="Variación" sortKey="changePct" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
+                      <SortableTh label="Var. diaria" sortKey="changePct" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
                       <SortableTh label="Cantidad" sortKey="quantity" sort={sort} onSort={onSort} align="right" className="hidden md:table-cell" />
                       <SortableTh label="Valor" sortKey="value" sort={sort} onSort={onSort} align="right" />
                       <SortableTh label="% cartera" sortKey="actualPct" sort={sort} onSort={onSort} align="right" />

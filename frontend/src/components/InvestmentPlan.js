@@ -3,6 +3,7 @@ import supabase from '../lib/supabaseClient'
 import { buildPlan, distribute } from '../lib/plan'
 import { useToast } from './Toast'
 import SortableTh from './SortableTh'
+import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR } from '../lib/planSort'
 
 const ASSET_TYPES = {
   accion: 'Acción',
@@ -42,16 +43,7 @@ const newDraft = () => ({
   manual_price: '',
 })
 
-const SORT_DEFAULTS = {
-  symbol: 'asc',
-  price: 'desc',
-  quantity: 'desc',
-  value: 'desc',
-  actualPct: 'desc',
-  target_weight: 'desc',
-  gap: 'desc',
-  buy: 'desc',
-}
+const PLAN_SORT_KEYS = new Set(['symbol', 'price', 'quantity', 'value', 'actualPct', 'target_weight', 'gap', 'buy'])
 
 const STRATEGY_OPTIONS = [
   { key: 'faltante', label: 'Mayor faltante ($)' },
@@ -68,6 +60,8 @@ export default function InvestmentPlan({
   setDisplay = () => {},
   rateMode = 'CCL',
   setRateMode = () => {},
+  sort: sortProp,
+  onSort: onSortProp,
 }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -75,7 +69,14 @@ export default function InvestmentPlan({
   const [rates, setRates] = useState({ MEP: null, CCL: null })
   const [budget, setBudget] = useState('')
   const [strategy, setStrategy] = useState('faltante')
-  const [sort, setSort] = useState({ key: null, dir: 'asc' })
+  const [localSort, setLocalSort] = useState(DEFAULT_PLAN_SORT)
+  const sort = sortProp ?? localSort
+  const onSort =
+    onSortProp ??
+    ((key) =>
+      setLocalSort((s) =>
+        s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' },
+      ))
   const [editingId, setEditingId] = useState(null)
   const [draft, setDraft] = useState(newDraft())
   const [error, setError] = useState(null)
@@ -150,13 +151,10 @@ export default function InvestmentPlan({
 
   const total = builtItems.reduce((sum, item) => sum + item.value, 0)
 
-  const onSort = (key) =>
-    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULTS[key] }))
-
   const sortedItems = useMemo(() => {
     if (!sort.key) return builtItems
+    const { key, dir } = PLAN_SORT_KEYS.has(sort.key) ? sort : DEFAULT_PLAN_SORT
     const arr = [...builtItems]
-    const { key, dir } = sort
     const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
     arr.sort((a, b) => {
       let cmp = 0
@@ -327,6 +325,9 @@ export default function InvestmentPlan({
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Plan de inversión</h1>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Meta vs actual, en vivo</p>
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+            Orden: % Meta mayor→menor · cambiá con los encabezados de la tabla (se recuerda)
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button

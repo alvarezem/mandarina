@@ -64,6 +64,7 @@ const wrap = (ui) => render(<ToastProvider>{ui}</ToastProvider>)
 describe('MarketQuotes', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    localStorage.clear()
   })
 
   it('muestra el estado vacío sin plan cargado', async () => {
@@ -126,9 +127,13 @@ describe('MarketQuotes', () => {
     expect(usd.className).toContain('bg-brand-600')
   })
 
-  it('ordena la tabla por precio desc', async () => {
+  it('ordena por % Meta desc por default y luego por precio desc', async () => {
+    const items = [
+      { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, manual_price: null, sort_order: 0 },
+      { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, manual_price: null, sort_order: 1 },
+    ]
     mockPlan(
-      ITEMS,
+      items,
       {
         VIST: { price: 34920, changePct: 1.2, source: 'byma' },
         QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
@@ -143,6 +148,23 @@ describe('MarketQuotes', () => {
     await userEvent.click(screen.getByRole('button', { name: /Precio/ }))
     const rowsAfter = screen.getAllByRole('row')
     expect(within(rowsAfter[1]).getByText('QQQ')).toBeInTheDocument()
+  })
+
+  it('muestra la sesión del día en el gráfico inline (apertura, máx, mín, cierre previo)', async () => {
+    mockPlan(ITEMS, {
+      VIST: { price: 34920, changePct: 1.2, open: 34720, high: 35000, low: 33900, prevClose: 33680, tradeHour: '16:59', source: 'byma' },
+      QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+    })
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('Patrimonio total')
+
+    await userEvent.click(screen.getByRole('button', { name: /VIST Acción/ }))
+    expect(await screen.findByTestId('chart-line')).toBeInTheDocument()
+
+    expect(screen.getByText(/Apr/i)).toBeInTheDocument()
+    expect(screen.getByText(/Cierre prev/i)).toBeInTheDocument()
+    expect(screen.getByText(/hoy 16:59/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/▲\s*1\.20%/).length).toBeGreaterThanOrEqual(2)
   })
 
   it('muestra aviso cuando no hay precios disponibles', async () => {

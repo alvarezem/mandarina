@@ -12,8 +12,14 @@ import { RANGES, formatPointDate } from '../lib/history'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
-const fmtPrice = (n) =>
-  n == null ? '—' : n.toLocaleString('es-AR', { maximumFractionDigits: 2 })
+const fmt = (n, currency = 'ARS') =>
+  n == null
+    ? '—'
+    : new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-AR', {
+        style: 'currency',
+        currency,
+        maximumFractionDigits: currency === 'USD' ? 2 : 0,
+      }).format(n)
 
 export default function PriceChart({
   symbol,
@@ -23,6 +29,8 @@ export default function PriceChart({
   error,
   onRange,
   compact = false,
+  quote = null,
+  display = 'ARS',
 }) {
   const data = {
     labels: points.map((p) => formatPointDate(p.t, range)),
@@ -54,7 +62,7 @@ export default function PriceChart({
             const p = points[i]
             return p ? new Date(p.t).toLocaleDateString('es-AR') : ''
           },
-          label: (item) => `Cierre: $${fmtPrice(item.parsed.y)}`,
+          label: (item) => `Cierre: ${fmt(item.parsed.y, display)}`,
         },
       },
     },
@@ -64,8 +72,49 @@ export default function PriceChart({
     },
   }
 
+  const changeColor =
+    quote?.changePct != null
+      ? quote.changePct >= 0
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-red-600 dark:text-red-400'
+      : ''
+
   return (
     <div className="flex flex-col gap-2">
+      {quote && (
+        <div className="rounded-lg border border-slate-200 bg-white/70 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-base font-bold text-slate-900 dark:text-slate-50">
+              {fmt(quote.price, display)}
+            </span>
+            {quote.changePct != null && (
+              <span className={`text-xs font-semibold ${changeColor}`}>
+                {quote.changePct >= 0 ? '▲' : '▼'}
+                {Math.abs(quote.changePct).toFixed(2)}%
+              </span>
+            )}
+            {quote.tradeHour && (
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">hoy {quote.tradeHour}</span>
+            )}
+          </div>
+          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+            <span>
+              Apr <b className="font-semibold text-slate-700 dark:text-slate-300">{fmt(quote.open, display)}</b>
+            </span>
+            <span>
+              Cierre prev{' '}
+              <b className="font-semibold text-slate-700 dark:text-slate-300">{fmt(quote.prevClose, display)}</b>
+            </span>
+            <span>
+              Máx <b className="font-semibold text-slate-700 dark:text-slate-300">{fmt(quote.high, display)}</b>
+            </span>
+            <span>
+              Mín <b className="font-semibold text-slate-700 dark:text-slate-300">{fmt(quote.low, display)}</b>
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {symbol}

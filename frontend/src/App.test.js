@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
+import { act } from 'react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
 
@@ -47,10 +48,16 @@ function mockApp(txs, summaries = []) {
 }
 
 describe('App', () => {
+  let authListener
+
   beforeEach(() => {
     localStorage.clear()
-    supabase.auth.onAuthStateChange.mockReturnValue({
-      data: { subscription: { unsubscribe: jest.fn() } },
+    authListener = jest.fn()
+    supabase.auth.onAuthStateChange.mockImplementation((cb) => {
+      authListener = cb
+      return {
+        data: { subscription: { unsubscribe: jest.fn() } },
+      }
     })
     supabase.auth.signOut.mockResolvedValue({ error: null })
     supabase.auth.getSession.mockResolvedValue({ data: { session }, error: null })
@@ -58,6 +65,11 @@ describe('App', () => {
     supabase.storage.from.mockReturnValue({ upload: jest.fn().mockResolvedValue({ error: null }) })
     mockApp([])
   })
+
+  const signIn = (user) =>
+    act(() => {
+      authListener('SIGNED_IN', { user })
+    })
 
   it('muestra la pantalla de auth cuando no hay sesión', async () => {
     supabase.auth.getSession.mockResolvedValue({ data: { session: null }, error: null })
@@ -77,6 +89,69 @@ describe('App', () => {
     expect(toast.className).toContain('text-emerald-700')
     expect(toast.className).not.toContain('brand')
     expect(supabase.auth.signOut).toHaveBeenCalled()
+  })
+
+  it('saluda con "¡Bienvenido/a!" la primera vez que inicia sesión (mano saludando)', async () => {
+    render(<App />)
+    await screen.findByText(EMPTY_STATE)
+
+    signIn({ id: 'u1', email: 'a@b.com', created_at: '2026-01-01T00:00:00.000Z', last_sign_in_at: '2026-01-01T00:00:00.000Z' })
+
+    expect(await screen.findByText('¡Bienvenido/a a Mandarina!')).toBeInTheDocument()
+    expect(screen.getByTestId('toast-icon-wave')).toBeInTheDocument()
+  })
+
+  it('saluda con "¡Volviste!" cuando vuelve a iniciar sesión', async () => {
+    render(<App />)
+    await screen.findByText(EMPTY_STATE)
+
+    signIn({ id: 'u1', email: 'a@b.com', created_at: '2026-01-01T00:00:00.000Z', last_sign_in_at: '2026-01-05T00:00:00.000Z' })
+
+    expect(await screen.findByText('¡Volviste!')).toBeInTheDocument()
+  })
+
+  it('muestra las top 3 posiciones con su variación al iniciar sesión', async () => {
+    const plan = [
+      { id: '1', symbol: 'VIST', target_weight: 20 },
+      { id: '2', symbol: 'QQQ', target_weight: 14 },
+      { id: '3', symbol: 'KO', target_weight: 12 },
+    ]
+    const limit = jest.fn().mockResolvedValue({ data: plan, error: null })
+    const order = jest.fn().mockReturnValue({ limit })
+    const planSelect = jest.fn().mockReturnValue({ order })
+    const tx = mockData('transactions', [])
+    const summariesData = mockData('card_summaries', [])
+    supabase.from.mockImplementation((table) => {
+      if (table === 'portfolio_plan') return { select: planSelect }
+      if (table === 'transactions') return { select: tx.select }
+      return { select: summariesData.select }
+    })
+    supabase.functions.invoke.mockResolvedValue({
+      data: {
+        quotes: {
+          VIST: { price: 34920, changePct: 1.2 },
+          QQQ: { price: 56400, changePct: -0.5 },
+          KO: { price: 27320, changePct: null },
+        },
+      },
+    })
+
+    render(<App />)
+    await screen.findByText(EMPTY_STATE)
+
+    signIn({ id: 'u1', email: 'a@b.com', created_at: '2026-01-01T00:00:00.000Z', last_sign_in_at: '2026-01-01T00:00:00.000Z' })
+
+    expect(
+      await screen.findByText('Tus posiciones: VIST ▲1.20% · QQQ ▼0.50% · KO —'),
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('toast-icon-trend')).toBeInTheDocument()
+  })
+
+  it('no saluda ni busca posiciones al restaurar la sesión guardada (refresh)', async () => {
+    render(<App />)
+    await screen.findByText(EMPTY_STATE)
+
+    expect(screen.queryByText(/¡Bienvenido|¡Volviste!/)).not.toBeInTheDocument()
   })
 
   describe('navegación rail (lg+)', () => {

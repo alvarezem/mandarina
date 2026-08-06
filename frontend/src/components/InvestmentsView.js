@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import InvestmentPlan from './InvestmentPlan'
 import MarketQuotes from './MarketQuotes'
+import { loadPlanSort, savePlanSort, SORT_DEFAULT_DIR } from '../lib/planSort'
 
 const TABS = [
   { key: 'plan', label: 'Plan de inversión' },
@@ -11,8 +12,17 @@ export default function InvestmentsView({ session }) {
   const [tab, setTab] = useState('plan')
   const [display, setDisplay] = useState('ARS')
   const [rateMode, setRateMode] = useState('CCL')
+  const [sort, setSort] = useState(() => loadPlanSort(session?.user?.id))
 
-  const shared = { display, setDisplay, rateMode, setRateMode }
+  const onSort = (key) =>
+    setSort((s) => {
+      const next =
+        s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' }
+      savePlanSort(session?.user?.id, next)
+      return next
+    })
+
+  const shared = { display, setDisplay, rateMode, setRateMode, sort, onSort }
 
   return (
     <div className="mx-auto max-w-4xl animate-fade-in-up">

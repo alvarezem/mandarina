@@ -10,6 +10,41 @@ import ToastProvider, { useToast } from './components/Toast'
 
 const VIEW_TITLES = { costos: 'Costos', inversiones: 'Inversiones', resumenes: 'Resúmenes' }
 
+const isFirstLogin = (user) => {
+  if (!user?.last_sign_in_at) return true
+  const created = new Date(user.created_at).getTime()
+  const last = new Date(user.last_sign_in_at).getTime()
+  return !Number.isFinite(created) || !Number.isFinite(last) || last - created < 60_000
+}
+
+async function pushTopPositions(session, pushToast) {
+  try {
+    const { data: plan, error } = await supabase
+      .from('portfolio_plan')
+      .select('*')
+      .order('target_weight', { ascending: false })
+      .limit(3)
+    if (error || !Array.isArray(plan) || plan.length === 0) return
+    const symbols = plan.map((i) => i.symbol).filter(Boolean)
+    if (symbols.length === 0) return
+    const { data } = await supabase.functions.invoke('quotes', { body: { symbols } })
+    const quotes = data?.quotes || {}
+    const parts = plan
+      .map((i) => {
+        const q = quotes[i.symbol]
+        if (!q?.price) return null
+        const pct = q.changePct
+        const arrow =
+          pct == null ? '—' : pct >= 0 ? `▲${Math.abs(pct).toFixed(2)}%` : `▼${Math.abs(pct).toFixed(2)}%`
+        return `${i.symbol} ${arrow}`
+      })
+      .filter(Boolean)
+    if (parts.length > 0) pushToast({ type: 'success', icon: 'trend', message: `Tus posiciones: ${parts.join(' · ')}` })
+  } catch {
+    // silencioso: no hay plan, sin precios o error de red
+  }
+}
+
 function BootSplash() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40">
@@ -21,6 +56,7 @@ function BootSplash() {
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [greeting, setGreeting] = useState(null)
   const [dark, setDark] = useState(() => {
     const stored =
       localStorage.getItem('mandarina-theme') ??
@@ -41,8 +77,11 @@ function App() {
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
+      if (event === 'SIGNED_IN' && session) {
+        setGreeting(isFirstLogin(session.user) ? 'first' : 'return')
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -52,12 +91,12 @@ function App() {
 
   return (
     <ToastProvider>
-      <AppContent session={session} dark={dark} setDark={setDark} />
+      <AppContent session={session} dark={dark} setDark={setDark} greeting={greeting} setGreeting={setGreeting} />
     </ToastProvider>
   )
 }
 
-function AppContent({ session, dark, setDark }) {
+function AppContent({ session, dark, setDark, greeting, setGreeting }) {
   const pushToast = useToast()
   const [view, setView] = useState('costos')
   const [selectedId, setSelectedId] = useState(null)
@@ -72,6 +111,18 @@ function AppContent({ session, dark, setDark }) {
   })
   const mainRef = useRef(null)
 
+  useEffect(() => {
+    if (!greeting) return
+    pushToast({
+      type: 'success',
+      icon: 'wave',
+      message: greeting === 'first' ? '¡Bienvenido/a a Mandarina!' : '¡Volviste!',
+    })
+    if (session) pushTopPositions(session, pushToast)
+    setGreeting(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [greeting])
+
   const toggleRail = () => {
     setRailExpanded((prev) => {
       localStorage.setItem('mandarina-rail-expanded', String(!prev))
@@ -81,7 +132,7 @@ function AppContent({ session, dark, setDark }) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    pushToast({ type: 'success', message: '¡Nos vemos!' })
+    pushToast({ type: 'success', icon: 'wave', message: '¡Nos vemos!' })
   }
 
   if (!session) return <Auth dark={dark} onToggleTheme={() => setDark((d) => !d)} />

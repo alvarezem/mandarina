@@ -85,11 +85,18 @@ async function bymaQuote(symbol: string) {
   if (!quote) return null
   const price = Number(quote.trade)
   if (!Number.isFinite(price) || price <= 0) return null
-  const prev = Number(quote.previousClosingPrice)
+  const num = (v: unknown) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null)
+  const prev = num(quote.previousClosingPrice)
   return {
     price,
     currency: quote.denominationCcy === 'USD' ? 'USD' : 'ARS',
-    changePct: Number.isFinite(prev) && prev > 0 ? (price / prev - 1) * 100 : null,
+    changePct: prev != null ? (price / prev - 1) * 100 : null,
+    open: num(quote.openingPrice),
+    high: num(quote.tradingHighPrice),
+    low: num(quote.tradingLowPrice),
+    prevClose: prev,
+    closingPrice: num(quote.closingPrice),
+    tradeHour: typeof quote.tradeHour === 'string' ? quote.tradeHour.slice(0, 5) : null,
     volume: Number(quote.tradeVolume) || null,
     source: 'byma',
   }

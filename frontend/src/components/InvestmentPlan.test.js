@@ -43,6 +43,7 @@ const wrap = (ui) => render(<ToastProvider>{ui}</ToastProvider>)
 describe('InvestmentPlan', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    localStorage.clear()
   })
 
   it('muestra el estado vacío sin plan cargado', async () => {
@@ -147,10 +148,10 @@ describe('InvestmentPlan', () => {
     expect(screen.getByText(/MEP \$\s*1\.200 · CCL \$\s*1\.213/)).toBeInTheDocument()
   })
 
-  it('ordena la tabla por cantidad desc', async () => {
+  it('ordena por % Meta desc por default y luego por cantidad desc', async () => {
     mockPlan(
       [
-        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 9, quantity: 8, manual_price: null, sort_order: 0 },
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, manual_price: null, sort_order: 0 },
         { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, manual_price: null, sort_order: 1 },
       ],
       { VIST: 34920, QQQ: 56400 },

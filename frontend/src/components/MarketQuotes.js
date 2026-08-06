@@ -6,6 +6,7 @@ import { normalizeHistory } from '../lib/history'
 import { useToast } from './Toast'
 import SortableTh from './SortableTh'
 import PriceChart from './PriceChart'
+import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR } from '../lib/planSort'
 
 const ASSET_TYPES = {
   accion: 'Acción',
@@ -42,26 +43,28 @@ const fmt = (n, currency = 'ARS') =>
 const fmtPct = (n) =>
   `${(Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 })}%`
 
-const SORT_DEFAULTS = {
-  symbol: 'asc',
-  price: 'desc',
-  changePct: 'desc',
-  quantity: 'desc',
-  value: 'desc',
-  actualPct: 'desc',
-}
+const QUOTE_SORT_KEYS = new Set(['symbol', 'price', 'changePct', 'quantity', 'value', 'actualPct'])
 
 export default function MarketQuotes({
   session,
   display = 'ARS',
   setDisplay = () => {},
   rateMode = 'CCL',
+  sort: sortProp,
+  onSort: onSortProp,
 }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [quotes, setQuotes] = useState({})
   const [rates, setRates] = useState({ MEP: null, CCL: null })
-  const [sort, setSort] = useState({ key: null, dir: 'asc' })
+  const [localSort, setLocalSort] = useState(DEFAULT_PLAN_SORT)
+  const sort = sortProp ?? localSort
+  const onSort =
+    onSortProp ??
+    ((key) =>
+      setLocalSort((s) =>
+        s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' },
+      ))
   const [error, setError] = useState(null)
   const [chart, setChart] = useState(null)
   const [modal, setModal] = useState(null)
@@ -199,13 +202,38 @@ export default function MarketQuotes({
 
   const pricedCount = withChange.filter((item) => item.price != null).length
 
-  const onSort = (key) =>
-    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULTS[key] }))
+  const chartScale = display === 'USD' && rate ? 1 / rate : 1
+
+  const chartPoints = useMemo(() => {
+    if (chartScale === 1) return chartData.points
+    return chartData.points.map((p) => ({
+      ...p,
+      o: p.o != null ? p.o * chartScale : null,
+      h: p.h != null ? p.h * chartScale : null,
+      l: p.l != null ? p.l * chartScale : null,
+      c: p.c != null ? p.c * chartScale : null,
+    }))
+  }, [chartData.points, chartScale])
+
+  const chartQuote = useMemo(() => {
+    if (!activeChart) return null
+    const q = quotes[activeChart.symbol]
+    if (!q) return null
+    if (chartScale === 1) return q
+    return {
+      ...q,
+      price: q.price != null ? q.price * chartScale : null,
+      open: q.open != null ? q.open * chartScale : null,
+      high: q.high != null ? q.high * chartScale : null,
+      low: q.low != null ? q.low * chartScale : null,
+      prevClose: q.prevClose != null ? q.prevClose * chartScale : null,
+    }
+  }, [activeChart, quotes, chartScale])
 
   const sortedItems = useMemo(() => {
     if (!sort.key) return withChange
+    const { key, dir } = QUOTE_SORT_KEYS.has(sort.key) ? sort : DEFAULT_PLAN_SORT
     const arr = [...withChange]
-    const { key, dir } = sort
     const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
     arr.sort((a, b) => {
       let cmp = 0
@@ -240,17 +268,17 @@ export default function MarketQuotes({
 
   const doughnutData = useMemo(
     () => ({
-      labels: builtItems.map((i) => i.symbol),
+      labels: sortedItems.map((i) => i.symbol),
       datasets: [
         {
-          data: builtItems.map((i) => Math.max(0, i.value)),
-          backgroundColor: builtItems.map((_, i) => PALETTE[i % PALETTE.length]),
+          data: sortedItems.map((i) => Math.max(0, i.value)),
+          backgroundColor: sortedItems.map((_, i) => PALETTE[i % PALETTE.length]),
           borderWidth: 0,
           hoverOffset: 6,
         },
       ],
     }),
-    [builtItems],
+    [sortedItems],
   )
 
   const doughnutOptions = useMemo(
@@ -392,8 +420,11 @@ export default function MarketQuotes({
               <div className="relative h-44">
                 <Doughnut data={doughnutData} options={doughnutOptions} />
               </div>
-              <div className="mt-3 flex flex-col gap-1 pr-1">
-                {builtItems.map((item, i) => (
+              <p className="mt-2 text-[11px] leading-snug text-slate-400 dark:text-slate-500">
+                Mismo orden que tu plan · se cambia desde Plan de inversión
+              </p>
+              <div className="mt-2 flex flex-col gap-1 pr-1">
+                {sortedItems.map((item, i) => (
                   <div
                     key={item.id}
                     className="flex items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300"
@@ -527,11 +558,13 @@ export default function MarketQuotes({
                                 <PriceChart
                                   symbol={item.symbol}
                                   range={chart.range}
-                                  points={chartData.points}
+                                  points={chartPoints}
                                   loading={chartData.loading}
                                   error={chartData.error}
                                   onRange={(r) => setChartRange(r, 'inline')}
                                   compact
+                                  quote={chartQuote}
+                                  display={display}
                                 />
                               </td>
                             </tr>
@@ -574,10 +607,12 @@ export default function MarketQuotes({
             <PriceChart
               symbol={modal.symbol}
               range={modal.range}
-              points={chartData.points}
+              points={chartPoints}
               loading={chartData.loading}
               error={chartData.error}
               onRange={(r) => setChartRange(r, 'modal')}
+              quote={chartQuote}
+              display={display}
             />
           </div>
         </div>

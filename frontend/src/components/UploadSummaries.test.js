@@ -95,4 +95,68 @@ describe('UploadSummaries', () => {
     const toast = await screen.findByRole('status')
     expect(toast).toHaveTextContent('Ya existe')
   })
+
+  it('renombra un resumen existente', async () => {
+    mockSummaries([{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }])
+    const eq = jest.fn().mockResolvedValue({ error: null })
+    const update = jest.fn().mockReturnValue({ eq })
+    supabase.from.mockImplementation((table) => {
+      if (table === 'card_summaries') {
+        return {
+          select: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+              error: null,
+            }),
+          }),
+          update,
+        }
+      }
+      return {}
+    })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('visa-julio.pdf')
+
+    await userEvent.click(screen.getByRole('button', { name: /Renombrar visa-julio/ }))
+    const input = screen.getByRole('textbox', { name: /Nombre del resumen/i })
+    await userEvent.clear(input)
+    await userEvent.type(input, 'julio 2026')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar nombre' }))
+
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ file_name: 'julio 2026' }))
+    expect(eq).toHaveBeenCalledWith('id', 'a')
+    expect(await screen.findByText('julio 2026')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Nombre actualizado')
+  })
+
+  it('no guarda un nombre vacío', async () => {
+    mockSummaries([{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }])
+    const update = jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) })
+    supabase.from.mockImplementation((table) => {
+      if (table === 'card_summaries') {
+        return {
+          select: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+              error: null,
+            }),
+          }),
+          update,
+        }
+      }
+      return {}
+    })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('visa-julio.pdf')
+
+    await userEvent.click(screen.getByRole('button', { name: /Renombrar visa-julio/ }))
+    const input = screen.getByRole('textbox', { name: /Nombre del resumen/i })
+    await userEvent.clear(input)
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar nombre' }))
+
+    expect(update).not.toHaveBeenCalled()
+    expect(screen.getByText('visa-julio.pdf')).toBeInTheDocument()
+  })
 })

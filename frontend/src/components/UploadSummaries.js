@@ -15,6 +15,8 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
+  const [editingId, setEditingId] = useState(null)
+  const [draft, setDraft] = useState('')
   const pushToast = useToast()
 
   const loadSummaries = useCallback(async () => {
@@ -85,6 +87,40 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
   }
 
   const countLabel = files.length === 1 ? '1 resumen' : `${files.length} resúmenes`
+
+  const startRename = (file) => {
+    setEditingId(file.id)
+    setDraft(file.file_name)
+  }
+
+  const cancelRename = () => {
+    setEditingId(null)
+    setDraft('')
+  }
+
+  const saveRename = async () => {
+    const id = editingId
+    if (id === null) return
+    const name = draft.trim()
+    setEditingId(null)
+    setDraft('')
+    if (!name || name.length > 100) return
+    const original = files.find((f) => f.id === id)
+    if (!original || name === original.file_name) return
+
+    const { error } = await supabase.from('card_summaries').update({ file_name: name }).eq('id', id)
+    if (error) {
+      pushToast({ type: 'error', message: error.message })
+      return
+    }
+    setFiles((list) => list.map((f) => (f.id === id ? { ...f, file_name: name } : f)))
+    pushToast({ type: 'success', message: 'Nombre actualizado' })
+  }
+
+  const submitRename = (e) => {
+    e.preventDefault()
+    saveRename()
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -182,32 +218,86 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
               const status = STATUS[f.status] ?? STATUS.pending
               return (
                 <li key={f.id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelect(f.id)}
-                    className={`w-full rounded-lg p-2.5 text-left transition ${
+                  <div
+                    className={`w-full rounded-lg p-2.5 transition ${
                       selectedId === f.id
                         ? 'bg-teal-50 ring-1 ring-teal-600/20 dark:bg-teal-950/40 dark:ring-teal-500/30'
                         : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
-                        {f.file_name}
-                      </span>
-                      <span
-                        className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${status.className}`}
-                      >
-                        {f.status === 'parsing' && (
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+                    {editingId === f.id ? (
+                      <form onSubmit={submitRename} className="flex items-center gap-1.5">
+                        <input
+                          value={draft}
+                          onChange={(e) => setDraft(e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') cancelRename()
+                          }}
+                          autoFocus
+                          aria-label="Nombre del resumen"
+                          className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                        />
+                        <button
+                          type="submit"
+                          aria-label="Guardar nombre"
+                          className="shrink-0 rounded-md p-1.5 text-emerald-600 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={cancelRename}
+                          aria-label="Cancelar"
+                          className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </form>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between gap-2">
+                          <button type="button" onClick={() => onSelect(f.id)} className="min-w-0 flex-1 text-left">
+                            <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+                              {f.file_name}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => startRename(f)}
+                            disabled={editingId !== null}
+                            aria-label={`Renombrar ${f.file_name}`}
+                            title="Renombrar"
+                            className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                              />
+                            </svg>
+                          </button>
+                          <span
+                            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${status.className}`}
+                          >
+                            {f.status === 'parsing' && (
+                              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+                            )}
+                            {status.label}
+                          </span>
+                        </div>
+                        {f.status === 'error' && f.error && (
+                          <p className="mt-1 truncate text-xs text-red-600 dark:text-red-400">{f.error}</p>
                         )}
-                        {status.label}
-                      </span>
-                    </div>
-                    {f.status === 'error' && f.error && (
-                      <p className="mt-1 truncate text-xs text-red-600 dark:text-red-400">{f.error}</p>
+                      </>
                     )}
-                  </button>
+                  </div>
                 </li>
               )
             })}

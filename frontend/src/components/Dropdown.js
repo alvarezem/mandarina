@@ -50,7 +50,7 @@ export default function Dropdown({ label, summary, children, align = 'right', cl
 
       {open && (
         <div
-          className={`absolute z-20 mt-2 min-w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
+          className={`animate-pop absolute z-20 mt-2 min-w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
             align === 'right' ? 'right-0' : 'left-0'
           }`}
         >

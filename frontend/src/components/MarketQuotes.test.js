@@ -16,6 +16,7 @@ jest.mock('../lib/supabaseClient', () => ({
 
 jest.mock('react-chartjs-2', () => ({
   Doughnut: () => <div data-testid="chart-doughnut" />,
+  Line: () => <div data-testid="chart-line" />,
 }))
 
 const supabase = require('../lib/supabaseClient').default
@@ -29,12 +30,32 @@ function mockPlan(items = ITEMS, quotes = {}, rates = {}) {
   const order = jest.fn().mockResolvedValue({ data: items, error: null })
   const select = jest.fn().mockReturnValue({ order })
   supabase.from.mockImplementation((table) => (table === 'portfolio_plan' ? { select } : {}))
-  supabase.functions.invoke.mockResolvedValue({
-    data: {
-      quotes,
-      rates: { MEP: { price: 1200 }, CCL: { price: 1213.13 }, ...rates },
-    },
-    error: null,
+  supabase.functions.invoke.mockImplementation((fn, { body } = {}) => {
+    if (body?.history) {
+      const withData = { VIST: true, QQQ: true }
+      return Promise.resolve({
+        data: {
+          history: {
+            symbol: body.history.symbol,
+            range: body.history.range,
+            points: withData[body.history.symbol]
+              ? [
+                  { t: 1000, o: 10, h: 12, l: 9, c: 11, v: 100 },
+                  { t: 2000, o: 11, h: 13, l: 10, c: 13, v: 120 },
+                ]
+              : [],
+          },
+        },
+        error: null,
+      })
+    }
+    return Promise.resolve({
+      data: {
+        quotes,
+        rates: { MEP: { price: 1200 }, CCL: { price: 1213.13 }, ...rates },
+      },
+      error: null,
+    })
   })
 }
 
@@ -128,5 +149,65 @@ describe('MarketQuotes', () => {
     mockPlan(ITEMS, {})
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     expect(await screen.findByText(/Aún no hay precios disponibles/i)).toBeInTheDocument()
+  })
+
+  it('abre el gráfico inline al tocar el símbolo y carga el histórico', async () => {
+    mockPlan(ITEMS, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' } })
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('Patrimonio total')
+
+    await userEvent.click(screen.getByRole('button', { name: /VIST Acción/ }))
+
+    expect(await screen.findByTestId('chart-line')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('quotes', {
+        body: { history: { symbol: 'VIST', range: '3M' } },
+      }),
+    )
+  })
+
+  it('cambia el rango del gráfico inline', async () => {
+    mockPlan(ITEMS, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' } })
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('Patrimonio total')
+
+    await userEvent.click(screen.getByRole('button', { name: /VIST Acción/ }))
+    await screen.findByTestId('chart-line')
+
+    await userEvent.click(screen.getByRole('button', { name: '1S' }))
+    await waitFor(() =>
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('quotes', {
+        body: { history: { symbol: 'VIST', range: '1S' } },
+      }),
+    )
+  })
+
+  it('abre el gráfico en otra ventana (modal) y lo cierra con X', async () => {
+    mockPlan(ITEMS, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' } })
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('Patrimonio total')
+
+    await userEvent.click(screen.getByRole('button', { name: /Abrir gráfico de QQQ/ }))
+
+    expect(await screen.findByRole('dialog', { name: /Gráfico de QQQ/ })).toBeInTheDocument()
+    expect(screen.getByText(/Precio · QQQ/)).toBeInTheDocument()
+    await waitFor(() =>
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('quotes', {
+        body: { history: { symbol: 'QQQ', range: '3M' } },
+      }),
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /Cerrar gráfico/ }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('muestra aviso de sin datos cuando el histórico viene vacío', async () => {
+    const items = [...ITEMS, { id: '3', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 12, quantity: 17, manual_price: null, sort_order: 2 }]
+    mockPlan(items, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' }, KO: { price: 27320, changePct: 0.8, source: 'byma' } })
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('Patrimonio total')
+
+    await userEvent.click(screen.getByRole('button', { name: /KO Acción/ }))
+    expect(await screen.findByText(/Sin datos históricos para KO/)).toBeInTheDocument()
   })
 })

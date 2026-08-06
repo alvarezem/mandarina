@@ -81,7 +81,7 @@ function AppContent({ session, dark, setDark }) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    pushToast({ type: 'info', message: '¡Nos vemos!' })
+    pushToast({ type: 'success', message: '¡Nos vemos!' })
   }
 
   if (!session) return <Auth dark={dark} onToggleTheme={() => setDark((d) => !d)} />

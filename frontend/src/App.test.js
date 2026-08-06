@@ -65,6 +65,20 @@ describe('App', () => {
     expect(await screen.findByRole('button', { name: /Iniciar sesión/i })).toBeInTheDocument()
   })
 
+  it('muestra el toast de logout con estilo de éxito (no error)', async () => {
+    render(<App />)
+    await screen.findByText(EMPTY_STATE)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+
+    const toast = (await screen.findByText('¡Nos vemos!')).closest('[role="status"]')
+    expect(toast).not.toBeNull()
+    expect(toast.className).toContain('border-emerald-200')
+    expect(toast.className).toContain('text-emerald-700')
+    expect(toast.className).not.toContain('brand')
+    expect(supabase.auth.signOut).toHaveBeenCalled()
+  })
+
   describe('navegación rail (lg+)', () => {
     it('muestra header con hamburguesa, logo Mandarina y rail con Costos activo', async () => {
       render(<App />)

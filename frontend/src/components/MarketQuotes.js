@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import supabase from '../lib/supabaseClient'
 import { buildPlan, portfolioChangePct } from '../lib/plan'
+import { normalizeHistory } from '../lib/history'
 import { useToast } from './Toast'
 import SortableTh from './SortableTh'
+import PriceChart from './PriceChart'
 
 const ASSET_TYPES = {
   accion: 'Acción',
@@ -61,7 +63,62 @@ export default function MarketQuotes({
   const [rates, setRates] = useState({ MEP: null, CCL: null })
   const [sort, setSort] = useState({ key: null, dir: 'asc' })
   const [error, setError] = useState(null)
+  const [chart, setChart] = useState(null)
+  const [modal, setModal] = useState(null)
+  const [chartData, setChartData] = useState({ loading: false, points: [], error: null })
   const pushToast = useToast()
+
+  const activeChart = modal ?? chart
+  const activeChartKey = activeChart ? `${activeChart.symbol}:${activeChart.range}` : null
+
+  const openInline = (symbol) => {
+    setModal(null)
+    setChart((c) => (c?.symbol === symbol ? null : { symbol, range: c?.range ?? '3M' }))
+  }
+
+  const openModal = (symbol) => {
+    setChart(null)
+    setModal((m) => (m?.symbol === symbol ? null : { symbol, range: m?.range ?? '3M' }))
+  }
+
+  const setChartRange = (range, kind) => {
+    const updater = (c) => (c ? { ...c, range } : c)
+    if (kind === 'modal') setModal(updater)
+    else setChart(updater)
+  }
+
+  useEffect(() => {
+    if (!activeChartKey) {
+      setChartData({ loading: false, points: [], error: null })
+      return
+    }
+    const [symbol, range] = activeChartKey.split(':')
+    let cancelled = false
+    setChartData({ loading: true, points: [], error: null })
+    supabase.functions
+      .invoke('quotes', {
+        body: { history: { symbol, range } },
+      })
+      .then(({ data }) => {
+        if (cancelled) return
+        setChartData({ loading: false, points: normalizeHistory(data?.history), error: null })
+      })
+      .catch(() => {
+        if (!cancelled) setChartData({ loading: false, points: [], error: 'error' })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [activeChartKey])
+
+  useEffect(() => {
+    if (!modal) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') setModal(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [modal])
 
   const loadPlan = async () => {
     setLoading(true)
@@ -367,66 +424,119 @@ export default function MarketQuotes({
                       <SortableTh label="Cantidad" sortKey="quantity" sort={sort} onSort={onSort} align="right" className="hidden md:table-cell" />
                       <SortableTh label="Valor" sortKey="value" sort={sort} onSort={onSort} align="right" />
                       <SortableTh label="% cartera" sortKey="actualPct" sort={sort} onSort={onSort} align="right" />
+                      <th className="px-3 py-2 text-right">
+                        <span className="sr-only">Ver gráfico</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {sortedItems.map((item) => {
                       const changePct = quotes[item.symbol]?.changePct ?? null
+                      const open = chart?.symbol === item.symbol
                       return (
-                        <tr key={item.id} className="transition hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-slate-800 dark:text-slate-100">{item.symbol}</span>
-                              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                                {ASSET_TYPES[item.asset_type] ?? item.asset_type}
-                              </span>
-                            </div>
-                            {item.name && item.name !== item.symbol && (
-                              <p className="truncate text-xs text-slate-400 dark:text-slate-500">{item.name}</p>
-                            )}
-                            <div className="mt-1.5 h-1 w-full max-w-24 rounded bg-slate-200 dark:bg-slate-700">
-                              <div
-                                className="h-1 rounded bg-brand-500"
-                                style={{ width: `${Math.min(100, item.actualPct)}%` }}
-                              />
-                            </div>
-                          </td>
-                          <td className="hidden px-3 py-3 text-right sm:table-cell">
-                            {item.price != null ? (
-                              <span className="font-medium text-slate-700 dark:text-slate-200">
-                                {fmt(item.price, display)}
-                              </span>
-                            ) : (
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                                sin precio
-                              </span>
-                            )}
-                          </td>
-                          <td className="hidden px-3 py-3 text-right sm:table-cell">
-                            {changePct != null ? (
-                              <span
-                                className={`font-medium ${
-                                  changePct >= 0
-                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                    : 'text-red-600 dark:text-red-400'
-                                }`}
+                        <Fragment key={item.id}>
+                          <tr className="transition hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                            <td className="px-4 py-3">
+                              <button
+                                type="button"
+                                onClick={() => openInline(item.symbol)}
+                                aria-expanded={open}
+                                title="Ver gráfico del precio"
+                                className="flex w-full items-center gap-2 text-left"
                               >
-                                {changePct >= 0 ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
-                              </span>
-                            ) : (
-                              <span className="text-slate-400 dark:text-slate-500">—</span>
-                            )}
-                          </td>
-                          <td className="hidden px-3 py-3 text-right text-slate-600 dark:text-slate-300 md:table-cell">
-                            {item.quantity}
-                          </td>
-                          <td className="px-3 py-3 text-right font-medium text-slate-700 dark:text-slate-200">
-                            {item.price != null ? fmt(item.value, display) : '—'}
-                          </td>
-                          <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">
-                            {fmtPct(item.actualPct)}
-                          </td>
-                        </tr>
+                                <svg
+                                  className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-90' : ''}`}
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth={2}
+                                  stroke="currentColor"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                                <span className="font-semibold text-slate-800 dark:text-slate-100">{item.symbol}</span>
+                                <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                  {ASSET_TYPES[item.asset_type] ?? item.asset_type}
+                                </span>
+                              </button>
+                              {item.name && item.name !== item.symbol && (
+                                <p className="truncate pl-5 text-xs text-slate-400 dark:text-slate-500">{item.name}</p>
+                              )}
+                              <div className="ml-5 mt-1.5 h-1 w-full max-w-24 rounded bg-slate-200 dark:bg-slate-700">
+                                <div
+                                  className="h-1 rounded bg-brand-500"
+                                  style={{ width: `${Math.min(100, item.actualPct)}%` }}
+                                />
+                              </div>
+                            </td>
+                            <td className="hidden px-3 py-3 text-right sm:table-cell">
+                              {item.price != null ? (
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                  {fmt(item.price, display)}
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                                  sin precio
+                                </span>
+                              )}
+                            </td>
+                            <td className="hidden px-3 py-3 text-right sm:table-cell">
+                              {changePct != null ? (
+                                <span
+                                  className={`font-medium ${
+                                    changePct >= 0
+                                      ? 'text-emerald-600 dark:text-emerald-400'
+                                      : 'text-red-600 dark:text-red-400'
+                                  }`}
+                                >
+                                  {changePct >= 0 ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 dark:text-slate-500">—</span>
+                              )}
+                            </td>
+                            <td className="hidden px-3 py-3 text-right text-slate-600 dark:text-slate-300 md:table-cell">
+                              {item.quantity}
+                            </td>
+                            <td className="px-3 py-3 text-right font-medium text-slate-700 dark:text-slate-200">
+                              {item.price != null ? fmt(item.value, display) : '—'}
+                            </td>
+                            <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">
+                              {fmtPct(item.actualPct)}
+                            </td>
+                            <td className="px-3 py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => openModal(item.symbol)}
+                                title="Ver gráfico en otra ventana"
+                                aria-label={`Abrir gráfico de ${item.symbol}`}
+                                className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"
+                                  />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                          {open && (
+                            <tr className="border-t-0">
+                              <td colSpan={7} className="border-t border-dashed border-slate-200 bg-slate-50/60 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/40">
+                                <PriceChart
+                                  symbol={item.symbol}
+                                  range={chart.range}
+                                  points={chartData.points}
+                                  loading={chartData.loading}
+                                  error={chartData.error}
+                                  onRange={(r) => setChartRange(r, 'inline')}
+                                  compact
+                                />
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
                       )
                     })}
                   </tbody>
@@ -435,6 +545,42 @@ export default function MarketQuotes({
             </section>
           </div>
         </>
+      )}
+
+      {modal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setModal(null)} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Gráfico de ${modal.symbol}`}
+            className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                Precio · {modal.symbol}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setModal(null)}
+                aria-label="Cerrar gráfico"
+                className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <PriceChart
+              symbol={modal.symbol}
+              range={modal.range}
+              points={chartData.points}
+              loading={chartData.loading}
+              error={chartData.error}
+              onRange={(r) => setChartRange(r, 'modal')}
+            />
+          </div>
+        </div>
       )}
     </div>
   )

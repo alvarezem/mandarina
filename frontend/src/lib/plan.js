@@ -58,6 +58,20 @@ export function buildPlan(items) {
   })
 }
 
+export function portfolioChangePct(items) {
+  let now = 0
+  let prev = 0
+  for (const item of items) {
+    const chg = item.changePct
+    if (chg == null || item.price == null) continue
+    const value = valueOf(item.quantity, item.price)
+    now += value
+    prev += value / (1 + chg / 100)
+  }
+  if (prev <= 0) return null
+  return (now / prev - 1) * 100
+}
+
 export function distribute(budget, builtItems) {
   const underweight = builtItems
     .filter((item) => item.buy > 0)

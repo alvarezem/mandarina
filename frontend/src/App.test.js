@@ -87,7 +87,7 @@ describe('App', () => {
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
       await userEvent.click(within(rail).getByRole('button', { name: /Inversiones/ }))
 
-      expect(await screen.findByText('Plan de inversión')).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: 'Plan de inversión' })).toBeInTheDocument()
       expect(screen.queryByText(EMPTY_STATE)).not.toBeInTheDocument()
     })
 
@@ -154,7 +154,7 @@ describe('App', () => {
       const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
       await userEvent.click(within(bottom).getByRole('button', { name: 'Inversiones' }))
 
-      expect(await screen.findByText('Plan de inversión')).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: 'Plan de inversión' })).toBeInTheDocument()
     })
 
     it('el logo central vuelve al inicio', async () => {
@@ -163,7 +163,7 @@ describe('App', () => {
 
       const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
       await userEvent.click(within(bottom).getByRole('button', { name: 'Inversiones' }))
-      await screen.findByText('Plan de inversión')
+      await screen.findByRole('heading', { name: 'Plan de inversión' })
 
       await userEvent.click(within(bottom).getByRole('button', { name: 'Inicio' }))
       expect(await screen.findByText(EMPTY_STATE)).toBeInTheDocument()

@@ -1,4 +1,14 @@
-import { valueOf, actualPct, gapPct, buyAmount, buyQty, isOver, buildPlan, distribute } from './plan'
+import {
+  valueOf,
+  actualPct,
+  gapPct,
+  buyAmount,
+  buyQty,
+  isOver,
+  buildPlan,
+  distribute,
+  portfolioChangePct,
+} from './plan'
 
 const item = (overrides) => ({
   symbol: 'VIST',
@@ -95,5 +105,32 @@ describe('distribute', () => {
     expect(steps[0].amount).toBeCloseTo(500, 2)
     expect(covered).toBe(true)
     expect(remaining).toBeGreaterThan(0)
+  })
+})
+
+describe('portfolioChangePct', () => {
+  it('pondera el cambio diario por el valor de ayer', () => {
+    const items = [
+      { price: 100, quantity: 2, changePct: 10 }, // hoy 200, ayer ~181.82
+      { price: 100, quantity: 1, changePct: -50 }, // hoy 100, ayer 200
+    ]
+    const pct = portfolioChangePct(items)
+    const today = 300
+    const yesterday = 200 / 1.1 + 100 / 0.5
+    expect(pct).toBeCloseTo((today / yesterday - 1) * 100, 6)
+  })
+
+  it('ignora activos sin precio o sin cambio', () => {
+    const items = [
+      { price: 100, quantity: 1, changePct: 0 },
+      { price: null, quantity: 1, changePct: 5 },
+      { price: 100, quantity: 1, changePct: null },
+    ]
+    expect(portfolioChangePct(items)).toBeCloseTo(0, 6)
+  })
+
+  it('devuelve null sin activos con precio', () => {
+    expect(portfolioChangePct([{ price: null, quantity: 1, changePct: 5 }])).toBeNull()
+    expect(portfolioChangePct([])).toBeNull()
   })
 })

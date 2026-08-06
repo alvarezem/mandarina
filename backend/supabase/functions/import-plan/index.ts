@@ -163,14 +163,6 @@ Deno.serve(async (req) => {
     return json({ error: 'El archivo no tiene activos para importar' }, 400, corsHeaders)
   }
 
-  const { error: delError } = await supabase
-    .from('portfolio_plan')
-    .delete()
-    .eq('user_id', userId)
-  if (delError) {
-    return json({ error: 'No se pudo reemplazar el plan' }, 500, corsHeaders)
-  }
-
   const rowsToInsert = items.map((item, i) => ({
     user_id: userId,
     symbol: item.symbol,
@@ -183,9 +175,43 @@ Deno.serve(async (req) => {
     sort_order: i,
   }))
 
+  const { data: previousRows, error: readError } = await supabase
+    .from('portfolio_plan')
+    .select('*')
+    .eq('user_id', userId)
+  if (readError) {
+    return json({ error: 'No se pudo leer el plan actual' }, 500, corsHeaders)
+  }
+
+  const { error: delError } = await supabase
+    .from('portfolio_plan')
+    .delete()
+    .eq('user_id', userId)
+  if (delError) {
+    return json({ error: 'No se pudo reemplazar el plan' }, 500, corsHeaders)
+  }
+
   const { error: insError } = await supabase.from('portfolio_plan').insert(rowsToInsert)
   if (insError) {
-    return json({ error: 'Error al guardar el plan' }, 500, corsHeaders)
+    const rollbackRows = (previousRows ?? []).map((r) => ({
+      user_id: userId,
+      symbol: r.symbol,
+      name: r.name ?? r.symbol,
+      asset_type: r.asset_type ?? 'otro',
+      currency: r.currency ?? 'ARS',
+      target_weight: r.target_weight ?? 0,
+      quantity: r.quantity ?? 0,
+      manual_price: r.manual_price ?? null,
+      sort_order: r.sort_order ?? 0,
+    }))
+    if (rollbackRows.length > 0) {
+      await supabase.from('portfolio_plan').insert(rollbackRows)
+    }
+    return json(
+      { error: `Error al guardar el plan: ${insError.message}` },
+      500,
+      corsHeaders,
+    )
   }
 
   return json(

@@ -3,7 +3,7 @@ import supabase from './lib/supabaseClient'
 import Auth from './components/Auth'
 import UploadSummaries from './components/UploadSummaries'
 import Dashboard from './components/Dashboard'
-import InvestmentPlan from './components/InvestmentPlan'
+import InvestmentsView from './components/InvestmentsView'
 import ThemeToggle from './components/ThemeToggle'
 import Sidebar, { Logo, NAV_ITEMS } from './components/Sidebar'
 import ToastProvider, { useToast } from './components/Toast'
@@ -178,7 +178,7 @@ function AppContent({ session, dark, setDark }) {
                 onSummarySelect={selectSummary}
               />
             ) : view === 'inversiones' ? (
-              <InvestmentPlan session={session} />
+              <InvestmentsView session={session} />
             ) : (
               summariesView
             )}

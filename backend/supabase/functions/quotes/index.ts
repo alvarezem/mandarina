@@ -1,5 +1,5 @@
 // Cotizaciones en vivo para el Plan de inversión.
-// Yahoo Finance (BYMA con sufijo .BA) + DolarAPI para dólar MEP/CCL.
+// BYMA Open Data (open.bymadata.com.ar) para activos + DolarAPI para dólar MEP/CCL.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
@@ -17,11 +17,21 @@ const json = (body, status, extraHeaders = {}) =>
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
 
-const YAHOO_HOSTS = ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com']
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+const BYMA_QUOTE_URL =
+  'https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/fichatecnica/especies/cotizacion'
 
 const DOLARAPI_CASAS = { MEP: 'bolsa', CCL: 'contadoconliqui' }
+
+const CACHE_TTL_MS = 60_000
+const cache = new Map<string, { at: number; value: unknown }>()
+
+async function cached(key: string, fn: () => Promise<unknown>) {
+  const hit = cache.get(key)
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value
+  const value = await fn()
+  cache.set(key, { at: Date.now(), value })
+  return value
+}
 
 async function fetchRates() {
   const out = { MEP: null, CCL: null }
@@ -39,57 +49,53 @@ async function fetchRates() {
         source: 'dolarapi',
       }
     } catch {
-      // dejamos null y seguimos con el resto
+      // null y seguimos con el resto
     }
   }
   return out
 }
 
-async function yahooQuote(symbol: string) {
-  const yahooSymbol = symbol.includes('.') ? symbol : `${symbol}.BA`
-  for (const host of YAHOO_HOSTS) {
-    try {
-      const url = `${host}/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=1d&interval=1d`
-      const res = await fetch(url, {
-        headers: { 'User-Agent': UA, Accept: 'application/json' },
-      })
-      if (res.status === 429) {
-        await delay(600)
-        continue
-      }
-      if (!res.ok) return null
-      const data = await res.json()
-      const meta = data?.chart?.result?.[0]?.meta
-      if (!meta || typeof meta.regularMarketPrice !== 'number') return null
-      const prev =
-        meta.regularMarketPreviousClose ?? meta.chartPreviousClose ?? meta.previousClose
-      return {
-        price: meta.regularMarketPrice,
-        currency: meta.currency ?? 'ARS',
-        changePct: typeof prev === 'number' && prev !== 0
-          ? ((meta.regularMarketPrice / prev) - 1) * 100
-          : null,
-        volume: meta.regularMarketVolume ?? null,
-        source: 'yahoo',
-      }
-    } catch {
-      return null
-    }
+async function bymaQuote(symbol: string) {
+  const res = await fetch(BYMA_QUOTE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': UA,
+      Accept: 'application/json',
+      Origin: 'https://open.bymadata.com.ar',
+    },
+    body: JSON.stringify({ symbol, settlementType: '2', 'Content-Type': 'application/json' }),
+  })
+  if (!res.ok) return null
+  const data = await res.json()
+  const quote = data?.data?.[0]
+  if (!quote) return null
+  const price = Number(quote.trade)
+  if (!Number.isFinite(price) || price <= 0) return null
+  const prev = Number(quote.previousClosingPrice)
+  return {
+    price,
+    currency: quote.denominationCcy === 'USD' ? 'USD' : 'ARS',
+    changePct: Number.isFinite(prev) && prev > 0 ? (price / prev - 1) * 100 : null,
+    volume: Number(quote.tradeVolume) || null,
+    source: 'byma',
   }
-  return null
 }
 
 async function fetchQuotes(symbols: string[]) {
+  const results = await Promise.allSettled(
+    symbols.map((raw) => {
+      const symbol = raw.toUpperCase().replace(/\s+/g, '')
+      if (!symbol || symbol === 'MEP' || symbol === 'CCL') return Promise.resolve(null)
+      return cached(`byma:${symbol}`, () => bymaQuote(symbol))
+    }),
+  )
   const quotes: Record<string, unknown> = {}
-  for (const raw of symbols) {
+  symbols.forEach((raw, i) => {
     const symbol = raw.toUpperCase().replace(/\s+/g, '')
-    if (!symbol) continue
-    if (symbol === 'MEP' || symbol === 'CCL') {
-      quotes[symbol] = null
-      continue
-    }
-    quotes[symbol] = await yahooQuote(symbol)
-  }
+    if (!symbol) return
+    quotes[symbol] = results[i].status === 'fulfilled' ? results[i].value : null
+  })
   return quotes
 }
 
@@ -118,6 +124,9 @@ Deno.serve(async (req) => {
     return json({ error: 'No autenticado' }, 401, corsHeaders)
   }
 
-  const [rates, quotes] = await Promise.all([fetchRates(), fetchQuotes(symbols)])
+  const [rates, quotes] = await Promise.all([
+    cached('dolarapi', fetchRates),
+    fetchQuotes(symbols),
+  ])
   return json({ quotes, rates }, 200, corsHeaders)
 })

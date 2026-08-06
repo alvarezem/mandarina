@@ -20,15 +20,7 @@ function BootSplash() {
 function ComingSoon({ title }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-16 text-center dark:border-slate-700 dark:bg-slate-900/60">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
-        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="13.5" r="7.5" fill="currentColor" />
-          <circle cx="9.7" cy="11" r="1.7" fill="#fdba74" opacity="0.65" />
-          <circle cx="14.1" cy="15.3" r="1.1" fill="#fdba74" opacity="0.55" />
-          <path d="M12 6.6C10 4.2 7.4 4.6 6.6 5.8 7.8 7.6 10.4 7.2 12 6.6Z" fill="#22c55e" />
-          <path d="M12 6.6C14 4.2 16.6 4.6 17.4 5.8 16.2 7.6 13.6 7.2 12 6.6Z" fill="#22c55e" />
-        </svg>
-      </div>
+      <Logo className="mb-4 h-14 w-14" />
       <p className="text-lg font-semibold text-slate-800 dark:text-slate-200">{title}</p>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Próximamente.</p>
     </div>

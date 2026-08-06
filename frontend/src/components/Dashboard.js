@@ -53,12 +53,11 @@ const PALETTE = [
   '#14b8a6',
 ]
 
-function accentHex(dark) {
-  return dark ? '#0d9488' : '#f97316'
-}
+const BRAND_HEX = '#f97316'
+const BRAND_HEX_STRONG = '#ea580c'
 
-function accentRgba(dark, alpha) {
-  return dark ? `rgba(13,148,136,${alpha})` : `rgba(249,115,22,${alpha})`
+function brandRgba(alpha) {
+  return `rgba(249,115,22,${alpha})`
 }
 
 function parseYmd(s) {
@@ -422,7 +421,7 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
               <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gastos acumulados</h3>
               <div className="h-64">
                 <Line
-                  data={lineData(analysis.expenseTrend, dark)}
+                  data={lineData(analysis.expenseTrend)}
                   options={lineOptions(dark, (date) => {
                     setPeriod('custom')
                     setCustomFrom(date)
@@ -442,7 +441,7 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
               <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gasto por categoría</h3>
               <div className="h-64">
                 <Doughnut
-                  data={doughnutData(analysis.byCategory, dark)}
+                  data={doughnutData(analysis.byCategory)}
                   options={doughnutOptions(dark, (cat) => {
                     focusCategory(cat)
                     scrollToTable()
@@ -464,7 +463,7 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
               </h3>
               <div className="h-72">
                 <Bar
-                  data={barData(analysis.byMerchant, dark)}
+                  data={barData(analysis.byMerchant)}
                   options={barOptions(dark, (merchant) => {
                     setQuery(merchant)
                     scrollToTable()
@@ -537,13 +536,13 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
   )
 }
 
-function lineData(expenseTrend, dark) {
+function lineData(expenseTrend) {
   const gradient = (context) => {
     const { ctx, chartArea } = context.chart
-    if (!chartArea) return accentRgba(dark, 0.15)
+    if (!chartArea) return brandRgba(0.15)
     const g = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top)
-    g.addColorStop(0, accentRgba(dark, 0.02))
-    g.addColorStop(1, accentRgba(dark, 0.18))
+    g.addColorStop(0, brandRgba(0.02))
+    g.addColorStop(1, brandRgba(0.18))
     return g
   }
   return {
@@ -552,7 +551,7 @@ function lineData(expenseTrend, dark) {
       {
         label: 'Gastos acumulados',
         data: expenseTrend.map((d) => d.accumulated),
-        borderColor: accentHex(dark),
+        borderColor: BRAND_HEX,
         backgroundColor: gradient,
         tension: 0.35,
         fill: true,
@@ -564,13 +563,13 @@ function lineData(expenseTrend, dark) {
   }
 }
 
-function doughnutData(byCategory, dark) {
+function doughnutData(byCategory) {
   return {
     labels: byCategory.map((c) => c.category),
     datasets: [
       {
         data: byCategory.map((c) => Math.abs(c.total)),
-        backgroundColor: [accentHex(dark), ...PALETTE],
+        backgroundColor: [BRAND_HEX, ...PALETTE],
         borderWidth: 0,
         hoverOffset: 6,
       },
@@ -578,7 +577,7 @@ function doughnutData(byCategory, dark) {
   }
 }
 
-function barData(byMerchant, dark) {
+function barData(byMerchant) {
   const top = byMerchant.filter((m) => m.total < 0).slice(0, 8)
   return {
     labels: top.map((m) => m.merchant),
@@ -586,8 +585,8 @@ function barData(byMerchant, dark) {
       {
         label: 'Gasto por comercio',
         data: top.map((m) => m.total),
-        backgroundColor: accentHex(dark),
-        hoverBackgroundColor: dark ? '#0f766e' : '#ea580c',
+        backgroundColor: BRAND_HEX,
+        hoverBackgroundColor: BRAND_HEX_STRONG,
         borderRadius: 4,
         maxBarThickness: 28,
       },

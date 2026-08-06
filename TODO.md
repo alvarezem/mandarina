@@ -8,9 +8,18 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 ## 📋 Pendiente (roadmap)
 
-- **Infra del rebrand** — dominio `mandarine.app` (DNS Cloudflare; ya hay cuenta), renombrar repo `alvarezem/fimplify` y proyecto Vercel, y redirect de `fimplify.vercel.app` → Mandarine.
+- **Área Inversiones (planear)** — la sección hoy es un placeholder. Idea base estilo **Bull Market**:
+  - **Cotizaciones locales** (acciones `.BA`, CEDEARs, bonos, dólares CCL/MEP) vía **Edge Function proxy** en Supabase (evita CORS, esconde claves) → API gratuita con cobertura AR (candidato: Yahoo Finance; evaluar alternativas/límites de la free tier).
+  - **Tabla de cotizaciones** con precio, variación diaria %, volumen y **watchlist** editable (persistida en DB o localStorage).
+  - **Gráficos de cotización** (velas/área) con Chart.js y rangos 1D/1S/1M/3M/1A.
+  - **Fase 2**: seguimiento de cartera — registrar compras/ventas y calcular rentabilidad vs. costo; alimentar a **Mandi** (asistente IA) para preguntas sobre el mercado/portfolio.
+  - A definir mañana: fuente de datos concreta, alcance (solo cotizaciones vs. cartera), y persistencia.
+- **Infra del rebrand (pasos; ejecutar en sesión con acceso)** — "fimplify" queda solo en fallbacks intencionales de localStorage; falta renombrar lo externo:
+  1. **Cloudflare Registrar** (punto de arranque): comprar `mandarine.app` (~US$12-15/año, compra manual en navegador con pago) y configurar el DNS en Cloudflare.
+  2. **Vercel**: en el proyecto `fimplify` (hoy sirve `fimplify.vercel.app`, sin dominios custom), agregar `mandarine.app` (+ `www.mandarine.app`) como dominio y fijarlo como producción; mantener `fimplify.vercel.app` como alias/redirect; luego renombrar el proyecto `fimplify` → `mandarine`.
+  3. **GitHub**: `gh repo rename` → `alvarezem/mandarine` (añade/actualiza descripción) y actualizar el `remote` local.
+  4. **Verificar**: `mandarine.app` sirve el bundle nuevo (grep de `main.*.js` y strings brand) y `fimplify.vercel.app` redirige a Mandarine.
 - **Móvil (`<lg`)** — diferido hasta estabilizar escritorio. La navegación móvil actual (bottom nav con logo central + header con solo título) convive con el nuevo header desktop ([≡] + logo Mandarine están `hidden lg:flex`). Pendiente estilo YouTube mobile: el hamburguesa debería abrir un **drawer deslizante** con Costos/Inversiones/Resúmenes; decidir si reemplaza o convive con la bottom nav.
-- **Deploy Fase 2 (Cloudflare DNS)** — **en pausa**: requiere dominio propio (cuenta Cloudflare ya disponible; registrar dominio o usar uno existente).
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 - **Asistente IA "Mandi"** — integrar un asistente que responda preguntas sobre el consumo usando el análisis de resúmenes.
 

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import InvestmentPlan from './InvestmentPlan'
 import ToastProvider from './Toast'
@@ -114,5 +114,31 @@ describe('InvestmentPlan', () => {
     await waitFor(() =>
       expect(supabase.from('portfolio_plan').update).toHaveBeenCalledWith({ quantity: 2 }),
     )
+  })
+
+  it('muestra el dato compacto de MEP/CCL junto al toggle', async () => {
+    mockPlan([], {})
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText(/Todavía no cargaste tu plan/i)
+    expect(screen.getByText(/MEP \$\s*1\.200 · CCL \$\s*1\.213/)).toBeInTheDocument()
+  })
+
+  it('ordena la tabla por cantidad desc', async () => {
+    mockPlan(
+      [
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 9, quantity: 8, manual_price: null, sort_order: 0 },
+        { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, manual_price: null, sort_order: 1 },
+      ],
+      { VIST: 34920, QQQ: 56400 },
+    )
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VIST')
+
+    const rows = screen.getAllByRole('row')
+    expect(within(rows[1]).getByText('VIST')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /Cantidad/ }))
+    const rowsAfter = screen.getAllByRole('row')
+    expect(within(rowsAfter[1]).getByText('QQQ')).toBeInTheDocument()
   })
 })

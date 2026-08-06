@@ -3,6 +3,7 @@ import { Doughnut } from 'react-chartjs-2'
 import supabase from '../lib/supabaseClient'
 import { buildPlan, portfolioChangePct } from '../lib/plan'
 import { useToast } from './Toast'
+import SortableTh from './SortableTh'
 
 const ASSET_TYPES = {
   accion: 'Acción',
@@ -12,11 +13,6 @@ const ASSET_TYPES = {
   fci: 'FCI',
   efectivo: 'Efectivo',
   otro: 'Otro',
-}
-
-const RATE_LABELS = {
-  CCL: 'CCL (contado con liqui)',
-  MEP: 'MEP (dólar bolsa)',
 }
 
 const PALETTE = [
@@ -44,13 +40,26 @@ const fmt = (n, currency = 'ARS') =>
 const fmtPct = (n) =>
   `${(Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 })}%`
 
-export default function MarketQuotes({ session }) {
+const SORT_DEFAULTS = {
+  symbol: 'asc',
+  price: 'desc',
+  changePct: 'desc',
+  quantity: 'desc',
+  value: 'desc',
+  actualPct: 'desc',
+}
+
+export default function MarketQuotes({
+  session,
+  display = 'ARS',
+  setDisplay = () => {},
+  rateMode = 'CCL',
+}) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [quotes, setQuotes] = useState({})
   const [rates, setRates] = useState({ MEP: null, CCL: null })
-  const [display, setDisplay] = useState('ARS')
-  const [rateMode, setRateMode] = useState('CCL')
+  const [sort, setSort] = useState({ key: null, dir: 'asc' })
   const [error, setError] = useState(null)
   const pushToast = useToast()
 
@@ -80,7 +89,6 @@ export default function MarketQuotes({ session }) {
 
   useEffect(() => {
     const symbols = items.map((i) => i.symbol).filter(Boolean)
-    if (symbols.length === 0) return
     let cancelled = false
     supabase.functions
       .invoke('quotes', { body: { symbols } })
@@ -133,6 +141,31 @@ export default function MarketQuotes({ session }) {
   const dayChange = useMemo(() => portfolioChangePct(withChange), [withChange])
 
   const pricedCount = withChange.filter((item) => item.price != null).length
+
+  const onSort = (key) =>
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULTS[key] }))
+
+  const sortedItems = useMemo(() => {
+    if (!sort.key) return withChange
+    const arr = [...withChange]
+    const { key, dir } = sort
+    const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
+    arr.sort((a, b) => {
+      let cmp = 0
+      if (key === 'symbol') {
+        cmp = cmpStr(a.symbol, b.symbol) || cmpStr(a.name, b.name)
+      } else {
+        const av = a[key]
+        const bv = b[key]
+        if (av == null && bv == null) cmp = 0
+        else if (av == null) cmp = 1
+        else if (bv == null) cmp = -1
+        else cmp = av - bv
+      }
+      return dir === 'asc' ? cmp : -cmp
+    })
+    return arr
+  }, [withChange, sort])
 
   const refreshQuotes = () => {
     const symbols = items.map((i) => i.symbol).filter(Boolean)
@@ -286,38 +319,11 @@ export default function MarketQuotes({ session }) {
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                  Dólar
-                  <select
-                    value={rateMode}
-                    onChange={(e) => setRateMode(e.target.value)}
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                  >
-                    <option value="CCL">{RATE_LABELS.CCL}</option>
-                    <option value="MEP">{RATE_LABELS.MEP}</option>
-                  </select>
-                </label>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  MEP {rates.MEP?.price != null ? fmt(rates.MEP.price, 'ARS') : '—'} · CCL{' '}
+                  {rates.CCL?.price != null ? fmt(rates.CCL.price, 'ARS') : '—'}
+                </p>
               </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {['MEP', 'CCL'].map((mode) => (
-                <div
-                  key={mode}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60"
-                >
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {mode === 'MEP' ? 'Dólar MEP' : 'Dólar CCL'}
-                  </p>
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    {rates[mode]?.price != null ? fmt(rates[mode].price, 'ARS') : '—'}
-                  </p>
-                  {rates[mode]?.compra != null && (
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                      compra {fmt(rates[mode].compra, 'ARS')}
-                    </p>
-                  )}
-                </div>
-              ))}
             </div>
           </section>
 
@@ -329,7 +335,7 @@ export default function MarketQuotes({ session }) {
               <div className="relative h-44">
                 <Doughnut data={doughnutData} options={doughnutOptions} />
               </div>
-              <div className="mt-3 flex max-h-40 flex-col gap-1 overflow-y-auto pr-1">
+              <div className="mt-3 flex flex-col gap-1 pr-1">
                 {builtItems.map((item, i) => (
                   <div
                     key={item.id}
@@ -354,17 +360,17 @@ export default function MarketQuotes({ session }) {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400 dark:border-slate-800 dark:text-slate-500">
-                      <th className="px-4 py-3 font-semibold">Activo</th>
-                      <th className="hidden px-3 py-3 text-right font-semibold sm:table-cell">Precio</th>
-                      <th className="hidden px-3 py-3 text-right font-semibold sm:table-cell">Variación</th>
-                      <th className="hidden px-3 py-3 text-right font-semibold md:table-cell">Cantidad</th>
-                      <th className="px-3 py-3 text-right font-semibold">Valor</th>
-                      <th className="px-3 py-3 text-right font-semibold">% cartera</th>
+                    <tr className="border-b border-slate-200 dark:border-slate-800">
+                      <SortableTh label="Activo" sortKey="symbol" sort={sort} onSort={onSort} />
+                      <SortableTh label="Precio" sortKey="price" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
+                      <SortableTh label="Variación" sortKey="changePct" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
+                      <SortableTh label="Cantidad" sortKey="quantity" sort={sort} onSort={onSort} align="right" className="hidden md:table-cell" />
+                      <SortableTh label="Valor" sortKey="value" sort={sort} onSort={onSort} align="right" />
+                      <SortableTh label="% cartera" sortKey="actualPct" sort={sort} onSort={onSort} align="right" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {builtItems.map((item) => {
+                    {sortedItems.map((item) => {
                       const changePct = quotes[item.symbol]?.changePct ?? null
                       return (
                         <tr key={item.id} className="transition hover:bg-slate-50/60 dark:hover:bg-slate-800/40">

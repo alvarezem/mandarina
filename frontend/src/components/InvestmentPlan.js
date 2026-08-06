@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { buildPlan, distribute } from '../lib/plan'
 import { useToast } from './Toast'
+import SortableTh from './SortableTh'
 
 const ASSET_TYPES = {
   accion: 'Acción',
@@ -41,14 +42,30 @@ const newDraft = () => ({
   manual_price: '',
 })
 
-export default function InvestmentPlan({ session }) {
+const SORT_DEFAULTS = {
+  symbol: 'asc',
+  price: 'desc',
+  quantity: 'desc',
+  value: 'desc',
+  actualPct: 'desc',
+  target_weight: 'desc',
+  gap: 'desc',
+  buy: 'desc',
+}
+
+export default function InvestmentPlan({
+  session,
+  display = 'ARS',
+  setDisplay = () => {},
+  rateMode = 'CCL',
+  setRateMode = () => {},
+}) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [quotes, setQuotes] = useState({})
   const [rates, setRates] = useState({ MEP: null, CCL: null })
-  const [display, setDisplay] = useState('ARS')
-  const [rateMode, setRateMode] = useState('CCL')
   const [budget, setBudget] = useState('')
+  const [sort, setSort] = useState({ key: null, dir: 'asc' })
   const [editingId, setEditingId] = useState(null)
   const [draft, setDraft] = useState(newDraft())
   const [error, setError] = useState(null)
@@ -83,7 +100,6 @@ export default function InvestmentPlan({ session }) {
 
   useEffect(() => {
     const symbols = items.map((i) => i.symbol).filter(Boolean)
-    if (symbols.length === 0) return
     let cancelled = false
     supabase.functions
       .invoke('quotes', { body: { symbols } })
@@ -123,6 +139,31 @@ export default function InvestmentPlan({ session }) {
   }, [items, quotes, rates, display, rateMode])
 
   const total = builtItems.reduce((sum, item) => sum + item.value, 0)
+
+  const onSort = (key) =>
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULTS[key] }))
+
+  const sortedItems = useMemo(() => {
+    if (!sort.key) return builtItems
+    const arr = [...builtItems]
+    const { key, dir } = sort
+    const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
+    arr.sort((a, b) => {
+      let cmp = 0
+      if (key === 'symbol') {
+        cmp = cmpStr(a.symbol, b.symbol) || cmpStr(a.name, b.name)
+      } else {
+        const av = a[key]
+        const bv = b[key]
+        if (av == null && bv == null) cmp = 0
+        else if (av == null) cmp = 1
+        else if (bv == null) cmp = -1
+        else cmp = av - bv
+      }
+      return dir === 'asc' ? cmp : -cmp
+    })
+    return arr
+  }, [builtItems, sort])
 
   const dist = useMemo(() => distribute(Number(budget) || 0, builtItems), [budget, builtItems])
 
@@ -358,6 +399,10 @@ export default function InvestmentPlan({ session }) {
               </svg>
             </button>
           </label>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            MEP {rates.MEP?.price != null ? fmt(rates.MEP.price, 'ARS') : '—'} · CCL{' '}
+            {rates.CCL?.price != null ? fmt(rates.CCL.price, 'ARS') : '—'}
+          </p>
           <div className="ml-auto text-right">
             <p className="text-xs text-slate-400 dark:text-slate-500">Total cartera</p>
             <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
@@ -402,20 +447,20 @@ export default function InvestmentPlan({ session }) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400 dark:border-slate-800 dark:text-slate-500">
-                  <th className="px-4 py-3 font-semibold">Activo</th>
-                  <th className="hidden px-3 py-3 font-semibold sm:table-cell">Precio</th>
-                  <th className="hidden px-3 py-3 font-semibold sm:table-cell">Cantidad</th>
-                  <th className="px-3 py-3 text-right font-semibold">Valor</th>
-                  <th className="px-3 py-3 text-right font-semibold">Actual</th>
-                  <th className="px-3 py-3 text-right font-semibold">Meta</th>
-                  <th className="px-3 py-3 text-right font-semibold">Gap</th>
-                  <th className="px-3 py-3 text-right font-semibold">A comprar</th>
+                <tr className="border-b border-slate-200 dark:border-slate-800">
+                  <SortableTh label="Activo" sortKey="symbol" sort={sort} onSort={onSort} />
+                  <SortableTh label="Precio" sortKey="price" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
+                  <SortableTh label="Cantidad" sortKey="quantity" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
+                  <SortableTh label="Valor" sortKey="value" sort={sort} onSort={onSort} align="right" />
+                  <SortableTh label="Actual" sortKey="actualPct" sort={sort} onSort={onSort} align="right" />
+                  <SortableTh label="Meta" sortKey="target_weight" sort={sort} onSort={onSort} align="right" />
+                  <SortableTh label="Gap" sortKey="gap" sort={sort} onSort={onSort} align="right" />
+                  <SortableTh label="A comprar" sortKey="buy" sort={sort} onSort={onSort} align="right" />
                   <th className="px-3 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {builtItems.map((item) =>
+                {sortedItems.map((item) =>
                   editingId === item.id ? (
                     <tr key={item.id} className="bg-brand-50/50 dark:bg-brand-950/20">
                       <td colSpan={9} className="px-4 py-3">

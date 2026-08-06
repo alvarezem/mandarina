@@ -9,6 +9,10 @@ const TABS = [
 
 export default function InvestmentsView({ session }) {
   const [tab, setTab] = useState('plan')
+  const [display, setDisplay] = useState('ARS')
+  const [rateMode, setRateMode] = useState('CCL')
+
+  const shared = { display, setDisplay, rateMode, setRateMode }
 
   return (
     <div className="mx-auto max-w-4xl animate-fade-in-up">
@@ -35,7 +39,11 @@ export default function InvestmentsView({ session }) {
         ))}
       </div>
 
-      {tab === 'plan' ? <InvestmentPlan session={session} /> : <MarketQuotes session={session} />}
+      {tab === 'plan' ? (
+        <InvestmentPlan session={session} {...shared} />
+      ) : (
+        <MarketQuotes session={session} {...shared} />
+      )}
     </div>
   )
 }

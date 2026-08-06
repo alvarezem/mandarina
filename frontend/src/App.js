@@ -5,8 +5,17 @@ import UploadSummaries from './components/UploadSummaries'
 import Dashboard from './components/Dashboard'
 import ThemeToggle from './components/ThemeToggle'
 import Sidebar, { Logo, NAV_ITEMS } from './components/Sidebar'
+import ToastProvider, { useToast } from './components/Toast'
 
 const VIEW_TITLES = { costos: 'Costos', inversiones: 'Inversiones' }
+
+function BootSplash() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-teal-50/60 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950/40">
+      <Logo className="h-14 w-14 animate-pulse text-2xl" />
+    </div>
+  )
+}
 
 function ComingSoon({ title }) {
   return (
@@ -29,12 +38,6 @@ function ComingSoon({ title }) {
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState('costos')
-  const [selectedId, setSelectedId] = useState(null)
-  const [mobileSummariesOpen, setMobileSummariesOpen] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
-  const [resetKey, setResetKey] = useState(0)
-  const mainRef = useRef(null)
   const [dark, setDark] = useState(() => {
     const stored = localStorage.getItem('fimplify-theme')
     if (stored) return stored === 'dark'
@@ -59,7 +62,28 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (loading) return null
+  if (loading) return <BootSplash />
+
+  return (
+    <ToastProvider>
+      <AppContent session={session} dark={dark} setDark={setDark} />
+    </ToastProvider>
+  )
+}
+
+function AppContent({ session, dark, setDark }) {
+  const pushToast = useToast()
+  const [view, setView] = useState('costos')
+  const [selectedId, setSelectedId] = useState(null)
+  const [mobileSummariesOpen, setMobileSummariesOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [resetKey, setResetKey] = useState(0)
+  const mainRef = useRef(null)
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    pushToast({ type: 'info', message: 'Sesión cerrada' })
+  }
 
   if (!session) return <Auth dark={dark} onToggleTheme={() => setDark((d) => !d)} />
 
@@ -103,8 +127,8 @@ function App() {
           </span>
           <button
             type="button"
-            onClick={() => supabase.auth.signOut()}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            onClick={handleSignOut}
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Cerrar sesión
           </button>
@@ -144,7 +168,7 @@ function App() {
             type="button"
             onClick={goHome}
             aria-label="Ir al inicio"
-            className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-slate-500 dark:text-slate-400"
+            className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-slate-500 active:scale-[0.98] dark:text-slate-400"
           >
             <Logo className="h-6 w-6 rounded-md text-xs" />
             <span className="text-[10px] font-medium">Inicio</span>
@@ -158,7 +182,7 @@ function App() {
                 type="button"
                 onClick={() => navigate(item.key)}
                 aria-current={active ? 'page' : undefined}
-                className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 ${
+                className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 active:scale-[0.98] ${
                   active ? 'text-teal-600 dark:text-teal-400' : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
@@ -172,7 +196,7 @@ function App() {
             type="button"
             onClick={() => setMobileSummariesOpen(true)}
             aria-label="Resúmenes"
-            className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-slate-500 dark:text-slate-400"
+            className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-slate-500 active:scale-[0.98] dark:text-slate-400"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
               <path

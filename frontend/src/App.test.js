@@ -86,6 +86,24 @@ describe('App', () => {
       expect(await screen.findByText('Próximamente.')).toBeInTheDocument()
       expect(screen.queryByText(EMPTY_STATE)).not.toBeInTheDocument()
     })
+
+    it('expande y colapsa el rail con el toggle', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      const rail = screen.getByRole('navigation', { name: 'Navegación' })
+      expect(within(rail).getByRole('button', { name: 'Expandir barra' })).toBeInTheDocument()
+      expect(rail.className).toContain('w-16')
+
+      await userEvent.click(within(rail).getByRole('button', { name: 'Expandir barra' }))
+      expect(rail.className).toContain('w-52')
+      expect(within(rail).getByRole('button', { name: 'Colapsar barra' })).toBeInTheDocument()
+      expect(within(rail).getByText('fimplify')).toBeInTheDocument()
+
+      await userEvent.click(within(rail).getByRole('button', { name: 'Colapsar barra' }))
+      expect(rail.className).toContain('w-16')
+      expect(within(rail).getByRole('button', { name: 'Expandir barra' })).toBeInTheDocument()
+    })
   })
 
   describe('navegación móvil (<lg)', () => {

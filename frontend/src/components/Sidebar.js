@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 export const NAV_ITEMS = [
   {
     key: 'costos',
@@ -39,10 +41,23 @@ export function Logo({ className = '' }) {
 }
 
 export default function Sidebar({ view, onNavigate, onGoHome }) {
+  const [expanded, setExpanded] = useState(
+    () => localStorage.getItem('fimplify-rail-expanded') === 'true',
+  )
+
+  const toggle = () => {
+    setExpanded((prev) => {
+      localStorage.setItem('fimplify-rail-expanded', String(!prev))
+      return !prev
+    })
+  }
+
   return (
     <nav
       aria-label="Navegación"
-      className="hidden w-16 shrink-0 flex-col items-center gap-1.5 border-r border-slate-200 bg-white py-3 dark:border-slate-800 dark:bg-slate-900 lg:flex"
+      className={`hidden shrink-0 flex-col items-center gap-1.5 border-r border-slate-200 bg-white py-3 transition-all duration-300 lg:flex dark:border-slate-800 dark:bg-slate-900 ${
+        expanded ? 'w-52 items-stretch px-3' : 'w-16'
+      }`}
     >
       <button
         type="button"
@@ -51,7 +66,14 @@ export default function Sidebar({ view, onNavigate, onGoHome }) {
         title="Fimplify"
         className="mb-2 flex items-center justify-center rounded-lg transition hover:opacity-85"
       >
-        <Logo className="h-8 w-8 text-base" />
+        {expanded ? (
+          <span className="flex items-center gap-2">
+            <Logo className="h-8 w-8 text-base" />
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">fimplify</span>
+          </span>
+        ) : (
+          <Logo className="h-8 w-8 text-base" />
+        )}
       </button>
 
       {NAV_ITEMS.map((item) => {
@@ -64,19 +86,46 @@ export default function Sidebar({ view, onNavigate, onGoHome }) {
             aria-label={item.label}
             aria-current={active ? 'page' : undefined}
             title={item.soon ? `${item.label} (próximamente)` : item.label}
-            className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition ${
+            className={`relative flex h-10 items-center gap-3 rounded-xl transition active:scale-[0.98] ${
+              expanded ? 'w-full px-3 justify-start' : 'w-10 justify-center'
+            } ${
               active
                 ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-600/20 dark:bg-teal-950/40 dark:text-teal-300 dark:ring-teal-500/30'
                 : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
             }`}
           >
             {item.icon}
+            {expanded && (
+              <span className="truncate text-sm font-medium">{item.label}</span>
+            )}
             {item.soon && (
-              <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900" />
+              <span
+                className={`absolute h-2 w-2 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900 ${
+                  expanded ? 'right-3 top-1.5' : '-right-0.5 -top-0.5'
+                }`}
+              />
             )}
           </button>
         )
       })}
+
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={expanded ? 'Colapsar barra' : 'Expandir barra'}
+        title={expanded ? 'Colapsar barra' : 'Expandir barra'}
+        className="mt-auto flex h-8 w-full items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+      >
+        <svg
+          className={`h-4 w-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
     </nav>
   )
 }

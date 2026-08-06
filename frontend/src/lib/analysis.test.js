@@ -95,6 +95,21 @@ describe('buildAnalysis', () => {
     const r = buildAnalysis([tx({ amount: -100 })])
     expect(r.usd).toBeUndefined()
   })
+
+  it('excluye créditos (montos positivos) de byCategory y byMerchant', () => {
+    const r = buildAnalysis([
+      tx({ merchant: 'DEPÓSITO', category: 'Ingresos', amount: 5000 }),
+      tx({ merchant: 'MERCADO LIBRE', category: 'Compras', amount: -300 }),
+      tx({ merchant: 'MERCADO LIBRE', category: 'Compras', amount: -200 }),
+    ])
+    expect(r.totals.debits).toBe(-500)
+    expect(r.totals.credits).toBe(5000)
+    expect(r.byCategory).toHaveLength(1)
+    expect(r.byCategory[0]).toMatchObject({ category: 'Compras', total: -500 })
+    expect(r.byCategory[0].category).not.toBe('Ingresos')
+    expect(r.byMerchant.some((m) => m.merchant === 'DEPÓSITO')).toBe(false)
+    expect(r.byMerchant[0]).toMatchObject({ merchant: 'MERCADO LIBRE', total: -500 })
+  })
 })
 
 describe('EXCLUDED_CATEGORIES', () => {

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Auth from './Auth'
 
@@ -34,6 +34,9 @@ describe('Auth', () => {
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com')
     await userEvent.type(screen.getByLabelText('Contraseña'), 'secret')
     await userEvent.click(screen.getByRole('button', { name: /Iniciar sesión/i }))
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Iniciar sesión/i })).toBeInTheDocument(),
+    )
     expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'a@b.com',
       password: 'secret',
@@ -47,6 +50,9 @@ describe('Auth', () => {
     await userEvent.type(screen.getByLabelText('Email'), 'c@d.com')
     await userEvent.type(screen.getByLabelText('Contraseña'), 'pass123')
     await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Crear cuenta/i })).toBeInTheDocument(),
+    )
     expect(supabase.auth.signUp).toHaveBeenCalledWith({
       email: 'c@d.com',
       password: 'pass123',

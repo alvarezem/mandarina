@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UploadSummaries from './UploadSummaries'
+import ToastProvider from './Toast'
 
 jest.mock('../lib/supabaseClient', () => ({
   __esModule: true,
@@ -30,8 +31,10 @@ describe('UploadSummaries', () => {
     mockSummaries([])
   })
 
+  const wrap = (ui) => render(<ToastProvider>{ui}</ToastProvider>)
+
   it('muestra el estado vacío sin resúmenes', async () => {
-    render(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
     expect(await screen.findByText(/No subiste resúmenes todavía/i)).toBeInTheDocument()
   })
 
@@ -40,7 +43,7 @@ describe('UploadSummaries', () => {
       { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
       { id: 'b', file_name: 'mc-junio.csv', status: 'error', error: 'parse failed', created_at: '2026-06-01' },
     ])
-    render(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
     expect(await screen.findByText('visa-julio.pdf')).toBeInTheDocument()
     expect(screen.getByText('Procesado')).toBeInTheDocument()
     expect(screen.getByText('mc-junio.csv')).toBeInTheDocument()
@@ -48,7 +51,7 @@ describe('UploadSummaries', () => {
     expect(screen.getByText('parse failed')).toBeInTheDocument()
   })
 
-  it('dispara la subida y el parseo con un archivo', async () => {
+  it('dispara la subida y el parseo con un archivo y muestra toast de éxito', async () => {
     const upload = jest.fn().mockResolvedValue({ error: null })
     const insert = jest.fn(() => ({
       select: jest.fn(() => ({
@@ -67,7 +70,7 @@ describe('UploadSummaries', () => {
     })
     const onDataChanged = jest.fn()
 
-    render(<UploadSummaries session={{ user: { id: 'u1' } }} onDataChanged={onDataChanged} />)
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} onDataChanged={onDataChanged} />)
     const file = new File(['x'], 'resumen.csv', { type: 'text/csv' })
     const input = document.querySelector('input[type="file"]')
     await userEvent.upload(input, file)
@@ -77,5 +80,19 @@ describe('UploadSummaries', () => {
       body: { summary_id: 'new-id' },
     })
     await waitFor(() => expect(onDataChanged).toHaveBeenCalled())
+    expect(await screen.findByText('Resumen resumen.csv subido')).toBeInTheDocument()
+  })
+
+  it('muestra toast de error cuando la subida falla', async () => {
+    const upload = jest.fn().mockResolvedValue({ error: { message: 'Ya existe' } })
+    supabase.storage.from.mockReturnValue({ upload })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    const file = new File(['x'], 'resumen.csv', { type: 'text/csv' })
+    const input = document.querySelector('input[type="file"]')
+    await userEvent.upload(input, file)
+
+    const toast = await screen.findByRole('status')
+    expect(toast).toHaveTextContent('Ya existe')
   })
 })

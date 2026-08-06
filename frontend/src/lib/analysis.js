@@ -63,14 +63,16 @@ function buildAnalysis(txs) {
     return { date: d.date, accumulated: Math.round(runningExpense * 100) / 100 }
   })
 
+  const spending = ars.filter((t) => t.amount < 0)
+
   const result = {
     period: { from, to, days },
     totals,
     maxExpense,
-    byMerchant: aggregate(ars, 'merchant')
+    byMerchant: aggregate(spending, 'merchant')
       .sort((a, b) => Math.abs(b.total) - Math.abs(a.total))
       .slice(0, 10),
-    byCategory: aggregate(ars, 'category').sort((a, b) => b.total - a.total),
+    byCategory: aggregate(spending, 'category').sort((a, b) => b.total - a.total),
     byDay: byDaySorted,
     expenseTrend,
     excludedCount: txs.length - relevant.length,
@@ -85,7 +87,7 @@ function buildAnalysis(txs) {
     }
     result.usd = {
       totals: computeTotals(usd),
-      byCategory: aggregate(usd, 'category').sort((a, b) => b.total - a.total),
+      byCategory: aggregate(usd.filter((t) => t.amount < 0), 'category').sort((a, b) => b.total - a.total),
       maxExpense: usdMaxExpense,
     }
   }

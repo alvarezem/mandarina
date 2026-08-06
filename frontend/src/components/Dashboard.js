@@ -138,7 +138,7 @@ function SortableTh({ label, sortKey, sort, onSort, align = 'left' }) {
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`inline-flex items-center gap-1 transition ${
+        className={`inline-flex items-center gap-1 transition active:scale-[0.98] ${
           active
             ? 'text-teal-600 dark:text-teal-400'
             : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
@@ -164,6 +164,8 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
   const [sort, setSort] = useState({ key: 'date', dir: 'desc' })
   const tableRef = useRef(null)
   const autoApplied = useRef(false)
+
+  const filterKey = `${period}|${customFrom}|${customTo}|${currency}|${summaryId ?? 'all'}|${categories.join(',')}`
 
   useEffect(() => {
     let active = true
@@ -301,7 +303,7 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4" key={filterKey}>
         {Array.from({ length: 4 }).map((_, i) => (
           <CardSkeleton key={i} />
         ))}
@@ -357,7 +359,7 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4" key={filterKey}>
             {[
               { label: 'Débitos', value: analysis.totals.debits, format: fmt, valueClass: 'text-red-600 dark:text-red-400' },
               {
@@ -489,7 +491,7 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
                     <SortableTh label="Monto" sortKey="amount" sort={sort} onSort={onSort} align="right" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
+                <tbody key={filterKey} className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
                   {sorted.map((t, i) => (
                     <tr
                       key={t.id}
@@ -560,7 +562,7 @@ function doughnutData(byCategory) {
     labels: byCategory.map((c) => c.category),
     datasets: [
       {
-        data: byCategory.map((c) => c.total),
+        data: byCategory.map((c) => Math.abs(c.total)),
         backgroundColor: PALETTE,
         borderWidth: 0,
         hoverOffset: 6,

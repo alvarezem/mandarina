@@ -7,13 +7,16 @@ export default function Auth({ dark, onToggleTheme }) {
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
+    setSubmitting(true)
     const { error } = isSignUp
       ? await supabase.auth.signUp({ email, password })
       : await supabase.auth.signInWithPassword({ email, password })
+    setSubmitting(false)
     if (error) setError(error.message)
   }
 
@@ -71,9 +74,19 @@ export default function Auth({ dark, onToggleTheme }) {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-gradient-to-r from-teal-500 to-emerald-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/25 transition hover:from-teal-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+            disabled={submitting}
+            className="w-full rounded-lg bg-gradient-to-r from-teal-500 to-emerald-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/25 transition hover:from-teal-600 hover:to-emerald-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-70"
           >
-            {isSignUp ? 'Crear cuenta' : 'Iniciar sesión'}
+            {submitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
+                {isSignUp ? 'Creando cuenta…' : 'Ingresando…'}
+              </span>
+            ) : isSignUp ? (
+              'Crear cuenta'
+            ) : (
+              'Iniciar sesión'
+            )}
           </button>
 
           <button

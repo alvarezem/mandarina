@@ -115,4 +115,13 @@ describe('Auth', () => {
       }),
     )
   })
+
+  it('muestra el difuminado naranja del toggle de tema solo al pasar el mouse', () => {
+    render(<Auth />)
+    const button = screen.getByRole('button', { name: 'Cambiar a tema oscuro' })
+    const group = button.closest('.group')
+    const glow = group.querySelector('.rounded-full')
+    expect(glow).toHaveClass('opacity-0')
+    expect(glow).toHaveClass('group-hover:opacity-100')
+  })
 })

@@ -12,6 +12,7 @@ const STYLES = {
 
 function Icon({ type, icon }) {
   const cls = 'h-5 w-5 shrink-0'
+  if (icon === 'none') return null
   if (icon === 'wave') {
     return (
       <svg

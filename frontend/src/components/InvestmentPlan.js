@@ -464,11 +464,11 @@ export default function InvestmentPlan({
                 <tr className="border-b border-slate-200 dark:border-slate-800">
                   <SortableTh label="Activo" sortKey="symbol" sort={sort} onSort={onSort} />
                   <SortableTh label="Precio" sortKey="price" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
+                  <SortableTh label="Meta" sortKey="target_weight" sort={sort} onSort={onSort} align="right" />
+                  <SortableTh label="Actual" sortKey="actualPct" sort={sort} onSort={onSort} align="right" />
+                  <SortableTh label="Gap" sortKey="gap" sort={sort} onSort={onSort} align="right" />
                   <SortableTh label="Cantidad" sortKey="quantity" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
                   <SortableTh label="Valor" sortKey="value" sort={sort} onSort={onSort} align="right" />
-                  <SortableTh label="Actual" sortKey="actualPct" sort={sort} onSort={onSort} align="right" />
-                  <SortableTh label="Meta" sortKey="target_weight" sort={sort} onSort={onSort} align="right" />
-                  <SortableTh label="Gap" sortKey="gap" sort={sort} onSort={onSort} align="right" />
                   <SortableTh label="A comprar" sortKey="buy" sort={sort} onSort={onSort} align="right" />
                   <th className="px-3 py-3" />
                 </tr>
@@ -588,14 +588,10 @@ export default function InvestmentPlan({
                           </span>
                         )}
                       </td>
-                      <td className="hidden px-3 py-3 text-slate-600 dark:text-slate-300 sm:table-cell">
-                        {item.quantity}
-                      </td>
-                      <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-200">{fmt(item.value, display)}</td>
-                      <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">{fmtPct(item.actualPct)}</td>
                       <td className="px-3 py-3 text-right font-medium text-slate-700 dark:text-slate-200">
                         {fmtPct(item.target_weight)}
                       </td>
+                      <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">{fmtPct(item.actualPct)}</td>
                       <td
                         className={`px-3 py-3 text-right ${
                           item.over
@@ -607,12 +603,13 @@ export default function InvestmentPlan({
                       >
                         {item.over ? `${fmtPct(item.gap)}` : item.gap > 0 ? `+${fmtPct(item.gap)}` : '—'}
                       </td>
+                      <td className="hidden px-3 py-3 text-slate-600 dark:text-slate-300 sm:table-cell">
+                        {item.quantity}
+                      </td>
+                      <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-200">{fmt(item.value, display)}</td>
                       <td className="px-3 py-3 text-right">
                         {item.buy > 0 ? (
-                          <span className="font-medium text-brand-700 dark:text-brand-300">
-                            {fmt(item.buy, display)}
-                            <span className="ml-1 text-xs font-normal text-slate-400">≈{item.buyQty} u</span>
-                          </span>
+                          <span className="font-medium text-brand-700 dark:text-brand-300">≈{item.buyQty} u</span>
                         ) : (
                           <span className="text-slate-400 dark:text-slate-500">—</span>
                         )}

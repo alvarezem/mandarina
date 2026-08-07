@@ -166,4 +166,42 @@ describe('InvestmentPlan', () => {
     const rowsAfter = screen.getAllByRole('row')
     expect(within(rowsAfter[1]).getByText('QQQ')).toBeInTheDocument()
   })
+
+  it('muestra las columnas en el orden Precio · Meta · Actual · Gap · Cantidad · Valor · A comprar', async () => {
+    mockPlan([{ id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, manual_price: null, sort_order: 0 }], { VIST: 34920 })
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VIST')
+
+    const labels = screen.getAllByRole('columnheader').map((th) => th.textContent.trim())
+    const start = labels.findIndex((l) => l === 'Activo')
+    expect(labels.slice(start, start + 8)).toEqual([
+      'Activo',
+      'Precio',
+      'Meta▼',
+      'Actual',
+      'Gap',
+      'Cantidad',
+      'Valor',
+      'A comprar',
+    ])
+  })
+
+  it('muestra A comprar solo en unidades', async () => {
+    mockPlan(
+      [
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 50, quantity: 1, manual_price: null, sort_order: 0 },
+        { id: '2', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 30, quantity: 1, manual_price: null, sort_order: 1 },
+      ],
+      { VIST: 34920, KO: 3500 },
+    )
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VIST')
+
+    const rows = screen.getAllByRole('row')
+    const koRow = rows.find((r) => within(r).queryByText('KO'))
+    expect(within(koRow).getByText(/≈3 u/)).toBeInTheDocument()
+    expect(within(koRow).queryByText(/≈3 u/)).not.toHaveTextContent('$')
+    const vistRow = rows.find((r) => within(r).queryByText('VIST'))
+    expect(within(vistRow).getByText('—')).toBeInTheDocument()
+  })
 })

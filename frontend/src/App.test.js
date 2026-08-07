@@ -107,7 +107,7 @@ describe('App', () => {
 
     signIn({ id: 'u1', email: 'a@b.com', created_at: '2026-01-01T00:00:00.000Z', last_sign_in_at: '2026-01-05T00:00:00.000Z' })
 
-    expect(await screen.findByText('¡Volviste!')).toBeInTheDocument()
+    expect(await screen.findByText('¡Volviste! 😂')).toBeInTheDocument()
   })
 
   it('muestra las top 3 posiciones con su variación al iniciar sesión', async () => {

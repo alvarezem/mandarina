@@ -116,7 +116,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
     pushToast({
       type: 'success',
       icon: 'wave',
-      message: greeting === 'first' ? '¡Bienvenido/a a Mandarina!' : '¡Volviste!',
+      message: greeting === 'first' ? '¡Bienvenido/a a Mandarina!' : '¡Volviste! 😂',
     })
     if (session) pushTopPositions(session, pushToast)
     setGreeting(null)

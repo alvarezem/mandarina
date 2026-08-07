@@ -232,4 +232,18 @@ describe('MarketQuotes', () => {
     await userEvent.click(screen.getByRole('button', { name: /KO Acción/ }))
     expect(await screen.findByText(/Sin datos históricos para KO/)).toBeInTheDocument()
   })
+
+  it('muestra la nota de cobertura solo si hay activos sin precio', async () => {
+    mockPlan(ITEMS, { VIST: { price: 34920, changePct: 1.2, source: 'byma' } })
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('Patrimonio total')
+    expect(screen.getByText(/· 1 de 2 activos con precio/)).toBeInTheDocument()
+  })
+
+  it('omite la nota de cobertura cuando todos los activos tienen precio', async () => {
+    mockPlan(ITEMS, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' } })
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('Patrimonio total')
+    expect(screen.queryByText(/activos con precio/)).not.toBeInTheDocument()
+  })
 })

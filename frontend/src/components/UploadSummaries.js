@@ -16,6 +16,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
   const [editingId, setEditingId] = useState(null)
+  const [confirmingId, setConfirmingId] = useState(null)
   const [draft, setDraft] = useState('')
   const pushToast = useToast()
 
@@ -90,12 +91,35 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
 
   const startRename = (file) => {
     setEditingId(file.id)
+    setConfirmingId(null)
     setDraft(file.file_name)
   }
 
   const cancelRename = () => {
     setEditingId(null)
     setDraft('')
+  }
+
+  const startDeleteConfirm = (file) => {
+    setConfirmingId(file.id)
+    setEditingId(null)
+    setDraft('')
+  }
+
+  const removeSummary = async (file) => {
+    setConfirmingId(null)
+    if (file.file_path) {
+      await supabase.storage.from('card-resumes').remove([file.file_path])
+    }
+    const { error } = await supabase.from('card_summaries').delete().eq('id', file.id)
+    if (error) {
+      pushToast({ type: 'error', message: error.message })
+      return
+    }
+    if (selectedId === file.id) onSelect?.(null)
+    onDataChanged?.()
+    await loadSummaries()
+    pushToast({ type: 'success', message: `Resumen ${file.file_name} eliminado` })
   }
 
   const saveRename = async () => {
@@ -267,6 +291,42 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                               {f.file_name}
                             </span>
                           </button>
+                          {confirmingId === f.id ? (
+                            <span className="flex shrink-0 items-center gap-1.5">
+                              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">¿Borrar?</span>
+                              <button
+                                type="button"
+                                onClick={() => removeSummary(f)}
+                                className="rounded-md bg-red-500 px-2 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
+                              >
+                                Sí
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmingId(null)}
+                                className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                              >
+                                Cancelar
+                              </button>
+                            </span>
+                          ) : (
+                            <>
+                          <button
+                            type="button"
+                            onClick={() => startDeleteConfirm(f)}
+                            disabled={editingId !== null}
+                            aria-label={`Eliminar ${f.file_name}`}
+                            title="Eliminar"
+                            className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0115.916 21H8.084a2.25 2.25 0 01-2.244-2.327L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                              />
+                            </svg>
+                          </button>
                           <button
                             type="button"
                             onClick={() => startRename(f)}
@@ -283,6 +343,8 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                               />
                             </svg>
                           </button>
+                            </>
+                          )}
                           <span
                             className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${status.className}`}
                           >

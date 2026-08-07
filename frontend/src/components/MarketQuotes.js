@@ -381,9 +381,11 @@ export default function MarketQuotes({
                     }`}
                   >
                     {dayChange >= 0 ? '▲' : '▼'} {Math.abs(dayChange).toFixed(2)}% hoy
-                    <span className="ml-1 text-xs font-normal text-slate-400">
-                      · {pricedCount} de {builtItems.length} activos con precio
-                    </span>
+                    {pricedCount < builtItems.length && (
+                      <span className="ml-1 text-xs font-normal text-slate-400">
+                        · {pricedCount} de {builtItems.length} activos con precio
+                      </span>
+                    )}
                   </p>
                 )}
               </div>

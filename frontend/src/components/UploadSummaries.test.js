@@ -159,4 +159,92 @@ describe('UploadSummaries', () => {
     expect(update).not.toHaveBeenCalled()
     expect(screen.getByText('visa-julio.pdf')).toBeInTheDocument()
   })
+
+  it('borra el archivo de storage y la fila con confirmación inline', async () => {
+    mockSummaries([
+      { id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
+    ])
+    const remove = jest.fn().mockResolvedValue({ data: null, error: null })
+    const eq = jest.fn().mockResolvedValue({ error: null })
+    const del = jest.fn().mockReturnValue({ eq })
+    supabase.storage.from.mockReturnValue({ remove })
+    supabase.from.mockImplementation((table) => {
+      if (table === 'card_summaries') {
+        return {
+          select: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+              error: null,
+            }),
+          }),
+          delete: del,
+        }
+      }
+      return {}
+    })
+    const onDataChanged = jest.fn()
+    const onSelect = jest.fn()
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} onDataChanged={onDataChanged} onSelect={onSelect} />)
+    await screen.findByText('visa-julio.pdf')
+
+    await userEvent.click(screen.getByRole('button', { name: /Eliminar visa-julio/ }))
+    expect(screen.getByText('¿Borrar?')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sí' }))
+    await waitFor(() => expect(remove).toHaveBeenCalledWith(['u1/visa-julio.pdf']))
+    expect(del).toHaveBeenCalled()
+    expect(eq).toHaveBeenCalledWith('id', 'a')
+    await waitFor(() => expect(onDataChanged).toHaveBeenCalled())
+    expect(await screen.findByRole('status')).toHaveTextContent('Resumen visa-julio.pdf eliminado')
+  })
+
+  it('cancela la confirmación de borrado', async () => {
+    mockSummaries([
+      { id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
+    ])
+    const remove = jest.fn()
+    supabase.storage.from.mockReturnValue({ remove })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('visa-julio.pdf')
+
+    await userEvent.click(screen.getByRole('button', { name: /Eliminar visa-julio/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByText('¿Borrar?')).not.toBeInTheDocument()
+    expect(remove).not.toHaveBeenCalled()
+  })
+
+  it('muestra toast de error si falla el borrado de la fila', async () => {
+    mockSummaries([
+      { id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
+    ])
+    const remove = jest.fn().mockResolvedValue({ data: null, error: null })
+    const eq = jest.fn().mockResolvedValue({ error: { message: 'denied' } })
+    const del = jest.fn().mockReturnValue({ eq })
+    supabase.storage.from.mockReturnValue({ remove })
+    supabase.from.mockImplementation((table) => {
+      if (table === 'card_summaries') {
+        return {
+          select: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+              error: null,
+            }),
+          }),
+          delete: del,
+        }
+      }
+      return {}
+    })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('visa-julio.pdf')
+
+    await userEvent.click(screen.getByRole('button', { name: /Eliminar visa-julio/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sí' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('denied')
+  })
 })

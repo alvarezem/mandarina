@@ -11,7 +11,6 @@ set category = case
   when merchant ~* 'transferencia enviada' then 'Transferencias'
   when merchant ~* 'seguro' then 'Seguros'
   when merchant ~* 'axion|ypf|nafta|combustible|shell|petrobras|gasoil' then 'Combustible'
-  when merchant ~* 'telecentro|fibertel|movistar|claro|telefonica' then 'Telecom'
   when merchant ~* 'carrefour|coto|jumbo|changomas|supermercado|walmart|makro' then 'Supermercados'
   when merchant ~* 'cinemark|hoyts|cine|teatro|ticketek|showcase' then 'Entretenimiento'
   when merchant ~* 'grido|mostaza|mcdonald|burger king|rotiseria|parrilla|pizzeria|restaurant|heladeria' then 'Gastronomía'
@@ -22,7 +21,7 @@ set category = case
   when merchant ~* 'simplicity' then 'Salud'
   when merchant ~* 'pedidosya' then 'Delivery'
   when merchant ~* 'google|apple|youtube|spotify|netflix|suscripcion|streaming' then 'Suscripciones'
-  when merchant ~* 'natury|naturgy|energia|agua|internet|telefon|servicio' then 'Servicios'
+  when merchant ~* 'natury|naturgy|energia|agua|internet|telefon|telecentro|fibertel|movistar|claro|servicio' then 'Servicios'
   when merchant ~* 'pago con qr' then 'Compras'
   else 'Otros'
 end;

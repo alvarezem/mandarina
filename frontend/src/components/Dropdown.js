@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-export default function Dropdown({ label, summary, children, align = 'right', className = '' }) {
+export default function Dropdown({ label, summary, children, align = 'left', className = '', closeOnSelect = false }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -50,7 +50,8 @@ export default function Dropdown({ label, summary, children, align = 'right', cl
 
       {open && (
         <div
-          className={`animate-pop absolute z-20 mt-2 min-w-52 rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-md dark:border-slate-700 dark:bg-slate-900 ${
+          onClick={closeOnSelect ? () => setOpen(false) : undefined}
+          className={`animate-pop absolute z-50 mt-2 min-w-52 rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-md dark:border-slate-700 dark:bg-slate-900 ${
             align === 'right' ? 'right-0' : 'left-0'
           }`}
         >

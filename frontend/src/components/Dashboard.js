@@ -14,8 +14,49 @@ import {
 import { Line, Doughnut, Bar } from 'react-chartjs-2'
 import supabase from '../lib/supabaseClient'
 import { buildAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
+import Dropdown from './Dropdown'
 import FiltersBar from './FiltersBar'
+import { useToast } from './Toast'
 import useCountUp from '../hooks/useCountUp'
+
+const CATEGORY_OPTIONS = [
+  'Combustible',
+  'Compras',
+  'Delivery',
+  'Educación',
+  'Entretenimiento',
+  'Farmacias',
+  'Gastronomía',
+  'Gimnasio',
+  'Impuestos',
+  'Ingresos',
+  'Inversiones',
+  'Otros',
+  'Pagos',
+  'Salud',
+  'Seguros',
+  'Servicios',
+  'Supermercados',
+  'Suscripciones',
+  'Transferencias',
+  'Transporte',
+]
+
+const itemBase = 'flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-xs transition'
+const itemActive = 'bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
+const itemInactive = 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+
+function Check({ on }) {
+  return (
+    <span
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
+        on ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 text-transparent dark:border-slate-600'
+      }`}
+    >
+      ✓
+    </span>
+  )
+}
 
 ChartJS.register(
   ArcElement,
@@ -158,6 +199,7 @@ function SortableTh({ label, sortKey, sort, onSort, align = 'left' }) {
 }
 
 export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSummarySelect }) {
+  const pushToast = useToast()
   const [allTx, setAllTx] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -306,6 +348,19 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
     setCategories((prev) => (prev.length === 1 && prev[0] === cat ? [] : [cat]))
 
   const scrollToTable = () => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+  const changeCategory = async (txId, category) => {
+    const { error } = await supabase
+      .from('transactions')
+      .update({ category })
+      .eq('id', txId)
+    if (error) {
+      pushToast({ type: 'error', message: error.message })
+      return
+    }
+    setAllTx((prev) => prev.map((t) => (t.id === txId ? { ...t, category } : t)))
+    pushToast({ type: 'success', message: 'Categoría actualizada' })
+  }
 
   if (loading) {
     return (
@@ -509,7 +564,29 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
                       {!summaryId && (
                         <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{fileOf(t) ?? '—'}</td>
                       )}
-                      <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{t.category ?? '—'}</td>
+                      <td className="px-4 py-3">
+                        <Dropdown label="" summary={t.category ?? 'Sin categoría'} closeOnSelect className="[&>button]:border-0 [&>button]:bg-transparent [&>button]:px-0 [&>button]:py-0.5 [&>button]:hover:bg-transparent dark:[&>button]:bg-transparent">
+                          {CATEGORY_OPTIONS.map((cat) => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => changeCategory(t.id, cat)}
+                              className={`${itemBase} ${t.category === cat ? itemActive : itemInactive}`}
+                            >
+                              <Check on={t.category === cat} />
+                              {cat}
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => changeCategory(t.id, null)}
+                            className={`${itemBase} ${t.category == null ? itemActive : itemInactive}`}
+                          >
+                            <Check on={t.category == null} />
+                            Sin categoría
+                          </button>
+                        </Dropdown>
+                      </td>
                       <td className="px-4 py-3">
                         {t.currency === 'USD' ? (
                           <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">USD</span>

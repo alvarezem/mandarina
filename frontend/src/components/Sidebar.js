@@ -42,33 +42,13 @@ export const NAV_ITEMS = [
 
 export function Logo({ className = '' }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        fill="#f97316"
-        d="M14 4.5C20 6 21.5 12 14 19.5 9.5 17.5 7 14.8 5.2 12 7 9.2 9.5 6.5 14 4.5Z"
-      />
-      <path
-        fill="#fdba74"
-        d="M14 4.5C17.6 6.2 18.6 12 14 19.5 9.5 17.5 7 14.8 5.2 12 7 9.2 9.5 6.5 14 4.5Z"
-      />
-      <path
-        d="M15 9.2C13.1 10 11.5 11 10.1 12"
-        stroke="#f97316"
-        strokeWidth="0.9"
-        strokeLinecap="round"
-        opacity="0.45"
-      />
-      <path
-        d="M15 14.8C13.1 14 11.5 13 10.1 12"
-        stroke="#f97316"
-        strokeWidth="0.9"
-        strokeLinecap="round"
-        opacity="0.45"
-      />
-      <circle cx="18.4" cy="8.2" r="0.55" fill="#ea580c" opacity="0.7" />
-      <circle cx="19.8" cy="12" r="0.55" fill="#ea580c" opacity="0.7" />
-      <circle cx="18.4" cy="15.8" r="0.55" fill="#ea580c" opacity="0.7" />
-    </svg>
+    <img
+      src={`${process.env.PUBLIC_URL}/logo.png`}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className={`object-contain ${className}`}
+    />
   )
 }
 

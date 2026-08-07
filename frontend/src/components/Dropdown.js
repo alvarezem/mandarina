@@ -1,11 +1,29 @@
-import { useEffect, useRef, useState } from 'react'
+import { Children, isValidElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-export default function Dropdown({ label, summary, children, align = 'left', className = '', closeOnSelect = false }) {
+function textOf(node) {
+  if (node == null) return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(textOf).join('')
+  if (isValidElement(node)) return textOf(node.props.children)
+  return ''
+}
+
+export default function Dropdown({
+  label,
+  summary,
+  children,
+  align = 'left',
+  className = '',
+  closeOnSelect = false,
+  searchable = false,
+}) {
   const [open, setOpen] = useState(false)
   const [rect, setRect] = useState(null)
+  const [query, setQuery] = useState('')
   const buttonRef = useRef(null)
   const menuRef = useRef(null)
+  const searchRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
@@ -18,23 +36,48 @@ export default function Dropdown({ label, summary, children, align = 'left', cla
     const onKey = (e) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    const onScrollOrResize = () => setOpen(false)
+    const onScroll = (e) => {
+      const menu = menuRef.current
+      if (menu && menu.contains(e.target)) return
+      setOpen(false)
+    }
+    const onResize = () => setOpen(false)
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
-    window.addEventListener('scroll', onScrollOrResize, true)
-    window.addEventListener('resize', onScrollOrResize)
+    window.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onResize)
     return () => {
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey)
-      window.removeEventListener('scroll', onScrollOrResize, true)
-      window.removeEventListener('resize', onScrollOrResize)
+      window.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('resize', onResize)
     }
   }, [open])
 
+  useLayoutEffect(() => {
+    if (open && searchable && searchRef.current) searchRef.current.focus()
+  }, [open, searchable])
+
   const toggle = () => {
+    setQuery('')
     if (buttonRef.current) setRect(buttonRef.current.getBoundingClientRect())
     setOpen((o) => !o)
   }
+
+  const q = query.trim().toLowerCase()
+  const isRenderProp = typeof children === 'function'
+  const filteredChildren = !isRenderProp && q
+    ? Children.toArray(children).filter((child) => {
+        if (!isValidElement(child)) return true
+        if (child.props['data-pinned']) return true
+        return textOf(child).toLowerCase().includes(q)
+      })
+    : children
+
+  const spaceBelow = rect ? window.innerHeight - rect.bottom - 8 : 0
+  const spaceAbove = rect ? rect.top - 8 : 0
+  const openUp = spaceBelow < 200 && spaceAbove > spaceBelow
+  const maxHeight = openUp ? spaceAbove : spaceBelow
 
   return (
     <div className={`relative ${className}`}>
@@ -71,15 +114,40 @@ export default function Dropdown({ label, summary, children, align = 'left', cla
           <div
             ref={menuRef}
             onClick={closeOnSelect ? () => setOpen(false) : undefined}
-            className="animate-pop fixed z-50 max-h-[60vh] min-w-52 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-md dark:border-slate-700 dark:bg-slate-900"
+            className="dropdown-scroll animate-pop fixed z-50 min-w-52 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-md dark:border-slate-700 dark:bg-slate-900"
             style={{
-              top: rect.bottom + 8,
+              top: openUp ? 'auto' : rect.bottom + 8,
+              bottom: openUp ? window.innerHeight - rect.top + 8 : 'auto',
               left: align === 'right' ? 'auto' : rect.left,
               right: align === 'right' ? window.innerWidth - rect.right : 'auto',
               width: 'max-content',
+              maxHeight,
             }}
           >
-            {children}
+            {searchable && (
+              <div className="relative mb-1.5">
+                <svg
+                  className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input
+                  ref={searchRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar categoría…"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-3 text-xs text-slate-700 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
+                />
+              </div>
+            )}
+            {isRenderProp
+              ? children({ close: () => setOpen(false), query: q })
+              : filteredChildren}
           </div>,
           document.body,
         )}

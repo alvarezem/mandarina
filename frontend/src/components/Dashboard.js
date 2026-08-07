@@ -58,6 +58,98 @@ function Check({ on }) {
   )
 }
 
+function CategoryCell({ tx, options, onChange, onAddCustom }) {
+  const [remember, setRemember] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [newName, setNewName] = useState('')
+
+  const submitNew = (close) => {
+    const name = newName.trim()
+    if (!name) return
+    onChange(tx, name, remember)
+    onAddCustom(name)
+    setNewName('')
+    setShowNew(false)
+    close()
+  }
+
+  return (
+    <Dropdown
+      label=""
+      summary={tx.category ?? 'Sin categoría'}
+      searchable
+      className="[&>button]:border-0 [&>button]:bg-transparent [&>button]:px-0 [&>button]:py-0.5 [&>button]:hover:bg-transparent dark:[&>button]:bg-transparent"
+    >
+      {({ close, query }) => (
+        <>
+          {options
+            .filter((cat) => !query || cat.toLowerCase().includes(query))
+            .map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  onChange(tx, cat, remember)
+                  close()
+                }}
+                className={`${itemBase} ${tx.category === cat ? itemActive : itemInactive}`}
+              >
+                <Check on={tx.category === cat} />
+                {cat}
+              </button>
+            ))}
+          <div data-pinned className="my-1 border-t border-slate-100 dark:border-slate-800" />
+          {showNew ? (
+            <div data-pinned className="px-1 pb-1">
+              <input
+                autoFocus
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') submitNew(close)
+                }}
+                placeholder="Nombre de la categoría…"
+                className="w-full rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
+              />
+            </div>
+          ) : (
+            <button
+              data-pinned
+              type="button"
+              onClick={() => setShowNew(true)}
+              className={`${itemBase} ${itemInactive}`}
+            >
+              + Nueva categoría…
+            </button>
+          )}
+          <label data-pinned className={`${itemBase} cursor-pointer`}>
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="h-3.5 w-3.5 shrink-0 accent-brand-600"
+            />
+            Recordar para este comercio
+          </label>
+          <button
+            data-pinned
+            type="button"
+            onClick={() => {
+              onChange(tx, null, false)
+              close()
+            }}
+            className={`${itemBase} ${tx.category == null ? itemActive : itemInactive}`}
+          >
+            <Check on={tx.category == null} />
+            Sin categoría
+          </button>
+        </>
+      )}
+    </Dropdown>
+  )
+}
+
 ChartJS.register(
   ArcElement,
   CategoryScale,
@@ -198,11 +290,13 @@ function SortableTh({ label, sortKey, sort, onSort, align = 'left' }) {
   )
 }
 
-export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSummarySelect }) {
+export default function Dashboard({ session, summaryId, dark, refreshKey, resetKey, onSummarySelect }) {
   const pushToast = useToast()
   const [allTx, setAllTx] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [overrides, setOverrides] = useState([])
+  const [customCategories, setCustomCategories] = useState([])
   const [period, setPeriod] = useState('todo')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
@@ -212,8 +306,26 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
   const [sort, setSort] = useState({ key: 'date', dir: 'desc' })
   const tableRef = useRef(null)
   const autoApplied = useRef(false)
+  const userId = session?.user?.id
 
   const filterKey = `${period}|${customFrom}|${customTo}|${currency}|${summaryId ?? 'all'}|${categories.join(',')}`
+
+  useEffect(() => {
+    if (!userId) return
+    let active = true
+    ;(async () => {
+      const [ov, cc] = await Promise.all([
+        supabase.from('merchant_overrides').select('merchant, category').eq('user_id', userId),
+        supabase.from('custom_categories').select('name').eq('user_id', userId),
+      ])
+      if (!active) return
+      if (!ov.error) setOverrides(ov.data ?? [])
+      if (!cc.error) setCustomCategories((cc.data ?? []).map((c) => c.name))
+    })()
+    return () => {
+      active = false
+    }
+  }, [userId, refreshKey])
 
   useEffect(() => {
     let active = true
@@ -274,6 +386,16 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
   const categoryOptions = useMemo(
     () => [...new Set(working.map((t) => t.category).filter(Boolean))].sort(),
     [working],
+  )
+
+  const allCategoryOptions = useMemo(
+    () =>
+      [...new Set([
+        ...CATEGORY_OPTIONS,
+        ...customCategories,
+        ...overrides.map((o) => o.category),
+      ])].sort(),
+    [customCategories, overrides],
   )
 
   const summaryOptions = useMemo(() => {
@@ -349,17 +471,54 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
 
   const scrollToTable = () => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
-  const changeCategory = async (txId, category) => {
+  const changeCategory = async (tx, category, remember = false) => {
     const { error } = await supabase
       .from('transactions')
       .update({ category })
-      .eq('id', txId)
+      .eq('id', tx.id)
     if (error) {
       pushToast({ type: 'error', message: error.message })
       return
     }
-    setAllTx((prev) => prev.map((t) => (t.id === txId ? { ...t, category } : t)))
+    setAllTx((prev) => prev.map((t) => (t.id === tx.id ? { ...t, category } : t)))
+
+    if (remember && tx.merchant && category) {
+      const { error: ovError } = await supabase
+        .from('merchant_overrides')
+        .upsert(
+          { user_id: userId, merchant: tx.merchant, category },
+          { onConflict: 'user_id,merchant' },
+        )
+      if (!ovError) {
+        setOverrides((prev) => [
+          ...prev.filter((o) => o.merchant.toLowerCase() !== tx.merchant.toLowerCase()),
+          { merchant: tx.merchant, category },
+        ])
+        const { data: all } = await supabase
+          .from('transactions')
+          .update({ category })
+          .eq('merchant', tx.merchant)
+        if (all) setAllTx((prev) => prev.map((t) => (t.merchant === tx.merchant ? { ...t, category } : t)))
+        pushToast({ type: 'success', message: `Guardado: ${tx.merchant} → ${category}` })
+        return
+      }
+    }
+
     pushToast({ type: 'success', message: 'Categoría actualizada' })
+  }
+
+  const addCustomCategory = async (name) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    const { error } = await supabase
+      .from('custom_categories')
+      .upsert({ user_id: userId, name: trimmed }, { onConflict: 'user_id,name' })
+    if (error) {
+      pushToast({ type: 'error', message: error.message })
+      return
+    }
+    setCustomCategories((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]))
+    pushToast({ type: 'success', message: `Categoría creada: ${trimmed}` })
   }
 
   if (loading) {
@@ -565,27 +724,7 @@ export default function Dashboard({ summaryId, dark, refreshKey, resetKey, onSum
                         <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{fileOf(t) ?? '—'}</td>
                       )}
                       <td className="px-4 py-3">
-                        <Dropdown label="" summary={t.category ?? 'Sin categoría'} closeOnSelect className="[&>button]:border-0 [&>button]:bg-transparent [&>button]:px-0 [&>button]:py-0.5 [&>button]:hover:bg-transparent dark:[&>button]:bg-transparent">
-                          {CATEGORY_OPTIONS.map((cat) => (
-                            <button
-                              key={cat}
-                              type="button"
-                              onClick={() => changeCategory(t.id, cat)}
-                              className={`${itemBase} ${t.category === cat ? itemActive : itemInactive}`}
-                            >
-                              <Check on={t.category === cat} />
-                              {cat}
-                            </button>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={() => changeCategory(t.id, null)}
-                            className={`${itemBase} ${t.category == null ? itemActive : itemInactive}`}
-                          >
-                            <Check on={t.category == null} />
-                            Sin categoría
-                          </button>
-                        </Dropdown>
+                        <CategoryCell tx={t} options={allCategoryOptions} onChange={changeCategory} onAddCustom={addCustomCategory} />
                       </td>
                       <td className="px-4 py-3">
                         {t.currency === 'USD' ? (

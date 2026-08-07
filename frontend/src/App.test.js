@@ -42,9 +42,21 @@ function mockData(table, data) {
 function mockApp(txs, summaries = []) {
   const tx = mockData('transactions', txs)
   const summariesData = mockData('card_summaries', summaries)
-  supabase.from.mockImplementation((table) =>
-    table === 'transactions' ? { select: tx.select } : { select: summariesData.select },
-  )
+  const metaChain = () => {
+    const order = jest.fn().mockResolvedValue({ data: [], error: null })
+    const eq = jest.fn().mockResolvedValue({ data: [], error: null })
+    return { order, eq }
+  }
+  const meta = (table) => {
+    const chain = metaChain()
+    const select = jest.fn().mockReturnValue(chain)
+    return { select }
+  }
+  supabase.from.mockImplementation((table) => {
+    if (table === 'transactions') return { select: tx.select }
+    if (table === 'card_summaries') return { select: summariesData.select }
+    return meta(table)
+  })
 }
 
 describe('App', () => {
@@ -123,10 +135,13 @@ describe('App', () => {
     const planSelect = jest.fn().mockReturnValue({ order })
     const tx = mockData('transactions', [])
     const summariesData = mockData('card_summaries', [])
+    const metaEq = jest.fn().mockResolvedValue({ data: [], error: null })
+    const metaSelect = jest.fn().mockReturnValue({ eq: metaEq })
     supabase.from.mockImplementation((table) => {
       if (table === 'portfolio_plan') return { select: planSelect }
       if (table === 'transactions') return { select: tx.select }
-      return { select: summariesData.select }
+      if (table === 'card_summaries') return { select: summariesData.select }
+      return { select: metaSelect }
     })
     supabase.functions.invoke.mockResolvedValue({
       data: {

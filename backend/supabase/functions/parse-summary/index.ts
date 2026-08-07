@@ -101,6 +101,16 @@ Deno.serve(async (req) => {
     return json({ error: message }, 400, corsHeaders)
   }
 
+  const { data: overrides } = await supabase
+    .from('merchant_overrides')
+    .select('merchant, category')
+    .eq('user_id', summary.user_id)
+  const overrideMap = new Map((overrides ?? []).map((o) => [o.merchant.toLowerCase(), o.category]))
+  transactions = transactions.map((t) => ({
+    ...t,
+    category: overrideMap.get(t.merchant.toLowerCase()) ?? t.category,
+  }))
+
   const { error: insError } = await supabase.from('transactions').insert(
     transactions.map((t) => ({ summary_id: summaryId, ...t })),
   )

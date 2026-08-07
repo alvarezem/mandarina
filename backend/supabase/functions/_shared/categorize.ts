@@ -4,7 +4,7 @@
 
 export const CATEGORY_RULES: Array<[RegExp, string]> = [
   [/impuesto|iibb|iva rg|db\.rg|cr\.rg/i, 'Impuestos'],
-  [/rendimiento/i, 'Inversiones'],
+  [/rendimiento|bull market|broker/i, 'Inversiones'],
   [/su pago|pago en pesos|pago en usd/i, 'Pagos'],
   [/transferencia recibida/i, 'Ingresos'],
   [/transferencia enviada/i, 'Transferencias'],

@@ -18,17 +18,29 @@ jest.mock('react-chartjs-2', () => ({
 
 const supabase = require('../lib/supabaseClient').default
 
-function mockTx(data) {
+function mockTx(data, { overrides = [], customCategories = [] } = {}) {
   const eq = jest.fn().mockResolvedValue({ data: null, error: null })
   const update = jest.fn().mockReturnValue({ eq })
   const order = jest.fn().mockResolvedValue({ data, error: null })
   const select = jest.fn().mockReturnValue({ order })
-  supabase.from.mockImplementation((table) =>
-    table === 'transactions'
-      ? { select, update }
-      : {},
-  )
-  return { update, eq }
+
+  const ovUpsert = jest.fn().mockResolvedValue({ data: null, error: null })
+  const ovEq = jest.fn().mockResolvedValue({ data: overrides, error: null })
+  const ovSelect = jest.fn().mockReturnValue({ eq: ovEq })
+  const ccUpsert = jest.fn().mockResolvedValue({ data: null, error: null })
+  const ccEq = jest.fn().mockResolvedValue({ data: customCategories, error: null })
+  const ccSelect = jest.fn().mockReturnValue({ eq: ccEq })
+
+  const overridesTable = { select: ovSelect, upsert: ovUpsert }
+  const categoriesTable = { select: ccSelect, upsert: ccUpsert }
+
+  supabase.from.mockImplementation((table) => {
+    if (table === 'transactions') return { select, update }
+    if (table === 'merchant_overrides') return overridesTable
+    if (table === 'custom_categories') return categoriesTable
+    return {}
+  })
+  return { update, eq, ovUpsert, ccUpsert }
 }
 
 const txs = [
@@ -180,5 +192,63 @@ describe('Dashboard', () => {
       .slice(1)
       .map((r) => within(r).getAllByRole('cell')[1].textContent)
     expect(merchants).not.toContain('AMAZON')
+  })
+
+  it('guarda override recordado y lo aplica a todas las txs del comercio', async () => {
+    const { update, eq, ovUpsert } = mockTx(txs)
+    renderDashboard({ session: { user: { id: 'user-1' } } })
+    await screen.findByText('Débitos')
+
+    const [_, ...rows] = await rowsOfTable()
+    const mercadoRow = rows.find((r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE')
+    await userEvent.click(within(mercadoRow).getByRole('button', { name: /Compras/i }))
+
+    const rememberBox = await screen.findByRole('checkbox')
+    await userEvent.click(rememberBox)
+    expect(rememberBox).toBeChecked()
+    await userEvent.click(await screen.findByRole('button', { name: /Transferencias/i }))
+
+    expect(await screen.findByText('Guardado: MERCADO LIBRE → Transferencias')).toBeInTheDocument()
+    expect(update).toHaveBeenCalledWith({ category: 'Transferencias' })
+    expect(eq).toHaveBeenCalledWith('id', '1')
+    expect(ovUpsert).toHaveBeenCalledWith(
+      { user_id: 'user-1', merchant: 'MERCADO LIBRE', category: 'Transferencias' },
+      { onConflict: 'user_id,merchant' },
+    )
+  })
+
+  it('crea una categoría custom desde la fila', async () => {
+    const { ccUpsert } = mockTx(txs)
+    renderDashboard({ session: { user: { id: 'user-1' } } })
+    await screen.findByText('Débitos')
+
+    const [_, ...rows] = await rowsOfTable()
+    const mercadoRow = rows.find((r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE')
+    await userEvent.click(within(mercadoRow).getByRole('button', { name: /Compras/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /\+ Nueva categoría…/i }))
+    await userEvent.type(await screen.findByPlaceholderText('Nombre de la categoría…'), 'Hogar{Enter}')
+
+    expect(ccUpsert).toHaveBeenCalledWith(
+      { user_id: 'user-1', name: 'Hogar' },
+      { onConflict: 'user_id,name' },
+    )
+    expect(await screen.findByText('Categoría creada: Hogar')).toBeInTheDocument()
+  })
+
+  it('filtra categorías al buscar en el dropdown de la fila', async () => {
+    mockTx(txs)
+    renderDashboard({ session: { user: { id: 'user-1' } } })
+    await screen.findByText('Débitos')
+
+    const [_, ...rows] = await rowsOfTable()
+    const mercadoRow = rows.find((r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE')
+    await userEvent.click(within(mercadoRow).getByRole('button', { name: /Compras/i }))
+
+    const search = await screen.findByPlaceholderText('Buscar categoría…')
+    await userEvent.type(search, 'suscrip')
+
+    expect(screen.getByRole('button', { name: /✓ Suscripciones/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /✓ Transferencias/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Sin categoría/i })).toBeInTheDocument()
   })
 })

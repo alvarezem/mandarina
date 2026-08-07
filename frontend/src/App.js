@@ -222,6 +222,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
           <div key={view}>
             {view === 'costos' ? (
               <Dashboard
+                session={session}
                 summaryId={selectedId}
                 dark={dark}
                 refreshKey={refreshKey}

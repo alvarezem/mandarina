@@ -5,7 +5,7 @@
 update public.transactions
 set category = case
   when merchant ~* 'impuesto|iibb|iva rg|db\.rg|cr\.rg' then 'Impuestos'
-  when merchant ~* 'rendimiento' then 'Inversiones'
+  when merchant ~* 'rendimiento|bull market|broker' then 'Inversiones'
   when merchant ~* 'su pago|pago en pesos|pago en usd' then 'Pagos'
   when merchant ~* 'transferencia recibida' then 'Ingresos'
   when merchant ~* 'transferencia enviada' then 'Transferencias'

@@ -40,6 +40,28 @@ Deno.test('detectSummaryType: fallback PDF sin alias → Banco', () => {
   assertEquals(detectSummaryType('estado-cuenta-2026.pdf', true), 'Banco')
 })
 
+Deno.test('detectSummaryType: detecta la marca en el contenido del PDF', () => {
+  assertEquals(detectSummaryType('resumen.pdf', true, 'Resumen con vencimiento Visa OCASA'), 'VISA')
+  assertEquals(detectSummaryType('resumen.pdf', true, 'Resumen con vencimiento Mastercard Black'), 'MASTERCARD')
+  assertEquals(detectSummaryType('resumen.pdf', true, 'American Express tarjeta de credito'), 'AMEX')
+  assertEquals(detectSummaryType('resumen.pdf', true, 'Mercado Pago cuenta'), 'Billetera virtual')
+  assertEquals(detectSummaryType('resumen.pdf', true, 'resumen de cuenta comafi'), 'Banco')
+})
+
+Deno.test('detectSummaryType: el nombre tiene prioridad sobre el contenido', () => {
+  assertEquals(detectSummaryType('mastercard.pdf', true, 'Resumen Visa OCASA'), 'MASTERCARD')
+  assertEquals(detectSummaryType('visa.pdf', true, 'Mastercard Black'), 'VISA')
+})
+
+Deno.test('detectSummaryType: contenido sin alias → fallback Banco (PDF)', () => {
+  assertEquals(detectSummaryType('resumen.pdf', true, 'titular emmanuel arganaraz consolidado cierre'), 'Banco')
+  assertEquals(detectSummaryType('resumen.pdf', true, ''), 'Banco')
+})
+
+Deno.test('detectSummaryType: CSV sin alias se ignora el texto (filename-only)', () => {
+  assertEquals(detectSummaryType('resumen.csv', false, 'Mastercard Black'), null)
+})
+
 Deno.test('detectSummaryType: sin alias en CSV/XLSX → null', () => {
   assertEquals(detectSummaryType('resumen-julio.csv', false), null)
   assertEquals(detectSummaryType('Finance.xlsx', false), null)

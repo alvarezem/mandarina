@@ -7,13 +7,23 @@ const SUMMARY_TYPE_RULES: [RegExp, string][] = [
   [/banco|bbva|santander|galicia|nacion|provincia|frances|ciudad|hipotecario|macro|supervielle|patagonia|hsbc|comafi/, 'Banco'],
 ]
 
-export function detectSummaryType(fileName: string | null | undefined, pdf: boolean): string | null {
+export function detectSummaryType(
+  fileName: string | null | undefined,
+  pdf: boolean,
+  text?: string | null,
+): string | null {
   const n = (fileName ?? '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
   for (const [re, type] of SUMMARY_TYPE_RULES) {
     if (re.test(n)) return type
+  }
+  if (pdf && text) {
+    const t = String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    for (const [re, type] of SUMMARY_TYPE_RULES) {
+      if (re.test(t)) return type
+    }
   }
   return pdf ? 'Banco' : null
 }

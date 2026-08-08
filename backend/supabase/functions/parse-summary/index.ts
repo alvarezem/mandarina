@@ -79,9 +79,12 @@ Deno.serve(async (req) => {
   }
 
   let transactions
+  let pdfText = null
   try {
     if (isPdf(summary.file_name)) {
-      transactions = await extractPdfTransactions(blob)
+      const res = await extractPdfTransactions(blob)
+      transactions = res.txs
+      pdfText = res.text
     } else {
       const rows = await extractRows(summary, blob)
       transactions = mapRows(rows).map((t) => ({
@@ -133,7 +136,7 @@ Deno.serve(async (req) => {
   }
 
   const { error: metaError } = await supabase.from('card_summaries').update({
-    summary_type: detectSummaryType(summary.file_name, isPdf(summary.file_name)),
+    summary_type: detectSummaryType(summary.file_name, isPdf(summary.file_name), pdfText),
     ...detectPeriod(transactions),
   }).eq('id', summaryId)
   if (metaError) {
@@ -250,6 +253,10 @@ async function extractPdfTransactions(blob) {
   const pdf = await getDocumentProxy(buf)
   const { items } = await extractTextItems(pdf, { merge: false })
 
+  const text = items.length
+    ? items[0].map((it) => it.str ?? '').join(' ')
+    : ''
+
   const txs = []
   for (const pageItems of items) {
     const active = pageItems
@@ -300,7 +307,7 @@ async function extractPdfTransactions(blob) {
       })
     }
   }
-  return txs
+  return { txs, text }
 }
 
 function isPdf(fileName) {

@@ -22,8 +22,8 @@ jest.mock('react-chartjs-2', () => ({
 const supabase = require('../lib/supabaseClient').default
 
 const ITEMS = [
-  { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 9, quantity: 8, manual_price: null, sort_order: 0 },
-  { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, manual_price: null, sort_order: 1 },
+  { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 9, quantity: 8, sort_order: 0 },
+  { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, sort_order: 1 },
 ]
 
 function mockPlan(items = ITEMS, quotes = {}, rates = {}) {
@@ -129,8 +129,8 @@ describe('MarketQuotes', () => {
 
   it('ordena por % Meta desc por default y luego por precio desc', async () => {
     const items = [
-      { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, manual_price: null, sort_order: 0 },
-      { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, manual_price: null, sort_order: 1 },
+      { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, sort_order: 0 },
+      { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, sort_order: 1 },
     ]
     mockPlan(
       items,
@@ -224,7 +224,7 @@ describe('MarketQuotes', () => {
   })
 
   it('muestra aviso de sin datos cuando el histórico viene vacío', async () => {
-    const items = [...ITEMS, { id: '3', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 12, quantity: 17, manual_price: null, sort_order: 2 }]
+    const items = [...ITEMS, { id: '3', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 12, quantity: 17, sort_order: 2 }]
     mockPlan(items, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' }, KO: { price: 27320, changePct: 0.8, source: 'byma' } })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')

@@ -55,8 +55,8 @@ describe('InvestmentPlan', () => {
   it('lista los activos con sus cotizaciones y metas', async () => {
     mockPlan(
       [
-        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 9, quantity: 8, manual_price: null, sort_order: 0 },
-        { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, manual_price: null, sort_order: 1 },
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 9, quantity: 8, sort_order: 0 },
+        { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, sort_order: 1 },
       ],
       { VIST: 34920, QQQ: 56400 },
     )
@@ -99,8 +99,8 @@ describe('InvestmentPlan', () => {
   it('muestra la cobertura del presupuesto ordenada por faltante desc', async () => {
     mockPlan(
       [
-        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 50, quantity: 1, manual_price: null, sort_order: 0 },
-        { id: '2', symbol: 'SPY', name: 'SPY', asset_type: 'cedear', currency: 'ARS', target_weight: 50, quantity: 1, manual_price: null, sort_order: 1 },
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 50, quantity: 1, sort_order: 0 },
+        { id: '2', symbol: 'SPY', name: 'SPY', asset_type: 'cedear', currency: 'ARS', target_weight: 50, quantity: 1, sort_order: 1 },
       ],
       { VIST: 1000, SPY: 3000 },
     )
@@ -120,9 +120,9 @@ describe('InvestmentPlan', () => {
   it('cambia la prioridad de compra con el selector de estrategia', async () => {
     mockPlan(
       [
-        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 40, quantity: 1, manual_price: null, sort_order: 0 },
-        { id: '2', symbol: 'SPY', name: 'SPY', asset_type: 'cedear', currency: 'ARS', target_weight: 30, quantity: 0, manual_price: null, sort_order: 1 },
-        { id: '3', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 30, quantity: 0, manual_price: null, sort_order: 2 },
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 40, quantity: 1, sort_order: 0 },
+        { id: '2', symbol: 'SPY', name: 'SPY', asset_type: 'cedear', currency: 'ARS', target_weight: 30, quantity: 0, sort_order: 1 },
+        { id: '3', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 30, quantity: 0, sort_order: 2 },
       ],
       { VIST: 1000, SPY: 100, KO: 10 },
     )
@@ -151,8 +151,8 @@ describe('InvestmentPlan', () => {
   it('ordena por % Meta desc por default y luego por cantidad desc', async () => {
     mockPlan(
       [
-        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, manual_price: null, sort_order: 0 },
-        { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, manual_price: null, sort_order: 1 },
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, sort_order: 0 },
+        { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, sort_order: 1 },
       ],
       { VIST: 34920, QQQ: 56400 },
     )
@@ -168,7 +168,7 @@ describe('InvestmentPlan', () => {
   })
 
   it('muestra las columnas en el orden Precio · Meta · Actual · Gap · Cantidad · Valor · A comprar', async () => {
-    mockPlan([{ id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, manual_price: null, sort_order: 0 }], { VIST: 34920 })
+    mockPlan([{ id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, sort_order: 0 }], { VIST: 34920 })
     wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
     await screen.findByText('VIST')
 
@@ -189,8 +189,8 @@ describe('InvestmentPlan', () => {
   it('muestra A comprar solo en unidades', async () => {
     mockPlan(
       [
-        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 50, quantity: 1, manual_price: null, sort_order: 0 },
-        { id: '2', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 30, quantity: 1, manual_price: null, sort_order: 1 },
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 50, quantity: 1, sort_order: 0 },
+        { id: '2', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 30, quantity: 1, sort_order: 1 },
       ],
       { VIST: 34920, KO: 3500 },
     )

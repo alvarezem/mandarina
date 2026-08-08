@@ -40,7 +40,6 @@ const newDraft = () => ({
   currency: 'ARS',
   target_weight: '',
   quantity: '',
-  manual_price: '',
 })
 
 const PLAN_SORT_KEYS = new Set(['symbol', 'price', 'quantity', 'value', 'actualPct', 'target_weight', 'gap', 'buy'])
@@ -129,9 +128,9 @@ export default function InvestmentPlan({
   const rate = rates[rateMode]?.price || null
 
   const resolvePrice = (item) => {
-    if (item.symbol === 'MEP') return rates.MEP?.price ?? item.manual_price ?? null
-    if (item.symbol === 'CCL') return rates.CCL?.price ?? item.manual_price ?? null
-    return quotes[item.symbol]?.price ?? item.manual_price ?? null
+    if (item.symbol === 'MEP') return rates.MEP?.price ?? null
+    if (item.symbol === 'CCL') return rates.CCL?.price ?? null
+    return quotes[item.symbol]?.price ?? null
   }
 
   const builtItems = useMemo(() => {
@@ -224,7 +223,6 @@ export default function InvestmentPlan({
       currency: item.currency ?? 'ARS',
       target_weight: String(item.target_weight ?? ''),
       quantity: String(item.quantity ?? ''),
-      manual_price: item.manual_price != null ? String(item.manual_price) : '',
     })
   }
 
@@ -246,10 +244,6 @@ export default function InvestmentPlan({
     }
     const target = Math.min(100, Math.max(0, Number(draft.target_weight) || 0))
     const quantity = Math.max(0, Number(draft.quantity) || 0)
-    const manual =
-      draft.manual_price === '' || Number.isNaN(Number(draft.manual_price))
-        ? null
-        : Number(draft.manual_price)
     const payload = {
       symbol,
       name: draft.name.trim() || symbol,
@@ -257,7 +251,6 @@ export default function InvestmentPlan({
       currency: draft.currency,
       target_weight: target,
       quantity,
-      manual_price: manual,
     }
 
     if (editingId === '__new__') {
@@ -316,7 +309,6 @@ export default function InvestmentPlan({
     { key: 'name', label: 'Nombre', type: 'text' },
     { key: 'target_weight', label: 'Meta %', type: 'number' },
     { key: 'quantity', label: 'Cantidad', type: 'number' },
-    { key: 'manual_price', label: 'Precio manual', type: 'number' },
   ]
 
   return (

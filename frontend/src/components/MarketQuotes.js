@@ -167,9 +167,9 @@ export default function MarketQuotes({
   const rate = rates[rateMode]?.price || null
 
   const resolvePrice = (item) => {
-    if (item.symbol === 'MEP') return rates.MEP?.price ?? item.manual_price ?? null
-    if (item.symbol === 'CCL') return rates.CCL?.price ?? item.manual_price ?? null
-    return quotes[item.symbol]?.price ?? item.manual_price ?? null
+    if (item.symbol === 'MEP') return rates.MEP?.price ?? null
+    if (item.symbol === 'CCL') return rates.CCL?.price ?? null
+    return quotes[item.symbol]?.price ?? null
   }
 
   const builtItems = useMemo(() => {
@@ -360,7 +360,7 @@ export default function MarketQuotes({
             Aún no hay precios disponibles.
           </p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Actualizá las cotizaciones o cargá precios manuales desde el plan.
+            Actualizá las cotizaciones.
           </p>
         </div>
       ) : (

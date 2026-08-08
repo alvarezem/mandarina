@@ -171,7 +171,6 @@ Deno.serve(async (req) => {
     currency: 'ARS',
     target_weight: item.target,
     quantity: item.quantity,
-    manual_price: null,
     sort_order: i,
   }))
 
@@ -201,7 +200,6 @@ Deno.serve(async (req) => {
       currency: r.currency ?? 'ARS',
       target_weight: r.target_weight ?? 0,
       quantity: r.quantity ?? 0,
-      manual_price: r.manual_price ?? null,
       sort_order: r.sort_order ?? 0,
     }))
     if (rollbackRows.length > 0) {

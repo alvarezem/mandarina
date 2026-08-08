@@ -60,6 +60,19 @@ Backend:
 
 ---
 
+## FASE 0 — Baseline (verificación previa) — HECHA el 2026-08-08
+_Objetivo: suites verdes y estado reproducible registrado antes de tocar nada._
+
+**Criterio de éxito**: todo el stack funciona y queda documentado antes de Fase 1.
+
+Resultados verificados:
+- [x] **Frontend tests** — `cd frontend && CI=true npm test` → **14 suites / 149 tests verdes** (Node v26.5.1 + react-scripts 5.0.1). Warnings de `act(...)` en consola (no bloquean; a revisar en Vitest/Fase 6).
+- [x] **Frontend build** — `npm run build` → OK, salida en `build/` (main 219 kB gzip). **Hallazgo**: node_modules estaba **stale** (la sesión abortada de la migración lo dejó podado, `web-vitals` faltaba); se resolvió con `npm ci` (reinstala exacto desde el lockfile). Lección: node_modules no lo restaura git — tras abortar cambios, correr `npm ci`.
+- [x] **Backend Deno tests** — `cd backend/supabase/functions && deno test` → **26 tests verdes** (17 detection + 6 byma + 3 pool).
+- [x] **Tag de rollback** — `pre-fase1` sobre `13c60c6` (estado previo a Fase 1).
+
+---
+
 ## FASE 1 — Migración de toolchain: CRA → Vite + Vitest
 _Objetivo: plataforma moderna, eliminar las deps comprometidas, dev/build/test unificados._
 

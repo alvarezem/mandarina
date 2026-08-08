@@ -12,18 +12,18 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
   2. Análisis a fondo de frontend y backend (duplicación, god components, service role key, CORS, RLS).
   3. Se creó **`improvements.md`**: plan de saneamiento/refactor en **8 fases** con justificación de cada decisión (D1–D13).
   4. Se implementó **memoria de opencode capas 1+2**: `AGENTS.md` (briefing auto-cargado, reemplaza a `AGENT.md`), `HANDOFF.md` (este archivo), `.opencode/opencode.json` (`instructions`).
+  5. **FASE 0 de improvements.md HECHA** (2026-08-08): baseline verificado — frontend `CI=true npm test` 14 suites/149 tests verdes + `npm run build` OK (requirió `npm ci` por node_modules stale), backend `deno test` 26 tests verdes, tag **`pre-fase1`** en `13c60c6`. Documentado en `improvements.md` (sección FASE 0) y `DONE.md`.
 
 ## En progreso
 
-- **Nada** en ejecución en el código de la app.
+- **FASE 1 de `improvements.md`**: migración CRA → Vite + Vitest.
 
 ## Próximo paso sugerido
 
 - Ejecutar **Fase 1 de `improvements.md`**: migración CRA → Vite + Vitest
   (instala `vite`/`@vitejs/plugin-react`/`vitest`, crea `vite.config.js`, mueve
   `index.html`, renombra env vars `REACT_APP_*` → `VITE_*`, migra los 14 tests,
-  actualiza `vercel.json`). Antes de arrancar, `npm test` debe estar verde con
-  la suite actual.
+  actualiza `vercel.json`). Baseline ya verificado (149 frontend + 26 Deno).
 
 ## Decisiones tomadas (a no re-litigar sin motivo)
 

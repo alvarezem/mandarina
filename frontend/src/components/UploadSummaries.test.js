@@ -96,6 +96,73 @@ describe('UploadSummaries', () => {
     expect(toast).toHaveTextContent('Ya existe')
   })
 
+  it('sanitiza el nombre en el path de Storage y conserva el nombre original', async () => {
+    const upload = jest.fn().mockResolvedValue({ error: null })
+    const insert = jest.fn(() => ({
+      select: jest.fn(() => ({
+        single: jest.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
+      })),
+    }))
+    supabase.storage.from.mockReturnValue({ upload })
+    supabase.from.mockImplementation((table) => {
+      if (table === 'card_summaries') {
+        return {
+          select: jest.fn().mockReturnValue({ order: jest.fn().mockResolvedValue({ data: [], error: null }) }),
+          insert,
+        }
+      }
+      return {}
+    })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    const file = new File(['x'], 'Nación.csv', { type: 'text/csv' })
+    const input = document.querySelector('input[type="file"]')
+    await userEvent.upload(input, file)
+
+    await waitFor(() => expect(upload).toHaveBeenCalledWith('u1/Nacion.csv', file, { upsert: false }))
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: 'u1', file_name: 'Nación.csv', file_path: 'u1/Nacion.csv' }),
+    )
+    expect(await screen.findByText('Resumen Nación.csv subido')).toBeInTheDocument()
+  })
+
+  it('dedupe: avisa con toast cuando el path sanitizado ya existía', async () => {
+    const upload = jest.fn().mockResolvedValue({ error: null })
+    const insert = jest.fn(() => ({
+      select: jest.fn(() => ({
+        single: jest.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
+      })),
+    }))
+    supabase.storage.from.mockReturnValue({ upload })
+    supabase.from.mockImplementation((table) => {
+      if (table === 'card_summaries') {
+        return {
+          select: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: [
+                { id: 'a', file_name: 'Nacion.csv', file_path: 'u1/Nacion.csv', status: 'done', error: null, created_at: '2026-07-01' },
+              ],
+              error: null,
+            }),
+          }),
+          insert,
+        }
+      }
+      return {}
+    })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('Nacion.csv')
+    const file = new File(['x'], 'Nación.csv', { type: 'text/csv' })
+    const input = document.querySelector('input[type="file"]')
+    await userEvent.upload(input, file)
+
+    await waitFor(() => expect(upload).toHaveBeenCalledWith('u1/Nacion_1.csv', file, { upsert: false }))
+    expect(
+      await screen.findByText(/subido como Nacion_1\.csv \(ya existía un archivo con ese nombre\)/),
+    ).toBeInTheDocument()
+  })
+
   it('renombra un resumen existente', async () => {
     mockSummaries([{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }])
     const eq = jest.fn().mockResolvedValue({ error: null })

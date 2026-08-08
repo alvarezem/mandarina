@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { useToast } from './Toast'
+import { sanitizeStoragePath, uniqueStoragePath } from '../lib/sanitizeFileName'
 
 const STATUS = {
   pending: { label: 'Pendiente', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
@@ -57,19 +58,33 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
     await loadSummaries()
   }
 
+  const friendlyUploadError = (error) => {
+    const msg = String(error?.message ?? '')
+    if (/invalid.?key|invalid characters/i.test(msg)) {
+      return 'El nombre del archivo tiene caracteres no permitidos'
+    }
+    if (/already.?exists|already_exists/i.test(msg)) {
+      return 'Ya existe un resumen con ese nombre en tu cuenta'
+    }
+    return msg || 'No se pudo subir el archivo'
+  }
+
   const handleUpload = async (file) => {
     if (!file || uploading) return
     setUploading(true)
     setError(null)
 
-    const path = `${session.user.id}/${file.name}`
+    const existingPaths = (files ?? []).map((f) => f.file_path).filter(Boolean)
+    const path = uniqueStoragePath(session.user.id, file.name, existingPaths)
+    const renamed = path !== sanitizeStoragePath(session.user.id, file.name)
     const { error: uploadError } = await supabase.storage
       .from('card-resumes')
       .upload(path, file, { upsert: false })
 
     if (uploadError) {
-      setError(uploadError.message)
-      pushToast({ type: 'error', message: uploadError.message })
+      const friendly = friendlyUploadError(uploadError)
+      setError(friendly)
+      pushToast({ type: 'error', message: friendly })
       setUploading(false)
       return
     }
@@ -89,7 +104,10 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
       setError(insertError.message)
       pushToast({ type: 'error', message: insertError.message })
     } else {
-      pushToast({ type: 'success', message: `Resumen ${file.name} subido` })
+      const successMsg = renamed
+        ? `Resumen ${file.name} subido como ${path.split('/').pop()} (ya existía un archivo con ese nombre)`
+        : `Resumen ${file.name} subido`
+      pushToast({ type: 'success', message: successMsg })
       await loadSummaries()
       await parse(summary.id)
       onDataChanged?.()

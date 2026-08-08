@@ -3,6 +3,7 @@ import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { getDocumentProxy, extractTextItems } from 'https://esm.sh/unpdf@1.8.0'
 import { categorize } from '../_shared/categorize.ts'
+import { detectPeriod, detectSummaryType } from './detection.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -304,45 +305,6 @@ async function extractPdfTransactions(blob) {
 
 function isPdf(fileName) {
   return fileName.split('.').pop()?.toLowerCase() === 'pdf'
-}
-
-const SUMMARY_TYPE_RULES = [
-  [/visa/, 'VISA'],
-  [/mastercard|\bmaster\b|\bmc\b/, 'MASTERCARD'],
-  [/american ?express|\bamex\b/, 'AMEX'],
-  [/mercado ?pago|mercadopago|\bmp\b|uala|brubank|naranja ?x|lemon|binance|belo|crypto/, 'Billetera virtual'],
-  [/broker|bull|\biol\b|balanz|\bppi\b|cocos|adcap|del sur|socma|portfolio/, 'Broker'],
-  [/banco|bbva|santander|galicia|nacion|provincia|frances|ciudad|hipotecario|macro|supervielle|patagonia|hsbc|comafi/, 'Banco'],
-]
-
-function detectSummaryType(fileName, pdf) {
-  const n = (fileName ?? '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-  for (const [re, type] of SUMMARY_TYPE_RULES) {
-    if (re.test(n)) return type
-  }
-  return pdf ? 'Banco' : null
-}
-
-function detectPeriod(txs) {
-  const counts = new Map()
-  for (const t of txs) {
-    const key = String(t.date).slice(0, 7)
-    counts.set(key, (counts.get(key) ?? 0) + 1)
-  }
-  let best = null
-  let bestCount = 0
-  for (const [key, count] of counts) {
-    if (count > bestCount) {
-      best = key
-      bestCount = count
-    }
-  }
-  if (!best) return { period_month: null, period_year: null }
-  const [year, month] = best.split('-')
-  return { period_month: Number(month), period_year: Number(year) }
 }
 
 function detectSeparator(text) {

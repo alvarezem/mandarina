@@ -2,6 +2,7 @@
 // BYMA Open Data (open.bymadata.com.ar) para activos + DolarAPI para dólar MEP/CCL.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { bymaQuote, bymaHistory, bymaLastClose } from './byma.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,25 +15,7 @@ const json = (body, status, extraHeaders = {}) =>
     headers: { 'Content-Type': 'application/json', ...extraHeaders },
   })
 
-const UA =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
-
-const BYMA_QUOTE_URL =
-  'https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/fichatecnica/especies/cotizacion'
-
-const BYMA_HISTORY_URL =
-  'https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/chart/historical-series/history'
-
 const DOLARAPI_CASAS = { MEP: 'bolsa', CCL: 'contadoconliqui' }
-
-// Rango -> resolución BYMA + ventana en días. El 1D (intradía, res 1/5/60) no está
-// disponible en el endpoint gratuito (devuelve no_data), por eso no se incluye.
-const HISTORY_RANGES: Record<string, { res: string; days: number }> = {
-  '1S': { res: 'D', days: 7 },
-  '1M': { res: 'D', days: 35 },
-  '3M': { res: 'D', days: 95 },
-  '1A': { res: 'W', days: 370 },
-}
 
 const CACHE_TTL_MS = 60_000
 const HISTORY_CACHE_TTL_MS = 300_000
@@ -68,73 +51,6 @@ async function fetchRates() {
   return out
 }
 
-async function bymaQuote(symbol: string) {
-  const res = await fetch(BYMA_QUOTE_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': UA,
-      Accept: 'application/json',
-      Origin: 'https://open.bymadata.com.ar',
-    },
-    body: JSON.stringify({ symbol, settlementType: '2', 'Content-Type': 'application/json' }),
-  })
-  if (!res.ok) return null
-  const data = await res.json()
-  const quote = data?.data?.[0]
-  if (!quote) return null
-  const price = Number(quote.trade)
-  if (!Number.isFinite(price) || price <= 0) return null
-  const num = (v: unknown) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null)
-  const prev = num(quote.previousClosingPrice)
-  return {
-    price,
-    currency: quote.denominationCcy === 'USD' ? 'USD' : 'ARS',
-    changePct: prev != null ? (price / prev - 1) * 100 : null,
-    open: num(quote.openingPrice),
-    high: num(quote.tradingHighPrice),
-    low: num(quote.tradingLowPrice),
-    prevClose: prev,
-    closingPrice: num(quote.closingPrice),
-    tradeHour: typeof quote.tradeHour === 'string' ? quote.tradeHour.slice(0, 5) : null,
-    volume: Number(quote.tradeVolume) || null,
-    source: 'byma',
-  }
-}
-
-async function bymaHistory(symbol: string, range: string) {
-  const cfg = HISTORY_RANGES[range]
-  if (!cfg) return null
-  const to = Math.floor(Date.now() / 1000)
-  const from = to - cfg.days * 86400
-  const params = new URLSearchParams({
-    symbol: `${symbol} 24HS`,
-    resolution: cfg.res,
-    from: String(from),
-    to: String(to),
-  })
-  let data: any
-  try {
-    const res = await fetch(`${BYMA_HISTORY_URL}?${params.toString()}`, {
-      headers: { 'User-Agent': UA, Accept: 'application/json', Origin: 'https://open.bymadata.com.ar' },
-    })
-    if (!res.ok) return null
-    data = await res.json()
-  } catch {
-    return null
-  }
-  if (data?.s !== 'ok' || !Array.isArray(data?.t)) return { symbol, range, points: [], source: 'byma' }
-  const points = data.t.map((t: number, i: number) => ({
-    t: t * 1000,
-    o: Number(data.o?.[i]) || null,
-    h: Number(data.h?.[i]) || null,
-    l: Number(data.l?.[i]) || null,
-    c: Number(data.c?.[i]) || null,
-    v: Number(data.v?.[i]) || 0,
-  }))
-  return { symbol, range, points, source: 'byma' }
-}
-
 async function fetchHistory(symbol: string, range: string) {
   const clean = (symbol || '').toUpperCase().replace(/\s+/g, '')
   if (!clean || clean === 'MEP' || clean === 'CCL') return { symbol, range, points: [] }
@@ -144,10 +60,14 @@ async function fetchHistory(symbol: string, range: string) {
 
 async function fetchQuotes(symbols: string[]) {
   const results = await Promise.allSettled(
-    symbols.map((raw) => {
+    symbols.map(async (raw) => {
       const symbol = raw.toUpperCase().replace(/\s+/g, '')
-      if (!symbol || symbol === 'MEP' || symbol === 'CCL') return Promise.resolve(null)
-      return cached(`byma:${symbol}`, () => bymaQuote(symbol))
+      if (!symbol || symbol === 'MEP' || symbol === 'CCL') return null
+      const quote = await cached(`byma:${symbol}`, () => bymaQuote(symbol))
+      if (quote) return quote
+      // El endpoint de cotización puede devolver ceros fuera de horario bursátil
+      // (finde/feriado) o si cambia; caemos al último cierre del histórico.
+      return cached(`byma-last:${symbol}`, () => bymaLastClose(symbol), HISTORY_CACHE_TTL_MS)
     }),
   )
   const quotes: Record<string, unknown> = {}

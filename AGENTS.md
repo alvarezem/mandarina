@@ -1,0 +1,81 @@
+# Mandarina — Briefing de proyecto
+
+App personal para analizar el consumo de tarjetas de crédito. Subís resúmenes
+(CSV, XLSX, PDF) y obtenés un dashboard con gastos categorizados, plan de
+inversión y cotizaciones en vivo.
+
+## Stack
+
+- **Frontend**: React 19 + Create React App (react-scripts 5) — **migración a Vite + Vitest planeada en `improvements.md` Fase 1**. Chart.js + react-chartjs-2, Tailwind v4 (CLI genera `src/index.generated.css`, gitignored).
+- **Backend**: Supabase (Auth, PostgreSQL, Storage, Edge Functions en Deno/TS).
+- **Parseo**: `@std/csv`, SheetJS (`xlsx`), `unpdf` (PDF posicional BBVA).
+- **Despliegue**: frontend estático en Vercel (autodeploy desde rama `master`), DNS vía Cloudflare.
+
+## Estructura
+
+```
+frontend/
+  public/              # index.html (entry), favicon, logos, manifest
+  src/
+    index.js           # entry
+    App.js             # shell, auth, navegación
+    components/        # Auth, Dashboard, UploadSummaries, InvestmentPlan,
+                       #   MarketQuotes, Sidebar, Toast, Dropdown, Charts, Tour...
+    lib/               # supabaseClient, plan, analysis, history, planSort,
+                       #   sanitizeFileName (lógica pura con tests)
+    hooks/             # useCountUp
+    *.test.js          # tests Vitest/Jest junto al código
+backend/
+  supabase/
+    migrations/        # SQL 0001..0012 (esquema + RLS + storage)
+    functions/         # Edge Functions Deno: parse-summary, import-plan, quotes
+    templates/         # emails con marca (13 templates HTML)
+    config.toml        # config local de Supabase
+examples/              # muestras reales de usuario (GITIGNORED — no subir)
+```
+
+## Comandos
+
+```bash
+# Frontend
+cd frontend && npm install
+npm start            # dev server :3000 (tailwind watch + vite/CRA)
+npm test             # suite de tests (Vitest; hoy Jest vía react-scripts)
+npm run build        # build:css + build de producción
+npm run lint         # (Fase 7 de improvements.md, cuando exista)
+
+# Backend / Edge Functions
+cd backend/supabase/functions
+deno test            # suites: parse-summary/detection_test, quotes/byma_test, quotes/pool_test
+deno check <funcion>/index.ts
+
+# Supabase (desde backend/)
+supabase link --project-ref qfjehqaeagskxjulzhgx
+supabase db push
+supabase functions deploy parse-summary|import-plan|quotes
+```
+
+## Índice de memoria
+
+**Leer en este orden según la tarea:**
+1. **`HANDOFF.md`** — estado de la última sesión: qué se hizo, qué sigue. **LEER PRIMERO SIEMPRE**.
+2. **`TODO.md`** — roadmap y pendientes vivos.
+3. **`DONE.md`** — historial de lo completado y decisiones de producto.
+4. **`improvements.md`** — plan de saneamiento/refactor en 8 fases. **LEER ANTES de tocar toolchain, seguridad, o estructura.** Contiene la justificación de cada decisión (Vite, Vitest, rotación de service role, CI, etc.).
+5. **`compromised.md`** — dependencias PROHIBIDAS por vulnerabilidades. Nunca instalar; verificar con `npm ls`/lockfile.
+6. **`README.md`** — descripción general y stack.
+
+## Reglas de conducta
+
+1. **Pensar antes de codear.** No asumir. No ocultar confusión. Exponer tradeoffs. Si hay interpretaciones múltiples, presentarlas. Si algo no está claro, parar y preguntar.
+2. **Simplicidad primero.** Código mínimo que resuelve el problema. Nada especulativo. Si 200 líneas pueden ser 50, reescribir.
+3. **Cambios quirúrgicos.** Tocar solo lo necesario. No "mejorar" código adyacente. Si hay código muerto no relacionado, mencionarlo — no borrarlo sin permiso. Cada línea cambiada debe trazar a la petición del usuario.
+4. **Ejecución por objetivos.** Transformar tareas en metas verificables. Para tareas multi-paso, declarar un plan breve con check de verificación por paso.
+
+## Recordatorio de memoria (re-evaluar)
+
+Cuando surjan procedimientos repetidos (ej. deploy, migraciones), sesiones
+profundas, o necesidad de aislar dominios, evaluar implementar:
+- **Skills** on-demand (`.opencode/skills/*/SKILL.md`) para procedimientos repetitivos.
+- **Subagentes** de dominio (`.opencode/agent/*.md`): frontend, backend, reviewer.
+- **DECISIONS.md** (ADR ligeros) para el log de decisiones técnicas.

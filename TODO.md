@@ -16,6 +16,7 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 - **Móvil (`<lg`)** — diferido hasta estabilizar escritorio. La navegación móvil actual (bottom nav con logo central + header con solo título) convive con el nuevo header desktop ([≡] + logo Mandarina están `hidden lg:flex`). Pendiente estilo YouTube mobile: el hamburguesa debería abrir un **drawer deslizante** con Costos/Inversiones/Resúmenes; decidir si reemplaza o convive con la bottom nav.
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 - **Asistente IA "Mandi"** — integrar un asistente que responda preguntas sobre el consumo usando el análisis de resúmenes.
+- **Memoria de opencode — evaluar capas 3-5** — hoy están las capas 1+2 (`AGENTS.md` + `HANDOFF.md`, auto-cargadas vía `.opencode/opencode.json`). Cuando surja necesidad, implementar: **skills** on-demand para procedimientos repetidos (deploy, migraciones), **subagentes** de dominio (frontend/backend/reviewer), y **DECISIONS.md** (ADR ligeros). El agente debe señalar cuándo valen la pena.
 
 ## ⏸️ En hold (refactor / limpieza — posponer hasta estabilizar)
 

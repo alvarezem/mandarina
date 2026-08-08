@@ -64,6 +64,7 @@ describe('App', () => {
 
   beforeEach(() => {
     localStorage.clear()
+    localStorage.setItem('mandarina:tour:u1', '1')
     authListener = jest.fn()
     supabase.auth.onAuthStateChange.mockImplementation((cb) => {
       authListener = cb
@@ -289,5 +290,70 @@ describe('App', () => {
     const cardsGrid = container.querySelector('.grid.grid-cols-2')
     expect(cardsGrid).not.toBeNull()
     expect(cardsGrid.className).toContain('lg:grid-cols-3')
+  })
+
+  describe('OnboardingTour', () => {
+    it('abre el tutorial automáticamente la primera vez (sin flag) y bloquea el scroll', async () => {
+      localStorage.removeItem('mandarina:tour:u1')
+      const { container } = render(<App />)
+
+      expect(await screen.findByRole('dialog', { name: /Guía de Mandarina/i })).toBeInTheDocument()
+      const main = container.querySelector('main')
+      expect(main.className).toContain('overflow-hidden')
+    })
+
+    it('el ícono "Ver guía" reabre el tutorial', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+      expect(screen.queryByRole('dialog', { name: /Guía de Mandarina/i })).not.toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Ver guía' }))
+
+      expect(await screen.findByRole('dialog', { name: /Guía de Mandarina/i })).toBeInTheDocument()
+    })
+
+    it('Omitir cierra el tutorial y guarda el flag para no volver a mostrarlo', async () => {
+      localStorage.removeItem('mandarina:tour:u1')
+      const { container } = render(<App />)
+      const dialog = await screen.findByRole('dialog', { name: /Guía de Mandarina/i })
+
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Omitir' }))
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(localStorage.getItem('mandarina:tour:u1')).toBe('1')
+      const main = container.querySelector('main')
+      expect(main.className).toContain('overflow-y-auto')
+    })
+
+    it('navega por los pasos con Siguiente/Anterior y finaliza', async () => {
+      localStorage.removeItem('mandarina:tour:u1')
+      render(<App />)
+      const dialog = await screen.findByRole('dialog', { name: /Guía de Mandarina/i })
+      expect(within(dialog).getByRole('heading', { name: /Bienvenido/i })).toBeInTheDocument()
+
+      await userEvent.click(within(dialog).getByRole('button', { name: /Siguiente/i }))
+      expect(within(dialog).getByRole('heading', { name: 'Costos' })).toBeInTheDocument()
+
+      await userEvent.click(within(dialog).getByRole('button', { name: /Anterior/i }))
+      expect(within(dialog).getByRole('heading', { name: /Bienvenido/i })).toBeInTheDocument()
+
+      for (let i = 0; i < 5; i += 1) {
+        await userEvent.click(within(dialog).getByRole('button', { name: /Siguiente|Finalizar/i }))
+      }
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Finalizar' }))
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(localStorage.getItem('mandarina:tour:u1')).toBe('1')
+    })
+
+    it('abre el tutorial en el primer login de una cuenta nueva', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+      expect(screen.queryByRole('dialog', { name: /Guía de Mandarina/i })).not.toBeInTheDocument()
+
+      signIn({ id: 'u2', email: 'nuevo@b.com' })
+
+      expect(await screen.findByRole('dialog', { name: /Guía de Mandarina/i })).toBeInTheDocument()
+    })
   })
 })

@@ -7,8 +7,12 @@ import InvestmentsView from './components/InvestmentsView'
 import ThemeToggle from './components/ThemeToggle'
 import Sidebar, { Logo, NAV_ITEMS } from './components/Sidebar'
 import ToastProvider, { useToast } from './components/Toast'
+import OnboardingTour from './components/OnboardingTour'
 
 const VIEW_TITLES = { costos: 'Costos', inversiones: 'Inversiones', resumenes: 'Resúmenes' }
+
+const TOUR_VERSION = 1
+const tourSeenKey = (userId) => `mandarina:tour:${userId}`
 
 const isFirstLogin = (user) => {
   if (!user?.last_sign_in_at) return true
@@ -111,6 +115,23 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
   })
   const mainRef = useRef(null)
 
+  const [tourOpen, setTourOpen] = useState(false)
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setTourOpen(false)
+      return
+    }
+    if (localStorage.getItem(tourSeenKey(session.user.id)) === String(TOUR_VERSION)) return
+    setTourOpen(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
+
+  const closeTour = () => {
+    if (session?.user?.id) localStorage.setItem(tourSeenKey(session.user.id), String(TOUR_VERSION))
+    setTourOpen(false)
+  }
+
   useEffect(() => {
     if (!greeting) return
     pushToast({
@@ -201,6 +222,21 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
           {VIEW_TITLES[view]}
         </span>
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setTourOpen(true)}
+            aria-label="Ver guía"
+            title="Ver guía de Mandarina"
+            className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-brand-800 dark:hover:bg-brand-950/40 dark:hover:text-brand-400"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+              />
+            </svg>
+          </button>
           <ThemeToggle dark={dark} onToggle={() => setDark((d) => !d)} />
           <span className="hidden max-w-48 truncate text-sm text-slate-500 dark:text-slate-400 sm:block">
             {session.user.email}
@@ -218,7 +254,10 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
       <div className="flex min-h-0 flex-1">
         <Sidebar view={view} onNavigate={navigate} expanded={railExpanded} />
 
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8">
+        <main
+          ref={mainRef}
+          className={`flex-1 p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8 ${tourOpen ? 'overflow-hidden' : 'overflow-y-auto'}`}
+        >
           <div key={view}>
             {view === 'costos' ? (
               <Dashboard
@@ -271,6 +310,8 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
           </button>
         </div>
       </nav>
+
+      <OnboardingTour open={tourOpen} onClose={closeTour} />
     </div>
   )
 }

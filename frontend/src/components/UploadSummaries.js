@@ -9,6 +9,13 @@ const STATUS = {
   error: { label: 'Error', className: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300' },
 }
 
+const TYPES = ['VISA', 'MASTERCARD', 'AMEX', 'Banco', 'Billetera virtual', 'Broker', 'Otro']
+
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+const NOW_YEAR = new Date().getFullYear()
+const YEARS = Array.from({ length: 8 }, (_, i) => NOW_YEAR - 6 + i)
+
 export default function UploadSummaries({ session, selectedId, onSelect, onDataChanged }) {
   const inputRef = useRef(null)
   const [files, setFiles] = useState([])
@@ -18,6 +25,8 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
   const [editingId, setEditingId] = useState(null)
   const [confirmingId, setConfirmingId] = useState(null)
   const [draft, setDraft] = useState('')
+  const [metaEditingId, setMetaEditingId] = useState(null)
+  const [metaDraft, setMetaDraft] = useState({ type: '', month: 1, year: 2026 })
   const pushToast = useToast()
 
   const loadSummaries = useCallback(async () => {
@@ -144,6 +153,56 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
   const submitRename = (e) => {
     e.preventDefault()
     saveRename()
+  }
+
+  const startMetaEdit = (file) => {
+    const now = new Date()
+    setEditingId(null)
+    setConfirmingId(null)
+    setMetaEditingId(file.id)
+    setMetaDraft({
+      type: file.summary_type ?? '',
+      month: file.period_month ?? now.getMonth() + 1,
+      year: file.period_year ?? now.getFullYear(),
+    })
+  }
+
+  const cancelMetaEdit = () => {
+    setMetaEditingId(null)
+    setMetaDraft({ type: '', month: 1, year: 2026 })
+  }
+
+  const saveMeta = async () => {
+    const id = metaEditingId
+    if (id === null) return
+    setMetaEditingId(null)
+    const original = files.find((f) => f.id === id)
+    if (!original) return
+
+    const payload = {
+      summary_type: metaDraft.type || null,
+      period_month: metaDraft.month,
+      period_year: metaDraft.year,
+    }
+    const { error } = await supabase.from('card_summaries').update(payload).eq('id', id)
+    if (error) {
+      pushToast({ type: 'error', message: error.message })
+      return
+    }
+    setFiles((list) => list.map((f) => (f.id === id ? { ...f, ...payload } : f)))
+    pushToast({ type: 'success', message: 'Clasificación actualizada' })
+  }
+
+  const submitMeta = (e) => {
+    e.preventDefault()
+    saveMeta()
+  }
+
+  const metaLabel = (file) => {
+    const parts = []
+    if (file.summary_type) parts.push(file.summary_type)
+    if (file.period_month) parts.push(`${MONTHS[file.period_month - 1] ?? file.period_month} ${file.period_year}`)
+    return parts.join(' · ')
   }
 
   return (
@@ -314,7 +373,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                           <button
                             type="button"
                             onClick={() => startDeleteConfirm(f)}
-                            disabled={editingId !== null}
+                            disabled={editingId !== null || metaEditingId !== null}
                             aria-label={`Eliminar ${f.file_name}`}
                             title="Eliminar"
                             className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
@@ -330,7 +389,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                           <button
                             type="button"
                             onClick={() => startRename(f)}
-                            disabled={editingId !== null}
+                            disabled={editingId !== null || metaEditingId !== null}
                             aria-label={`Renombrar ${f.file_name}`}
                             title="Renombrar"
                             className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
@@ -356,6 +415,90 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                         </div>
                         {f.status === 'error' && f.error && (
                           <p className="mt-1 truncate text-xs text-red-600 dark:text-red-400">{f.error}</p>
+                        )}
+                        {metaEditingId === f.id ? (
+                          <form onSubmit={submitMeta} className="mt-2 flex flex-wrap items-center gap-1.5">
+                            <select
+                              value={metaDraft.type}
+                              onChange={(e) => setMetaDraft((d) => ({ ...d, type: e.target.value }))}
+                              aria-label="Tipo de resumen"
+                              className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                            >
+                              <option value="">Tipo…</option>
+                              {TYPES.map((t) => (
+                                <option key={t} value={t}>{t}</option>
+                              ))}
+                            </select>
+                            <select
+                              value={metaDraft.month}
+                              onChange={(e) => setMetaDraft((d) => ({ ...d, month: Number(e.target.value) }))}
+                              aria-label="Mes del período"
+                              className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                            >
+                              {MONTHS.map((m, i) => (
+                                <option key={m} value={i + 1}>{m}</option>
+                              ))}
+                            </select>
+                            <select
+                              value={metaDraft.year}
+                              onChange={(e) => setMetaDraft((d) => ({ ...d, year: Number(e.target.value) }))}
+                              aria-label="Año del período"
+                              className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                            >
+                              {YEARS.map((y) => (
+                                <option key={y} value={y}>{y}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="submit"
+                              aria-label="Guardar clasificación"
+                              className="shrink-0 rounded-md p-1.5 text-emerald-600 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={cancelMetaEdit}
+                              aria-label="Cancelar clasificación"
+                              className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </form>
+                        ) : (
+                          <div className="mt-1.5 flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => startMetaEdit(f)}
+                              disabled={editingId !== null || metaEditingId !== null}
+                              aria-label={`Clasificar ${f.file_name}`}
+                              title="Clasificar"
+                              className="shrink-0 rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-brand-400"
+                            >
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"
+                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+                              </svg>
+                            </button>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                                metaLabel(f)
+                                  ? 'bg-brand-100 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300'
+                                  : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
+                              }`}
+                            >
+                              {metaLabel(f) || 'Sin clasificar'}
+                            </span>
+                          </div>
                         )}
                       </>
                     )}

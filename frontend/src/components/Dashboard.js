@@ -229,6 +229,24 @@ function fileOf(t) {
   return Array.isArray(cs) ? cs[0]?.file_name ?? null : cs.file_name ?? null
 }
 
+const SUMMARY_MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+function SummaryMeta({ t }) {
+  const cs = t.card_summaries
+  if (!cs) return null
+  const m = Array.isArray(cs) ? cs[0] : cs
+  if (!m) return null
+  const parts = []
+  if (m.summary_type) parts.push(m.summary_type)
+  if (m.period_month) parts.push(`${SUMMARY_MONTHS[m.period_month - 1] ?? m.period_month} ${m.period_year}`)
+  if (parts.length === 0) return null
+  return (
+    <span className="mt-0.5 inline-flex w-fit items-center rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
+      {parts.join(' · ')}
+    </span>
+  )
+}
+
 function CountUp({ value, format }) {
   const v = useCountUp(value, { duration: 1100 })
   return format(v)
@@ -334,7 +352,7 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
     ;(async () => {
       const { data, error } = await supabase
         .from('transactions')
-        .select('*, card_summaries(file_name)')
+        .select('*, card_summaries(file_name, summary_type, period_month, period_year)')
         .order('date', { ascending: false })
       if (!active) return
       setError(error ? error.message : null)
@@ -721,7 +739,12 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
                       <td className="px-4 py-3 text-sm text-slate-600 tabular-nums dark:text-slate-400">{t.date}</td>
                       <td className="px-4 py-3 text-sm text-slate-800 dark:text-slate-200">{t.merchant}</td>
                       {!summaryId && (
-                        <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{fileOf(t) ?? '—'}</td>
+                        <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                          <span className="flex flex-col items-start gap-0.5">
+                            <span>{fileOf(t) ?? '—'}</span>
+                            <SummaryMeta t={t} />
+                          </span>
+                        </td>
                       )}
                       <td className="px-4 py-3">
                         <CategoryCell tx={t} options={allCategoryOptions} onChange={changeCategory} onAddCustom={addCustomCategory} />

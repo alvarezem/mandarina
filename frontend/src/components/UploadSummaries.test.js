@@ -247,4 +247,82 @@ describe('UploadSummaries', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent('denied')
   })
+
+  it('muestra el badge de tipo y período (y "Sin clasificar" si no hay metadata)', async () => {
+    mockSummaries([
+      { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 },
+      { id: 'b', file_name: 'mc-junio.csv', status: 'done', error: null, created_at: '2026-06-01' },
+    ])
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    expect(await screen.findByText('VISA · jul 2026')).toBeInTheDocument()
+    expect(screen.getByText('Sin clasificar')).toBeInTheDocument()
+  })
+
+  it('edita el tipo y período de un resumen', async () => {
+    mockSummaries([
+      { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 },
+    ])
+    const eq = jest.fn().mockResolvedValue({ error: null })
+    const update = jest.fn().mockReturnValue({ eq })
+    supabase.from.mockImplementation((table) => {
+      if (table === 'card_summaries') {
+        return {
+          select: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
+              error: null,
+            }),
+          }),
+          update,
+        }
+      }
+      return {}
+    })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VISA · jul 2026')
+
+    await userEvent.click(screen.getByRole('button', { name: /Clasificar visa-julio/ }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Tipo de resumen/i }), 'Broker')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Mes del período/i }), '8')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Año del período/i }), '2026')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar clasificación' }))
+
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith({ summary_type: 'Broker', period_month: 8, period_year: 2026 }),
+    )
+    expect(eq).toHaveBeenCalledWith('id', 'a')
+    expect(await screen.findByText('Broker · ago 2026')).toBeInTheDocument()
+  })
+
+  it('cancela la edición de metadata sin guardar', async () => {
+    mockSummaries([
+      { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 },
+    ])
+    const update = jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) })
+    supabase.from.mockImplementation((table) => {
+      if (table === 'card_summaries') {
+        return {
+          select: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
+              error: null,
+            }),
+          }),
+          update,
+        }
+      }
+      return {}
+    })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VISA · jul 2026')
+
+    await userEvent.click(screen.getByRole('button', { name: /Clasificar visa-julio/ }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Tipo de resumen/i }), 'Broker')
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar clasificación' }))
+
+    expect(update).not.toHaveBeenCalled()
+    expect(screen.getByText('VISA · jul 2026')).toBeInTheDocument()
+  })
 })

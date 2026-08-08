@@ -251,4 +251,22 @@ describe('Dashboard', () => {
     expect(screen.queryByRole('button', { name: /✓ Transferencias/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Sin categoría/i })).toBeInTheDocument()
   })
+
+  it('muestra el badge de tipo y período en la columna Resumen', async () => {
+    mockTx([
+      {
+        id: '1',
+        date: '2026-07-01',
+        merchant: 'MERCADO LIBRE',
+        category: 'Compras',
+        currency: 'ARS',
+        amount: -1500,
+        summary_id: 's1',
+        card_summaries: { file_name: 'visa-julio.pdf', summary_type: 'VISA', period_month: 7, period_year: 2026 },
+      },
+    ])
+    renderDashboard({ session: { user: { id: 'user-1' } } })
+    await screen.findByText('Débitos')
+    expect(await screen.findByText('VISA · jul 2026')).toBeInTheDocument()
+  })
 })

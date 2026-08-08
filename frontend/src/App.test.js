@@ -355,5 +355,20 @@ describe('App', () => {
 
       expect(await screen.findByRole('dialog', { name: /Guía de Mandarina/i })).toBeInTheDocument()
     })
+
+    it('los íconos de navegación y la guía llevan el marcador data-tour', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
+      expect(within(bottom).getByRole('button', { name: 'Costos' }).getAttribute('data-tour')).toBe('costos')
+      expect(within(bottom).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour')).toBe('inversiones')
+      expect(within(bottom).getByRole('button', { name: 'Resúmenes' }).getAttribute('data-tour')).toBe('resumenes')
+
+      const rail = screen.getByRole('navigation', { name: 'Navegación' })
+      expect(within(rail).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour')).toBe('inversiones')
+
+      expect(screen.getByRole('button', { name: 'Ver guía' }).getAttribute('data-tour')).toBe('help')
+    })
   })
 })

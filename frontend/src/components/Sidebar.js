@@ -70,6 +70,7 @@ export default function Sidebar({ view, onNavigate, expanded }) {
             aria-label={item.label}
             aria-current={active ? 'page' : undefined}
             title={item.label}
+            data-tour={item.key}
             className={`relative flex h-10 items-center gap-3 rounded-xl transition active:scale-[0.98] ${
               expanded ? 'w-full px-3 justify-start' : 'w-10 justify-center'
             } ${

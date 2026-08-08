@@ -217,6 +217,9 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
             <Logo className="h-8 w-8" />
             <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Mandarina</span>
           </button>
+          <span className="hidden border-l border-slate-200 pl-3 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500 xl:block">
+            a tu plata, sacale todo el jugo
+          </span>
         </div>
         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 lg:hidden">
           {VIEW_TITLES[view]}
@@ -227,6 +230,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
             onClick={() => setTourOpen(true)}
             aria-label="Ver guía"
             title="Ver guía de Mandarina"
+            data-tour="help"
             className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-brand-800 dark:hover:bg-brand-950/40 dark:hover:text-brand-400"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
@@ -290,6 +294,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
                 type="button"
                 onClick={() => navigate(item.key)}
                 aria-current={active ? 'page' : undefined}
+                data-tour={item.key}
                 className={`flex flex-col items-center justify-center gap-0.5 pb-2 active:scale-[0.98] ${
                   active ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
                 }`}

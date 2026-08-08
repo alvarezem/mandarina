@@ -52,6 +52,7 @@ export default function MarketQuotes({
   rateMode = 'CCL',
   sort: sortProp,
   onSort: onSortProp,
+  onMarketClosed = () => {},
 }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -156,6 +157,7 @@ export default function MarketQuotes({
         if (cancelled || !data) return
         setQuotes(data.quotes || {})
         setRates((r) => ({ ...r, ...(data.rates || {}) }))
+        onMarketClosed(data.marketClosed === true)
       })
       .catch(() => {})
     return () => {
@@ -261,6 +263,7 @@ export default function MarketQuotes({
         if (!data) return
         setQuotes(data.quotes || {})
         setRates((r) => ({ ...r, ...(data.rates || {}) }))
+        onMarketClosed(data.marketClosed === true)
         pushToast({ type: 'success', message: 'Precios actualizados' })
       })
       .catch(() => pushToast({ type: 'error', message: 'No se pudieron actualizar los precios' }))

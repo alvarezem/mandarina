@@ -3,6 +3,7 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { bymaQuote, bymaHistory, bymaLastClose } from './byma.ts'
+import { mapWithConcurrency } from './pool.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,6 +27,16 @@ async function cached(key: string, fn: () => Promise<unknown>, ttl = CACHE_TTL_M
   if (hit && Date.now() - hit.at < ttl) return hit.value
   const value = await fn()
   cache.set(key, { at: Date.now(), value })
+  return value
+}
+
+// Igual que `cached` pero solo guarda resultados truthy: un fallback que falla
+// no se cachea 5 minutos, así la próxima consulta reintenta contra BYMA.
+async function cachedTruthy(key: string, fn: () => Promise<unknown>, ttl = CACHE_TTL_MS) {
+  const hit = cache.get(key)
+  if (hit && Date.now() - hit.at < ttl && hit.value) return hit.value
+  const value = await fn()
+  if (value) cache.set(key, { at: Date.now(), value })
   return value
 }
 
@@ -58,23 +69,34 @@ async function fetchHistory(symbol: string, range: string) {
   return res ?? { symbol, range, points: [] }
 }
 
+async function resolveSymbol(symbol: string) {
+  const quote = await cached(`byma:${symbol}`, () => bymaQuote(symbol))
+  if (quote) return quote
+  // El endpoint de cotización puede devolver ceros fuera de horario bursátil
+  // (finde/feriado) o si cambia; caemos al último cierre del histórico.
+  return cachedTruthy(`byma-last:${symbol}`, () => bymaLastClose(symbol), HISTORY_CACHE_TTL_MS)
+}
+
+async function resolveWithRetry(symbol: string) {
+  const first = await resolveSymbol(symbol)
+  if (first) return first
+  await new Promise((r) => setTimeout(r, 400))
+  return resolveSymbol(symbol)
+}
+
+// BYMA throttlea las requests en paralelo (mide ~6-7 máx), así que resolvemos
+// con un pool de pocas requests a la vez + reintento único ante fallo.
 async function fetchQuotes(symbols: string[]) {
-  const results = await Promise.allSettled(
-    symbols.map(async (raw) => {
-      const symbol = raw.toUpperCase().replace(/\s+/g, '')
-      if (!symbol || symbol === 'MEP' || symbol === 'CCL') return null
-      const quote = await cached(`byma:${symbol}`, () => bymaQuote(symbol))
-      if (quote) return quote
-      // El endpoint de cotización puede devolver ceros fuera de horario bursátil
-      // (finde/feriado) o si cambia; caemos al último cierre del histórico.
-      return cached(`byma-last:${symbol}`, () => bymaLastClose(symbol), HISTORY_CACHE_TTL_MS)
-    }),
-  )
+  const values = await mapWithConcurrency(symbols, 2, async (raw) => {
+    const symbol = raw.toUpperCase().replace(/\s+/g, '')
+    if (!symbol || symbol === 'MEP' || symbol === 'CCL') return null
+    return resolveWithRetry(symbol).catch(() => null)
+  })
   const quotes: Record<string, unknown> = {}
   symbols.forEach((raw, i) => {
     const symbol = raw.toUpperCase().replace(/\s+/g, '')
     if (!symbol) return
-    quotes[symbol] = results[i].status === 'fulfilled' ? results[i].value : null
+    quotes[symbol] = values[i] ?? null
   })
   return quotes
 }
@@ -115,5 +137,12 @@ Deno.serve(async (req) => {
   ])
   const out: Record<string, unknown> = { quotes, rates }
   if (historyResult) out.history = historyResult
+  // Mercado cerrado = todos los precios resueltos vienen del último cierre
+  // (fallback histórico). Si hay algún vivo (byma) está abierto; null si no
+  // hubo ningún precio y no podemos saberlo.
+  const priced = (Object.values(quotes) as Array<{ price?: unknown; source?: string } | null>).filter(
+    (q) => q && q.price != null,
+  )
+  out.marketClosed = priced.length > 0 ? priced.every((q) => q?.source === 'byma-history') : null
   return json(out, 200, corsHeaders)
 })

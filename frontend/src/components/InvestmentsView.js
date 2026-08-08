@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import InvestmentPlan from './InvestmentPlan'
 import MarketQuotes from './MarketQuotes'
+import MarketClosedNotice from './MarketClosedNotice'
 import { loadPlanSort, savePlanSort, SORT_DEFAULT_DIR } from '../lib/planSort'
 
 const TABS = [
@@ -13,6 +14,8 @@ export default function InvestmentsView({ session }) {
   const [display, setDisplay] = useState('ARS')
   const [rateMode, setRateMode] = useState('CCL')
   const [sort, setSort] = useState(() => loadPlanSort(session?.user?.id))
+  const [marketClosed, setMarketClosed] = useState(false)
+  const [noticeDismissed, setNoticeDismissed] = useState(false)
 
   const onSort = (key) =>
     setSort((s) => {
@@ -22,10 +25,12 @@ export default function InvestmentsView({ session }) {
       return next
     })
 
-  const shared = { display, setDisplay, rateMode, setRateMode, sort, onSort }
+  const shared = { display, setDisplay, rateMode, setRateMode, sort, onSort, onMarketClosed: setMarketClosed }
 
   return (
     <div className="mx-auto max-w-4xl animate-fade-in-up">
+      {marketClosed && !noticeDismissed && <MarketClosedNotice onClose={() => setNoticeDismissed(true)} />}
+
       <div
         role="tablist"
         aria-label="Secciones de Inversiones"

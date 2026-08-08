@@ -33,7 +33,13 @@ export async function bymaQuote(symbol: string) {
     body: JSON.stringify({ symbol, settlementType: '2', 'Content-Type': 'application/json' }),
   })
   if (!res.ok) return null
-  const data = await res.json()
+  let data: any
+  try {
+    data = await res.json()
+  } catch {
+    // respuesta no-JSON (HTML de error, etc.) → null, y caemos al fallback
+    return null
+  }
   const quote = data?.data?.[0]
   if (!quote) return null
   const price = Number(quote.trade)

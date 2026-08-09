@@ -6,10 +6,10 @@ inversión y cotizaciones en vivo.
 
 ## Stack
 
-- **Frontend**: React 19 + Vite 8 + Vitest 4 (migrado desde CRA en `improvements.md` Fase 1). Chart.js + react-chartjs-2, Tailwind v4 (CLI genera `src/index.generated.css`, gitignored).
+- **Frontend**: React 19 + Vite 8 + Vitest 4 (migrado desde CRA en `improvements.md` Fase 1). Chart.js + react-chartjs-2, Tailwind v4 (CLI genera `src/index.generated.css`, gitignored). Código en JS (JSX en `.js`); migrar a TypeScript quedó descartado por ahora (el backend sí es Deno/TS).
 - **Backend**: Supabase (Auth, PostgreSQL, Storage, Edge Functions en Deno/TS).
 - **Parseo**: `@std/csv`, SheetJS (`xlsx`), `unpdf` (PDF posicional BBVA).
-- **Despliegue**: frontend estático en Vercel (autodeploy desde rama `master`), DNS vía Cloudflare.
+- **Despliegue**: frontend estático en Vercel (autodeploy desde rama `master` → `mandarina-fi.vercel.app`); sin dominio custom hoy — Cloudflare solo sería opción futura si se compra `mandarina.app` (ver `TODO.md`).
 
 ## Estructura
 

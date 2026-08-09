@@ -6,7 +6,7 @@ inversión y cotizaciones en vivo.
 
 ## Stack
 
-- **Frontend**: React 19 + Create React App (react-scripts 5) — **migración a Vite + Vitest planeada en `improvements.md` Fase 1**. Chart.js + react-chartjs-2, Tailwind v4 (CLI genera `src/index.generated.css`, gitignored).
+- **Frontend**: React 19 + Vite 8 + Vitest 4 (migrado desde CRA en `improvements.md` Fase 1). Chart.js + react-chartjs-2, Tailwind v4 (CLI genera `src/index.generated.css`, gitignored).
 - **Backend**: Supabase (Auth, PostgreSQL, Storage, Edge Functions en Deno/TS).
 - **Parseo**: `@std/csv`, SheetJS (`xlsx`), `unpdf` (PDF posicional BBVA).
 - **Despliegue**: frontend estático en Vercel (autodeploy desde rama `master`), DNS vía Cloudflare.
@@ -15,7 +15,9 @@ inversión y cotizaciones en vivo.
 
 ```
 frontend/
-  public/              # index.html (entry), favicon, logos, manifest
+  index.html           # entry (raíz, no public/)
+  vite.config.js       # Vite + Vitest (incluye plugin transform-jsx-in-js)
+  public/              # favicon, logos, manifest, robots (Vite los copia a dist/)
   src/
     index.js           # entry
     App.js             # shell, auth, navegación
@@ -24,7 +26,7 @@ frontend/
     lib/               # supabaseClient, plan, analysis, history, planSort,
                        #   sanitizeFileName (lógica pura con tests)
     hooks/             # useCountUp
-    *.test.js          # tests Vitest/Jest junto al código
+    *.test.js          # tests Vitest junto al código
 backend/
   supabase/
     migrations/        # SQL 0001..0012 (esquema + RLS + storage)
@@ -39,9 +41,10 @@ examples/              # muestras reales de usuario (GITIGNORED — no subir)
 ```bash
 # Frontend
 cd frontend && npm install
-npm start            # dev server :3000 (tailwind watch + vite/CRA)
-npm test             # suite de tests (Vitest; hoy Jest vía react-scripts)
-npm run build        # build:css + build de producción
+npm start            # dev server :3000 (tailwind watch + vite)
+npm test             # suite de tests (Vitest, un solo run)
+npm run test:watch   # Vitest en modo watch
+npm run build        # build:css + build de producción (salida en dist/)
 npm run lint         # (Fase 7 de improvements.md, cuando exista)
 
 # Backend / Edge Functions

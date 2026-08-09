@@ -2,40 +2,33 @@ import { render, screen, within } from '@testing-library/react'
 import { act } from 'react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
+import supabase from './lib/supabaseClient'
 
-jest.mock('./lib/supabaseClient', () => ({
+vi.mock('./lib/supabaseClient', () => ({
   __esModule: true,
   default: {
     auth: {
-      getSession: jest.fn(),
-      onAuthStateChange: jest.fn(),
-      signOut: jest.fn(),
+      getSession: vi.fn(),
+      onAuthStateChange: vi.fn(),
+      signOut: vi.fn(),
     },
-    from: jest.fn(),
+    from: vi.fn(),
     storage: {
-      from: jest.fn(),
+      from: vi.fn(),
     },
     functions: {
-      invoke: jest.fn(),
+      invoke: vi.fn(),
     },
   },
 }))
-
-jest.mock('react-chartjs-2', () => ({
-  Line: () => <div data-testid="chart-line" />,
-  Doughnut: () => <div data-testid="chart-doughnut" />,
-  Bar: () => <div data-testid="chart-bar" />,
-}))
-
-const supabase = require('./lib/supabaseClient').default
 
 const session = { user: { id: 'u1', email: 'a@b.com' } }
 
 const EMPTY_STATE = 'Subí un resumen para empezar.'
 
 function mockData(table, data) {
-  const order = jest.fn().mockResolvedValue({ data, error: null })
-  const select = jest.fn().mockReturnValue({ order })
+  const order = vi.fn().mockResolvedValue({ data, error: null })
+  const select = vi.fn().mockReturnValue({ order })
   return { select, order }
 }
 
@@ -43,13 +36,13 @@ function mockApp(txs, summaries = []) {
   const tx = mockData('transactions', txs)
   const summariesData = mockData('card_summaries', summaries)
   const metaChain = () => {
-    const order = jest.fn().mockResolvedValue({ data: [], error: null })
-    const eq = jest.fn().mockResolvedValue({ data: [], error: null })
+    const order = vi.fn().mockResolvedValue({ data: [], error: null })
+    const eq = vi.fn().mockResolvedValue({ data: [], error: null })
     return { order, eq }
   }
   const meta = (table) => {
     const chain = metaChain()
-    const select = jest.fn().mockReturnValue(chain)
+    const select = vi.fn().mockReturnValue(chain)
     return { select }
   }
   supabase.from.mockImplementation((table) => {
@@ -65,17 +58,17 @@ describe('App', () => {
   beforeEach(() => {
     localStorage.clear()
     localStorage.setItem('mandarina:tour:u1', '1')
-    authListener = jest.fn()
+    authListener = vi.fn()
     supabase.auth.onAuthStateChange.mockImplementation((cb) => {
       authListener = cb
       return {
-        data: { subscription: { unsubscribe: jest.fn() } },
+        data: { subscription: { unsubscribe: vi.fn() } },
       }
     })
     supabase.auth.signOut.mockResolvedValue({ error: null })
     supabase.auth.getSession.mockResolvedValue({ data: { session }, error: null })
     supabase.functions.invoke.mockResolvedValue({})
-    supabase.storage.from.mockReturnValue({ upload: jest.fn().mockResolvedValue({ error: null }) })
+    supabase.storage.from.mockReturnValue({ upload: vi.fn().mockResolvedValue({ error: null }) })
     mockApp([])
   })
 
@@ -131,13 +124,13 @@ describe('App', () => {
       { id: '2', symbol: 'QQQ', target_weight: 14 },
       { id: '3', symbol: 'KO', target_weight: 12 },
     ]
-    const limit = jest.fn().mockResolvedValue({ data: plan, error: null })
-    const order = jest.fn().mockReturnValue({ limit })
-    const planSelect = jest.fn().mockReturnValue({ order })
+    const limit = vi.fn().mockResolvedValue({ data: plan, error: null })
+    const order = vi.fn().mockReturnValue({ limit })
+    const planSelect = vi.fn().mockReturnValue({ order })
     const tx = mockData('transactions', [])
     const summariesData = mockData('card_summaries', [])
-    const metaEq = jest.fn().mockResolvedValue({ data: [], error: null })
-    const metaSelect = jest.fn().mockReturnValue({ eq: metaEq })
+    const metaEq = vi.fn().mockResolvedValue({ data: [], error: null })
+    const metaSelect = vi.fn().mockReturnValue({ eq: metaEq })
     supabase.from.mockImplementation((table) => {
       if (table === 'portfolio_plan') return { select: planSelect }
       if (table === 'transactions') return { select: tx.select }

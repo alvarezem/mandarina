@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import OnboardingTour from './OnboardingTour'
 
 describe('OnboardingTour', () => {
-  const onClose = jest.fn()
+  const onClose = vi.fn()
 
   beforeEach(() => {
     onClose.mockClear()

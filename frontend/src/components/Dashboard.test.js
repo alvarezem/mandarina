@@ -2,34 +2,27 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Dashboard from './Dashboard'
 import ToastProvider from './Toast'
+import supabase from '../lib/supabaseClient'
 
-jest.mock('../lib/supabaseClient', () => ({
+vi.mock('../lib/supabaseClient', () => ({
   __esModule: true,
   default: {
-    from: jest.fn(),
+    from: vi.fn(),
   },
 }))
 
-jest.mock('react-chartjs-2', () => ({
-  Line: () => <div data-testid="chart-line" />,
-  Doughnut: () => <div data-testid="chart-doughnut" />,
-  Bar: () => <div data-testid="chart-bar" />,
-}))
-
-const supabase = require('../lib/supabaseClient').default
-
 function mockTx(data, { overrides = [], customCategories = [] } = {}) {
-  const eq = jest.fn().mockResolvedValue({ data: null, error: null })
-  const update = jest.fn().mockReturnValue({ eq })
-  const order = jest.fn().mockResolvedValue({ data, error: null })
-  const select = jest.fn().mockReturnValue({ order })
+  const eq = vi.fn().mockResolvedValue({ data: null, error: null })
+  const update = vi.fn().mockReturnValue({ eq })
+  const order = vi.fn().mockResolvedValue({ data, error: null })
+  const select = vi.fn().mockReturnValue({ order })
 
-  const ovUpsert = jest.fn().mockResolvedValue({ data: null, error: null })
-  const ovEq = jest.fn().mockResolvedValue({ data: overrides, error: null })
-  const ovSelect = jest.fn().mockReturnValue({ eq: ovEq })
-  const ccUpsert = jest.fn().mockResolvedValue({ data: null, error: null })
-  const ccEq = jest.fn().mockResolvedValue({ data: customCategories, error: null })
-  const ccSelect = jest.fn().mockReturnValue({ eq: ccEq })
+  const ovUpsert = vi.fn().mockResolvedValue({ data: null, error: null })
+  const ovEq = vi.fn().mockResolvedValue({ data: overrides, error: null })
+  const ovSelect = vi.fn().mockReturnValue({ eq: ovEq })
+  const ccUpsert = vi.fn().mockResolvedValue({ data: null, error: null })
+  const ccEq = vi.fn().mockResolvedValue({ data: customCategories, error: null })
+  const ccSelect = vi.fn().mockReturnValue({ eq: ccEq })
 
   const overridesTable = { select: ovSelect, upsert: ovUpsert }
   const categoriesTable = { select: ccSelect, upsert: ccUpsert }
@@ -85,7 +78,7 @@ describe('Dashboard', () => {
   it('filtra por moneda USD', async () => {
     renderDashboard()
     await screen.findByText('Débitos')
-    await userEvent.click(screen.getByRole('button', { name: /Moneda Ambas/i }))
+    await userEvent.click(screen.getByRole('button', { name: /Moneda\s*Ambas/i }))
     await userEvent.click(await screen.findByRole('button', { name: /USD/i }))
 
     const [_, ...rows] = await rowsOfTable()
@@ -97,8 +90,8 @@ describe('Dashboard', () => {
   it('filtra por categoría desde el dropdown', async () => {
     renderDashboard()
     await screen.findByText('Débitos')
-    await userEvent.click(screen.getByRole('button', { name: /Categorías Todas/i }))
-    await userEvent.click(await screen.findByRole('button', { name: /✓ Suscripciones/i }))
+    await userEvent.click(screen.getByRole('button', { name: /Categorías\s*Todas/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /✓\s*Suscripciones/i }))
 
     const [_, ...rows] = await rowsOfTable()
     const merchants = rows.map((r) => within(r).getAllByRole('cell')[1].textContent)
@@ -125,10 +118,10 @@ describe('Dashboard', () => {
   })
 
   it('avisa al padre al seleccionar un resumen en el dropdown', async () => {
-    const onSummarySelect = jest.fn()
+    const onSummarySelect = vi.fn()
     renderDashboard({ onSummarySelect })
     await screen.findByText('Débitos')
-    await userEvent.click(screen.getByRole('button', { name: /Resumen Todos los resúmenes/i }))
+    await userEvent.click(screen.getByRole('button', { name: /Resumen\s*Todos los resúmenes/i }))
     await userEvent.click(await screen.findByRole('button', { name: /resumen-junio\.csv/i }))
     expect(onSummarySelect).toHaveBeenCalledWith('s2')
   })
@@ -184,7 +177,7 @@ describe('Dashboard', () => {
     const [_, ...rows] = await rowsOfTable()
     const amazonRow = rows.find((r) => within(r).getAllByRole('cell')[1].textContent === 'AMAZON')
     await userEvent.click(within(amazonRow).getByRole('button', { name: /Compras/i }))
-    await userEvent.click(await screen.findByRole('button', { name: /✓ Pagos/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /✓\s*Pagos/i }))
 
     expect(update).toHaveBeenCalledWith({ category: 'Pagos' })
     expect(await screen.findByText(/2 pagos de tarjeta excluido/i)).toBeInTheDocument()
@@ -247,7 +240,7 @@ describe('Dashboard', () => {
     const search = await screen.findByPlaceholderText('Buscar categoría…')
     await userEvent.type(search, 'suscrip')
 
-    expect(screen.getByRole('button', { name: /✓ Suscripciones/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /✓\s*Suscripciones/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /✓ Transferencias/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Sin categoría/i })).toBeInTheDocument()
   })

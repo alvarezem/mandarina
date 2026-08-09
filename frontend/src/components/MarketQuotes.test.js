@@ -3,23 +3,17 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import MarketQuotes from './MarketQuotes'
 import ToastProvider from './Toast'
+import supabase from '../lib/supabaseClient'
 
-jest.mock('../lib/supabaseClient', () => ({
+vi.mock('../lib/supabaseClient', () => ({
   __esModule: true,
   default: {
-    from: jest.fn(),
+    from: vi.fn(),
     functions: {
-      invoke: jest.fn(),
+      invoke: vi.fn(),
     },
   },
 }))
-
-jest.mock('react-chartjs-2', () => ({
-  Doughnut: () => <div data-testid="chart-doughnut" />,
-  Line: () => <div data-testid="chart-line" />,
-}))
-
-const supabase = require('../lib/supabaseClient').default
 
 const ITEMS = [
   { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 9, quantity: 8, sort_order: 0 },
@@ -27,8 +21,8 @@ const ITEMS = [
 ]
 
 function mockPlan(items = ITEMS, quotes = {}, rates = {}) {
-  const order = jest.fn().mockResolvedValue({ data: items, error: null })
-  const select = jest.fn().mockReturnValue({ order })
+  const order = vi.fn().mockResolvedValue({ data: items, error: null })
+  const select = vi.fn().mockReturnValue({ order })
   supabase.from.mockImplementation((table) => (table === 'portfolio_plan' ? { select } : {}))
   supabase.functions.invoke.mockImplementation((fn, { body } = {}) => {
     if (body?.history) {
@@ -63,7 +57,7 @@ const wrap = (ui) => render(<ToastProvider>{ui}</ToastProvider>)
 
 describe('MarketQuotes', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     localStorage.clear()
   })
 
@@ -158,7 +152,7 @@ describe('MarketQuotes', () => {
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
 
-    await userEvent.click(screen.getByRole('button', { name: /VIST Acción/ }))
+    await userEvent.click(screen.getByRole('button', { name: /VIST\s*Acción/ }))
     expect(await screen.findByTestId('chart-line')).toBeInTheDocument()
 
     expect(screen.getByText(/Apr/i)).toBeInTheDocument()
@@ -178,7 +172,7 @@ describe('MarketQuotes', () => {
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
 
-    await userEvent.click(screen.getByRole('button', { name: /VIST Acción/ }))
+    await userEvent.click(screen.getByRole('button', { name: /VIST\s*Acción/ }))
 
     expect(await screen.findByTestId('chart-line')).toBeInTheDocument()
     await waitFor(() =>
@@ -193,7 +187,7 @@ describe('MarketQuotes', () => {
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
 
-    await userEvent.click(screen.getByRole('button', { name: /VIST Acción/ }))
+    await userEvent.click(screen.getByRole('button', { name: /VIST\s*Acción/ }))
     await screen.findByTestId('chart-line')
 
     await userEvent.click(screen.getByRole('button', { name: '1S' }))
@@ -229,7 +223,7 @@ describe('MarketQuotes', () => {
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
 
-    await userEvent.click(screen.getByRole('button', { name: /KO Acción/ }))
+    await userEvent.click(screen.getByRole('button', { name: /KO\s*Acción/ }))
     expect(await screen.findByText(/Sin datos históricos para KO/)).toBeInTheDocument()
   })
 

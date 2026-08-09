@@ -73,7 +73,7 @@ Resultados verificados:
 
 ---
 
-## FASE 1 — Migración de toolchain: CRA → Vite + Vitest
+## FASE 1 — Migración de toolchain: CRA → Vite + Vitest — HECHA el 2026-08-08
 _Objetivo: plataforma moderna, eliminar las deps comprometidas, dev/build/test unificados._
 
 **Por qué**: react-scripts 5 no soporta React 19 y es la única fuente de los
@@ -115,11 +115,25 @@ Tareas:
 9. Actualizar `frontend/README.md` (hoy 100% boilerplate de CRA).
 
 **Verificación**:
-- [x] `npm run build` compila (salida en `dist/`).
-- [x] `npm test` pasa completo (Vitest).
+- [x] `npm run build` compila (salida en `dist/`). 210 kB gzip (baseline CRA: 219 kB).
+- [x] `npm test` pasa completo (Vitest) — 14 archivos / 149 tests verdes.
 - [x] `npm start` levanta dev server en :3000.
 - [x] `npm ls keyv flat-cache file-entry-cache` → sin salida (arbol limpio).
 - [x] El lockfile ya no contiene ninguna dep de compromised.md.
+
+Hallazgos de la migración:
+- **JSX en `.js`**: el transformador oxc de Vite 8 excluye `.js` por defecto y
+  infiere `lang: 'js'` (JSX deshabilitado). Solución: plugin `transform-jsx-in-js`
+  en `vite.config.js` (pre-transform con `lang: 'jsx'`), ver discusión de Vite #21505.
+- **`localStorage` undefined en tests**: Node 26 expone un global `localStorage`
+  experimental (undefined sin `--localstorage-file`) que Vitest filtra de las keys
+  del window. Solución: mock in-memory en `setupTests.js`.
+- **Accname sin espacio**: jsdom 30 concatena texto inline sin espacio (spec-correct);
+  jsdom 16 (CRA) insertaba espacios. Se ajustaron 10 matchers de tests a `\s*`.
+- **OAuth redirectTo**: jsdom 30 default url trae puerto; se fijó
+  `environmentOptions.jsdom.url = 'http://localhost'` para que `window.location.origin`
+  coincida con el `redirectTo` esperado en tests.
+- Se eliminaron huérfanos CRA: `src/reportWebVitals.js`, `src/logo.svg`, `web-vitals`.
 
 ---
 

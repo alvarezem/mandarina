@@ -4,7 +4,7 @@ import ThemeToggle from './ThemeToggle'
 
 describe('ThemeToggle', () => {
   it('muestra sol en modo oscuro y alterna al hacer clic', async () => {
-    const onToggle = jest.fn()
+    const onToggle = vi.fn()
     render(<ThemeToggle dark onToggle={onToggle} />)
     const button = screen.getByRole('button', { name: 'Cambiar a tema claro' })
     expect(button).toBeInTheDocument()
@@ -13,7 +13,7 @@ describe('ThemeToggle', () => {
   })
 
   it('muestra luna en modo claro con su label y el hover naranja', () => {
-    render(<ThemeToggle dark={false} onToggle={jest.fn()} />)
+    render(<ThemeToggle dark={false} onToggle={vi.fn()} />)
     const button = screen.getByRole('button', { name: 'Cambiar a tema oscuro' })
     expect(button).toHaveClass('hover:border-brand-300')
     expect(button).toHaveClass('hover:bg-brand-50')

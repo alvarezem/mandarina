@@ -2,25 +2,24 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import InvestmentPlan from './InvestmentPlan'
 import ToastProvider from './Toast'
+import supabase from '../lib/supabaseClient'
 
-jest.mock('../lib/supabaseClient', () => ({
+vi.mock('../lib/supabaseClient', () => ({
   __esModule: true,
   default: {
-    from: jest.fn(),
+    from: vi.fn(),
     functions: {
-      invoke: jest.fn(),
+      invoke: vi.fn(),
     },
   },
 }))
 
-const supabase = require('../lib/supabaseClient').default
-
 function mockPlan(items, prices = {}) {
-  const order = jest.fn().mockResolvedValue({ data: items, error: null })
-  const select = jest.fn().mockReturnValue({ order })
-  const update = jest.fn(() => ({ eq: jest.fn().mockResolvedValue({ error: null }) }))
-  const insert = jest.fn().mockResolvedValue({ error: null })
-  const del = jest.fn(() => ({ eq: jest.fn().mockResolvedValue({ error: null }) }))
+  const order = vi.fn().mockResolvedValue({ data: items, error: null })
+  const select = vi.fn().mockReturnValue({ order })
+  const update = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }))
+  const insert = vi.fn().mockResolvedValue({ error: null })
+  const del = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }))
   supabase.from.mockImplementation((table) =>
     table === 'portfolio_plan' ? { select, update, insert, delete: del } : {},
   )
@@ -42,7 +41,7 @@ const wrap = (ui) => render(<ToastProvider>{ui}</ToastProvider>)
 
 describe('InvestmentPlan', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     localStorage.clear()
   })
 

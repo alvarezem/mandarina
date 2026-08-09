@@ -43,7 +43,7 @@ export const NAV_ITEMS = [
 export function Logo({ className = '' }) {
   return (
     <img
-      src={`${process.env.PUBLIC_URL}/logo.png`}
+      src={`/logo.png`}
       alt=""
       aria-hidden="true"
       draggable={false}

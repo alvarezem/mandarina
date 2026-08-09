@@ -1,19 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Auth from './Auth'
+import supabase from '../lib/supabaseClient'
 
-jest.mock('../lib/supabaseClient', () => ({
+vi.mock('../lib/supabaseClient', () => ({
   __esModule: true,
   default: {
     auth: {
-      signUp: jest.fn(),
-      signInWithPassword: jest.fn(),
-      signInWithOAuth: jest.fn(),
+      signUp: vi.fn(),
+      signInWithPassword: vi.fn(),
+      signInWithOAuth: vi.fn(),
     },
   },
 }))
-
-const supabase = require('../lib/supabaseClient').default
 
 describe('Auth', () => {
   beforeEach(() => {

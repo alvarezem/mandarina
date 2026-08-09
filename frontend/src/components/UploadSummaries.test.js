@@ -2,25 +2,24 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UploadSummaries from './UploadSummaries'
 import ToastProvider from './Toast'
+import supabase from '../lib/supabaseClient'
 
-jest.mock('../lib/supabaseClient', () => ({
+vi.mock('../lib/supabaseClient', () => ({
   __esModule: true,
   default: {
-    from: jest.fn(),
+    from: vi.fn(),
     storage: {
-      from: jest.fn(() => ({ upload: jest.fn() })),
+      from: vi.fn(() => ({ upload: vi.fn() })),
     },
     functions: {
-      invoke: jest.fn().mockResolvedValue({}),
+      invoke: vi.fn().mockResolvedValue({}),
     },
   },
 }))
 
-const supabase = require('../lib/supabaseClient').default
-
 function mockSummaries(list) {
-  const order = jest.fn().mockResolvedValue({ data: list, error: null })
-  const select = jest.fn().mockReturnValue({ order })
+  const order = vi.fn().mockResolvedValue({ data: list, error: null })
+  const select = vi.fn().mockReturnValue({ order })
   supabase.from.mockImplementation((table) =>
     table === 'card_summaries' ? { select } : {},
   )
@@ -52,23 +51,23 @@ describe('UploadSummaries', () => {
   })
 
   it('dispara la subida y el parseo con un archivo y muestra toast de éxito', async () => {
-    const upload = jest.fn().mockResolvedValue({ error: null })
-    const insert = jest.fn(() => ({
-      select: jest.fn(() => ({
-        single: jest.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
+    const upload = vi.fn().mockResolvedValue({ error: null })
+    const insert = vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
       })),
     }))
     supabase.storage.from.mockReturnValue({ upload })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: jest.fn().mockReturnValue({ order: jest.fn().mockResolvedValue({ data: [], error: null }) }),
+          select: vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: [], error: null }) }),
           insert,
         }
       }
       return {}
     })
-    const onDataChanged = jest.fn()
+    const onDataChanged = vi.fn()
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} onDataChanged={onDataChanged} />)
     const file = new File(['x'], 'resumen.csv', { type: 'text/csv' })
@@ -84,7 +83,7 @@ describe('UploadSummaries', () => {
   })
 
   it('muestra toast de error cuando la subida falla', async () => {
-    const upload = jest.fn().mockResolvedValue({ error: { message: 'Ya existe' } })
+    const upload = vi.fn().mockResolvedValue({ error: { message: 'Ya existe' } })
     supabase.storage.from.mockReturnValue({ upload })
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
@@ -97,17 +96,17 @@ describe('UploadSummaries', () => {
   })
 
   it('sanitiza el nombre en el path de Storage y conserva el nombre original', async () => {
-    const upload = jest.fn().mockResolvedValue({ error: null })
-    const insert = jest.fn(() => ({
-      select: jest.fn(() => ({
-        single: jest.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
+    const upload = vi.fn().mockResolvedValue({ error: null })
+    const insert = vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
       })),
     }))
     supabase.storage.from.mockReturnValue({ upload })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: jest.fn().mockReturnValue({ order: jest.fn().mockResolvedValue({ data: [], error: null }) }),
+          select: vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: [], error: null }) }),
           insert,
         }
       }
@@ -127,18 +126,18 @@ describe('UploadSummaries', () => {
   })
 
   it('dedupe: avisa con toast cuando el path sanitizado ya existía', async () => {
-    const upload = jest.fn().mockResolvedValue({ error: null })
-    const insert = jest.fn(() => ({
-      select: jest.fn(() => ({
-        single: jest.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
+    const upload = vi.fn().mockResolvedValue({ error: null })
+    const insert = vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
       })),
     }))
     supabase.storage.from.mockReturnValue({ upload })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
               data: [
                 { id: 'a', file_name: 'Nacion.csv', file_path: 'u1/Nacion.csv', status: 'done', error: null, created_at: '2026-07-01' },
               ],
@@ -165,13 +164,13 @@ describe('UploadSummaries', () => {
 
   it('renombra un resumen existente', async () => {
     mockSummaries([{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }])
-    const eq = jest.fn().mockResolvedValue({ error: null })
-    const update = jest.fn().mockReturnValue({ eq })
+    const eq = vi.fn().mockResolvedValue({ error: null })
+    const update = vi.fn().mockReturnValue({ eq })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
               data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
               error: null,
             }),
@@ -199,12 +198,12 @@ describe('UploadSummaries', () => {
 
   it('no guarda un nombre vacío', async () => {
     mockSummaries([{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }])
-    const update = jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) })
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
               data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
               error: null,
             }),
@@ -231,15 +230,15 @@ describe('UploadSummaries', () => {
     mockSummaries([
       { id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
     ])
-    const remove = jest.fn().mockResolvedValue({ data: null, error: null })
-    const eq = jest.fn().mockResolvedValue({ error: null })
-    const del = jest.fn().mockReturnValue({ eq })
+    const remove = vi.fn().mockResolvedValue({ data: null, error: null })
+    const eq = vi.fn().mockResolvedValue({ error: null })
+    const del = vi.fn().mockReturnValue({ eq })
     supabase.storage.from.mockReturnValue({ remove })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
               data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
               error: null,
             }),
@@ -249,8 +248,8 @@ describe('UploadSummaries', () => {
       }
       return {}
     })
-    const onDataChanged = jest.fn()
-    const onSelect = jest.fn()
+    const onDataChanged = vi.fn()
+    const onSelect = vi.fn()
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} onDataChanged={onDataChanged} onSelect={onSelect} />)
     await screen.findByText('visa-julio.pdf')
@@ -270,7 +269,7 @@ describe('UploadSummaries', () => {
     mockSummaries([
       { id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
     ])
-    const remove = jest.fn()
+    const remove = vi.fn()
     supabase.storage.from.mockReturnValue({ remove })
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
@@ -287,15 +286,15 @@ describe('UploadSummaries', () => {
     mockSummaries([
       { id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
     ])
-    const remove = jest.fn().mockResolvedValue({ data: null, error: null })
-    const eq = jest.fn().mockResolvedValue({ error: { message: 'denied' } })
-    const del = jest.fn().mockReturnValue({ eq })
+    const remove = vi.fn().mockResolvedValue({ data: null, error: null })
+    const eq = vi.fn().mockResolvedValue({ error: { message: 'denied' } })
+    const del = vi.fn().mockReturnValue({ eq })
     supabase.storage.from.mockReturnValue({ remove })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
               data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
               error: null,
             }),
@@ -329,13 +328,13 @@ describe('UploadSummaries', () => {
     mockSummaries([
       { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 },
     ])
-    const eq = jest.fn().mockResolvedValue({ error: null })
-    const update = jest.fn().mockReturnValue({ eq })
+    const eq = vi.fn().mockResolvedValue({ error: null })
+    const update = vi.fn().mockReturnValue({ eq })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
               data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
               error: null,
             }),
@@ -366,12 +365,12 @@ describe('UploadSummaries', () => {
     mockSummaries([
       { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 },
     ])
-    const update = jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) })
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
               data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
               error: null,
             }),

@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import InvestmentsView from './InvestmentsView'
 
-jest.mock('./InvestmentPlan', () => ({ session, display, setDisplay, rateMode, setRateMode, sort, onSort }) => (
+vi.mock('./InvestmentPlan', () => ({
+  default: ({ session, display, setDisplay, rateMode, sort, onSort }) => (
   <div data-testid="mock-plan">
     <span>
       Plan {display} {rateMode} {sort.key}:{sort.dir}
@@ -13,13 +14,16 @@ jest.mock('./InvestmentPlan', () => ({ session, display, setDisplay, rateMode, s
     <button type="button" onClick={() => onSort('price')}>
       ordenar por precio
     </button>
-  </div>
-))
-jest.mock('./MarketQuotes', () => ({ session, display, rateMode, sort }) => (
+    </div>
+  ),
+}))
+vi.mock('./MarketQuotes', () => ({
+  default: ({ session, display, rateMode, sort }) => (
   <div data-testid="mock-quotes">
     Cotizaciones {display} {rateMode} {sort.key}:{sort.dir}
   </div>
-))
+  ),
+}))
 
 const wrap = (ui) => render(ui)
 

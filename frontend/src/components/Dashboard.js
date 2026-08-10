@@ -14,6 +14,8 @@ import {
 import { Line, Doughnut, Bar } from 'react-chartjs-2'
 import supabase from '../lib/supabaseClient'
 import { buildAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
+import { fmt, fmtCompact } from '../lib/format'
+import { MONTHS, BRAND_HEX, BRAND_HEX_STRONG, brandRgba, PALETTE } from '../lib/constants'
 import Dropdown from './Dropdown'
 import FiltersBar from './FiltersBar'
 import { useToast } from './Toast'
@@ -162,42 +164,10 @@ ChartJS.register(
   Filler,
 )
 
-const fmt = (n, currency = 'ARS') =>
-  new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-AR', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(n)
-
-const fmtCompact = (n, currency = 'ARS') =>
-  new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-AR', {
-    style: 'currency',
-    currency,
-    notation: 'compact',
-  }).format(n)
-
-const PALETTE = [
-  '#10b981',
-  '#f59e0b',
-  '#f43f5e',
-  '#8b5cf6',
-  '#0ea5e9',
-  '#94a3b8',
-  '#14b8a6',
-]
-
-const BRAND_HEX = '#f97316'
-const BRAND_HEX_STRONG = '#ea580c'
-
-function brandRgba(alpha) {
-  return `rgba(249,115,22,${alpha})`
-}
-
 function parseYmd(s) {
   const [y, m, d] = s.split('-').map(Number)
   return new Date(y, m - 1, d)
 }
-
 function ymd(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
@@ -229,8 +199,6 @@ function fileOf(t) {
   return Array.isArray(cs) ? cs[0]?.file_name ?? null : cs.file_name ?? null
 }
 
-const SUMMARY_MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-
 function SummaryMeta({ t }) {
   const cs = t.card_summaries
   if (!cs) return null
@@ -238,7 +206,7 @@ function SummaryMeta({ t }) {
   if (!m) return null
   const parts = []
   if (m.summary_type) parts.push(m.summary_type)
-  if (m.period_month) parts.push(`${SUMMARY_MONTHS[m.period_month - 1] ?? m.period_month} ${m.period_year}`)
+  if (m.period_month) parts.push(`${MONTHS[m.period_month - 1] ?? m.period_month} ${m.period_year}`)
   if (parts.length === 0) return null
   return (
     <span className="mt-0.5 inline-flex w-fit items-center rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">

@@ -1,19 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { buildPlan, distribute } from '../lib/plan'
+import { fmt, fmtPct } from '../lib/format'
+import { ASSET_TYPES } from '../lib/constants'
 import { useToast } from './Toast'
 import SortableTh from './SortableTh'
-import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR } from '../lib/planSort'
-
-const ASSET_TYPES = {
-  accion: 'Acción',
-  cedear: 'CEDEAR',
-  bono: 'Bono',
-  dolar: 'Dólar',
-  fci: 'FCI',
-  efectivo: 'Efectivo',
-  otro: 'Otro',
-}
+import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR, SORT_KEYS } from '../lib/planSort'
 
 const RATE_LABELS = {
   CCL: 'CCL (contado con liqui)',
@@ -23,16 +15,6 @@ const RATE_LABELS = {
 const RATE_INFO =
   'CCL (contado con liquidación): el dólar que obtenés operando CEDEARs o acciones que liquidan en dólares. MEP (dólar bolsa): el dólar de comprar bonos en BYMA. Elegí el que uses al comprar.'
 
-const fmt = (n, currency = 'ARS') =>
-  new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-AR', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: currency === 'USD' ? 2 : 0,
-  }).format(n || 0)
-
-const fmtPct = (n) =>
-  `${(Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 })}%`
-
 const newDraft = () => ({
   symbol: '',
   name: '',
@@ -41,8 +23,6 @@ const newDraft = () => ({
   target_weight: '',
   quantity: '',
 })
-
-const PLAN_SORT_KEYS = new Set(['symbol', 'price', 'quantity', 'value', 'actualPct', 'target_weight', 'gap', 'buy'])
 
 const STRATEGY_OPTIONS = [
   { key: 'faltante', label: 'Mayor faltante ($)' },
@@ -156,7 +136,7 @@ export default function InvestmentPlan({
 
   const sortedItems = useMemo(() => {
     if (!sort.key) return builtItems
-    const { key, dir } = PLAN_SORT_KEYS.has(sort.key) ? sort : DEFAULT_PLAN_SORT
+    const { key, dir } = SORT_KEYS.has(sort.key) ? sort : DEFAULT_PLAN_SORT
     const arr = [...builtItems]
     const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
     arr.sort((a, b) => {

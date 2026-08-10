@@ -29,7 +29,7 @@ const EMPTY_STATE = 'Subí un resumen para empezar.'
 function mockData(table, data) {
   const order = vi.fn().mockResolvedValue({ data, error: null })
   const eq = vi.fn().mockReturnValue({ order })
-  const select = vi.fn().mockReturnValue({ eq })
+  const select = vi.fn().mockReturnValue({ eq, order })
   return { select, eq, order }
 }
 
@@ -39,7 +39,7 @@ function mockApp(txs, summaries = []) {
   const meta = (table) => {
     const order = vi.fn().mockResolvedValue({ data: [], error: null })
     const eq = vi.fn().mockReturnValue({ order })
-    const select = vi.fn().mockReturnValue({ eq })
+    const select = vi.fn().mockReturnValue({ eq, order })
     return { select }
   }
   supabase.from.mockImplementation((table) => {

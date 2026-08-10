@@ -3,47 +3,12 @@ import { Doughnut } from 'react-chartjs-2'
 import supabase from '../lib/supabaseClient'
 import { buildPlan, portfolioChangePct } from '../lib/plan'
 import { normalizeHistory } from '../lib/history'
+import { fmt, fmtPct } from '../lib/format'
+import { ASSET_TYPES, QUOTE_PALETTE } from '../lib/constants'
 import { useToast } from './Toast'
 import SortableTh from './SortableTh'
 import PriceChart from './PriceChart'
-import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR } from '../lib/planSort'
-
-const ASSET_TYPES = {
-  accion: 'Acción',
-  cedear: 'CEDEAR',
-  bono: 'Bono',
-  dolar: 'Dólar',
-  fci: 'FCI',
-  efectivo: 'Efectivo',
-  otro: 'Otro',
-}
-
-const PALETTE = [
-  '#f97316',
-  '#fdba74',
-  '#ea580c',
-  '#fbbf24',
-  '#f59e0b',
-  '#fb923c',
-  '#fd7e14',
-  '#f4791f',
-  '#ef6c00',
-  '#ff9800',
-  '#ffb74d',
-  '#ff8f00',
-]
-
-const fmt = (n, currency = 'ARS') =>
-  new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-AR', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: currency === 'USD' ? 2 : 0,
-  }).format(n || 0)
-
-const fmtPct = (n) =>
-  `${(Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 })}%`
-
-const QUOTE_SORT_KEYS = new Set(['symbol', 'price', 'changePct', 'quantity', 'value', 'actualPct'])
+import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR, SORT_KEYS } from '../lib/planSort'
 
 export default function MarketQuotes({
   session,
@@ -236,7 +201,7 @@ export default function MarketQuotes({
 
   const sortedItems = useMemo(() => {
     if (!sort.key) return withChange
-    const { key, dir } = QUOTE_SORT_KEYS.has(sort.key) ? sort : DEFAULT_PLAN_SORT
+    const { key, dir } = SORT_KEYS.has(sort.key) ? sort : DEFAULT_PLAN_SORT
     const arr = [...withChange]
     const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
     arr.sort((a, b) => {
@@ -277,7 +242,7 @@ export default function MarketQuotes({
       datasets: [
         {
           data: sortedItems.map((i) => Math.max(0, i.value)),
-          backgroundColor: sortedItems.map((_, i) => PALETTE[i % PALETTE.length]),
+          backgroundColor: sortedItems.map((_, i) => QUOTE_PALETTE[i % QUOTE_PALETTE.length]),
           borderWidth: 0,
           hoverOffset: 6,
         },
@@ -439,7 +404,7 @@ export default function MarketQuotes({
                     <span className="flex min-w-0 items-center gap-1.5">
                       <span
                         className="h-2 w-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: PALETTE[i % PALETTE.length] }}
+                        style={{ backgroundColor: QUOTE_PALETTE[i % QUOTE_PALETTE.length] }}
                       />
                       <span className="truncate font-medium">{item.symbol}</span>
                     </span>

@@ -102,7 +102,7 @@ describe('MarketQuotes', () => {
     )
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
-    expect(screen.getByText(/MEP \$\s*1\.200 · CCL \$\s*1\.213/)).toBeInTheDocument()
+    expect(screen.getByText(/MEP \$\s*1\.200,00 · CCL \$\s*1\.213,13/)).toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: /Dólar/i })).not.toBeInTheDocument()
   })
 

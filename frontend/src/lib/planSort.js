@@ -14,7 +14,7 @@ export const SORT_DEFAULT_DIR = {
 
 export const SORT_DIRS = ['asc', 'desc']
 
-const SORT_KEYS = new Set([
+export const SORT_KEYS = new Set([
   'symbol',
   'price',
   'quantity',

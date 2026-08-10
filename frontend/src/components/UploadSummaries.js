@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { useToast } from './Toast'
 import { sanitizeStoragePath, uniqueStoragePath } from '../lib/sanitizeFileName'
+import { MONTHS } from '../lib/constants'
 
 const STATUS = {
   pending: { label: 'Pendiente', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
@@ -11,8 +12,6 @@ const STATUS = {
 }
 
 const TYPES = ['VISA', 'MASTERCARD', 'AMEX', 'Banco', 'Billetera virtual', 'Broker', 'Otro']
-
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
 
 const NOW_YEAR = new Date().getFullYear()
 const YEARS = Array.from({ length: 8 }, (_, i) => NOW_YEAR - 6 + i)

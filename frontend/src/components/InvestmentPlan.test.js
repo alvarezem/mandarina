@@ -145,7 +145,7 @@ describe('InvestmentPlan', () => {
     mockPlan([], {})
     wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
     await screen.findByText(/Todavía no cargaste tu plan/i)
-    expect(screen.getByText(/MEP \$\s*1\.200 · CCL \$\s*1\.213/)).toBeInTheDocument()
+    expect(screen.getByText(/MEP \$\s*1\.200,00 · CCL \$\s*1\.213,13/)).toBeInTheDocument()
   })
 
   it('ordena por % Meta desc por default y luego por cantidad desc', async () => {

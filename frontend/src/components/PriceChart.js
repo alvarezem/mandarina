@@ -9,17 +9,10 @@ import {
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import { RANGES, formatPointDate } from '../lib/history'
+import { fmt } from '../lib/format'
+import { BRAND_HEX } from '../lib/constants'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
-
-const fmt = (n, currency = 'ARS') =>
-  n == null
-    ? '—'
-    : new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-AR', {
-        style: 'currency',
-        currency,
-        maximumFractionDigits: currency === 'USD' ? 2 : 0,
-      }).format(n)
 
 export default function PriceChart({
   symbol,
@@ -38,7 +31,7 @@ export default function PriceChart({
       {
         label: symbol,
         data: points.map((p) => p.c),
-        borderColor: '#f97316',
+        borderColor: BRAND_HEX,
         backgroundColor: 'rgba(249, 115, 22, 0.15)',
         fill: true,
         tension: 0.25,

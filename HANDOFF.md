@@ -6,28 +6,17 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 ## Última sesión
 
-- **Fecha**: 2026-08-09
-- **Qué se hizo** (Fase 2 de improvements.md — cierre por CLI + docs):
-  1. **Código de Fase 2 COMMITEADO** en `716e30a` (`feat: fase 2 de improvements.md — hardening de auth, funciones y datos`); tag `pre-fase2`.
-  2. **Suites verificadas antes del commit**: frontend `CI=true npm test` 149/149 + `npm run build` OK (dist 210 kB gzip); backend `deno test` 28/28.
-  3. **Deploy de las 3 Edge Functions** en hosting (`supabase functions deploy parse-summary import-plan quotes`): parse-summary **v17**, quotes **v7**, import-plan **v4**, todas ACTIVE.
-  4. **Migración aplicada** (`supabase db push`): `0013_replace_plan_rpc.sql` aplicada en remoto (confirmada en `supabase migration list`).
-  5. **Verificación en hosting**: request sin JWT a `quotes` → **401** (`verify_jwt` activo); preflight CORS desde `https://mandarina-fi.vercel.app` → refleja el origen con `Vary: Origin`; desde `https://evil.example.com` → sin `Allow-Origin`.
-  6. **`supabase db reset` local VERIFICADO**: `supabase start` levantó el stack y las 13 migraciones (0001–0013) aplicaron sin errores; seed ya no rompe. Stack apagado tras verificar.
-  7. **Service role key FUERA DE DISCO**: `backend/.env` borrado. **Supabase ya no permite rotar legacy keys** (solo ver/copiar) — la rotación clásica quedó descartada (la key no estaba comprometida); la vía de rotación moderna (nuevas API keys `sb_publishable`/`sb_secret`) quedó anotada en `TODO.md` (deprecación legacy a fines 2026).
-  8. **Settings de auth aplicados por el usuario en el dashboard**: min 8 + letras + números (`letters_digits`), confirmaciones ON, `secure_password_change` ON (pide la password actual al cambiarla). Se reflejó el requisito en `config.toml`.
+- **Fecha**: 2026-08-10
+- **Qué se hizo**:
+  1. **Auth UX en español** (commit `03f8986`): `lib/authErrors.js` (`authErrorToSpanish` por `error.code` + fallback por texto), validación `letters_digits` en cliente, email existente (`identities: []` o `user_already_exists`) → pantalla "Ya existe una cuenta" con botones **Volver a iniciar sesión** / **Recuperar contraseña**; link **"¿Olvidaste tu contraseña?"** en login. Tests 160/160 + build OK.
+  2. **Verificado en hosting por el usuario**: signup con confirmación de email, "Ya existe una cuenta" para email ya registrado, y email de recuperación → **FASE 2 CERRADA** (marcada HECHA en `improvements.md`/`DONE.md`).
+  3. **Fix de bug en Costos**: el fetch de `transactions` en `Dashboard.js` filtraba `.eq('user_id', …)` pero esa tabla **no tiene columna `user_id`** → "No se pudieron cargar los gastos". Se quitó el filtro (RLS ya filtra vía `summary_id`) + test de regresión.
+  4. **FASE 3 — Refactor frontend en curso** (helpers compartidos, hook de inversiones, god components).
 
 ## En progreso
 
-- **FASE 2** de `improvements.md` — **solo falta que el usuario verifique el signup con confirmación de email** (todo lo demás cerrado: código commiteado, deploy, migración, `db reset` local, `backend/.env` borrado, settings de auth aplicados).
-
-- **Auth UX — signup con email ya registrado**: con confirmaciones ON, Supabase devuelve un usuario fake (`identities: []`, anti-enumeración) si el email ya tiene cuenta confirmada. **IMPLEMENTADO** (2026-08-10): `Auth.js` distingue `identities.length > 0` (cuenta nueva → "Casi listo") de `=== 0` (email existente → "Ya existe una cuenta" + botones **Volver a iniciar sesión** y **Recuperar contraseña** vía `resetPasswordForEmail`); link **"¿Olvidaste tu contraseña?"** agregado en el login normal (formulario de reset). **Ampliado** (2026-08-10): nuevo helper `lib/authErrors.js` (`authErrorToSpanish`) traduce errores de Supabase por `error.code` (con fallback por texto) — cubre `invalid_credentials`, `weak_password`, `email_not_confirmed`, `user_already_exists`, rate limits; `Auth.js` valida password `letters_digits` en cliente ("debe incluir letras y números") y maneja `error.code === 'user_already_exists'` → misma pantalla `emailTaken` (el fake user con `identities: []` no es el único camino: con SMS confirmations OFF la doc indica que Supabase devuelve el error). Tests 160/160 OK + build OK. **Pendiente de verificar en hosting**: qué responde realmente signUp para email existente (error `user_already_exists` vs fake user) y que el email de reset llega. Sin commit aún.
-  - **Tarea aparte**: flujo de **cambio de contraseña** (link del email → pantalla de nueva contraseña; hoy no existe, el redirect maneja el token de Supabase).
-
-## Próximo paso sugerido
-
-- El usuario verifica el flujo de signup con confirmación; tras eso, marcar Fase 2 HECHA
-  en `DONE.md` y pasar a **FASE 3 — Refactor del frontend**.
+- **FASE 3** de `improvements.md` — **Refactor del frontend**: unificar duplicación (format/constants/planSort, SortableTh/Check/AssetForm, hook `usePortfolioQuotes`) y descomponer los god components (Dashboard 914, InvestmentPlan 816, MarketQuotes 629, UploadSummaries 537). Arrancado: fix de costos + cierre de Fase 2. Commits parciales por paso.
+  - **Tarea aparte** (anotada, sin empezar): flujo de **cambio de contraseña** (link del email → pantalla de nueva contraseña; hoy el redirect maneja el token de Supabase).
 
 ## Decisiones tomadas (a no re-litigar sin motivo)
 

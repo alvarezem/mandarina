@@ -16,7 +16,7 @@ function mockTx(data, { overrides = [], customCategories = [] } = {}) {
   const update = vi.fn().mockReturnValue({ eq })
   const order = vi.fn().mockResolvedValue({ data, error: null })
   const txEq = vi.fn().mockReturnValue({ order })
-  const select = vi.fn().mockReturnValue({ eq: txEq })
+  const select = vi.fn().mockReturnValue({ eq: txEq, order })
 
   const ovUpsert = vi.fn().mockResolvedValue({ data: null, error: null })
   const ovEq = vi.fn().mockResolvedValue({ data: overrides, error: null })
@@ -34,7 +34,7 @@ function mockTx(data, { overrides = [], customCategories = [] } = {}) {
     if (table === 'custom_categories') return categoriesTable
     return {}
   })
-  return { update, eq, ovUpsert, ccUpsert }
+  return { select, update, eq, ovUpsert, ccUpsert }
 }
 
 const txs = [
@@ -61,6 +61,16 @@ async function rowsOfTable() {
 describe('Dashboard', () => {
   beforeEach(() => {
     mockTx(txs)
+  })
+
+  it('carga los gastos sin filtrar por user_id en transactions', async () => {
+    const { select } = mockTx(txs)
+    renderDashboard()
+    expect(await screen.findByText('Movimientos')).toBeInTheDocument()
+    expect(select).toHaveBeenCalledWith(
+      '*, card_summaries(file_name, summary_type, period_month, period_year)',
+    )
+    expect(select.mock.results[0].value.eq).not.toHaveBeenCalled()
   })
 
   it('renderiza cards y excluye pagos de tarjeta', async () => {

@@ -137,7 +137,7 @@ Hallazgos de la migración:
 
 ---
 
-## FASE 2 — Seguridad y secretos — ABIERTA (solo falta tu verificación del signup con confirmación)
+## FASE 2 — Seguridad y secretos — HECHA el 2026-08-10
 _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 
 ### 2.1 Service role / cliente huérfano
@@ -216,7 +216,7 @@ _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 **Pendientes de Fase 2 (tu checklist manual en el dashboard de Supabase)** — [PASO A PASO en la sección "Paso a paso manual (usuario)" más abajo]:
 1. **`backend/.env` BORRADO** ✅ (2026-08-09): la service role key ya no está en disco. Nota: **Supabase ya no permite rotar las legacy keys** — la rotación quedó descartada; la key no estaba comprometida (nunca entró al historial git). La migración a nuevas API keys queda como mejora futura en `TODO.md`.
 2. **Aplicar los settings de auth en el dashboard** (el `config.toml` solo afecta local) — **HECHO por el usuario** (2026-08-09): `minimum_password_length = 8`, password requirements **`letters_digits`** (letras + números), email **Confirmations ON**, **`secure_password_change` ON** (pide la password actual al cambiarla). Se reflejó el mismo requisito en `config.toml`.
-3. **Verificar el flujo de signup** con confirmación de email ON (cambia el flujo: el usuario debe confirmar el email antes de entrar). **PENDIENTE del usuario**.
+3. **Verificar el flujo de signup** con confirmación de email ON (cambia el flujo: el usuario debe confirmar el email antes de entrar). **HECHO por el usuario (2026-08-10)**: signup con confirmación + "Ya existe una cuenta" (email existente) + email de reset — los 3 verificados en hosting.
 4. **Verificación local**: `supabase db reset` ✅ YA VERIFICADO (2026-08-09, stack local + 13 migraciones OK).
 5. `backend/.env.example`: ya actualizado a `SUPABASE_ANON_KEY` (sin service role).
 
@@ -241,9 +241,11 @@ _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 2. Confirmá que el email de confirmación llega y que el acceso se habilita solo tras confirmar.
 3. Si algo del flujo se rompe (los emails de producción los maneja el SMTP de Supabase), avisá para ajustar.
 
-**Estado del cierre**: con `backend/.env` borrado, los settings de auth aplicados en el dashboard y el
-`supabase db reset` local verde, **solo falta tu verificación del signup con confirmación** para
-marcar Fase 2 como HECHA en `DONE.md` y pasar a Fase 3.
+**Estado del cierre**: Fase 2 **HECHA**. El signup con confirmación y la UX de auth quedaron verificados
+en hosting (2026-08-10): email de confirmación, "Ya existe una cuenta" para emails ya registrados y email
+de recuperación de contraseña. La UX de auth en español (errores traducidos, email existente, "¿Olvidaste tu
+contraseña?") se implementó y deployó (commit `03f8986`). Pendientes de auth en `HANDOFF.md`:
+el flujo de **cambio de contraseña** desde el link del email (pantalla de nueva password) queda como tarea aparte.
 
 **Código realizado (2026-08-09)**:
 - Borrados: `backend/src/supabaseClient.js`, `backend/package*.json`, `backend/node_modules/`, y `backend/.env` (service role key fuera de disco).

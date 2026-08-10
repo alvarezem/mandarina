@@ -354,7 +354,6 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
       const { data, error } = await supabase
         .from('transactions')
         .select('*, card_summaries(file_name, summary_type, period_month, period_year)')
-        .eq('user_id', userId)
         .order('date', { ascending: false })
       if (!active) return
       if (error) {

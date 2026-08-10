@@ -7,33 +7,25 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-09
-- **Qué se hizo** (Fase 2 de improvements.md — seguridad y secretos):
-  1. **Código de Fase 2 COMPLETO** (working tree con cambios sin commitear):
-     - Borrados `backend/src/supabaseClient.js`, `backend/package*.json`, `backend/node_modules/`; `backend/.env.example` ahora documenta `SUPABASE_ANON_KEY` (sin service role).
-     - `config.toml` endurecido (password ≥8 + letras/dígitos, confirmaciones on, `secure_password_change`, `max_frequency 10s`, `verify_jwt` en las 3 funciones, seed off, `realtime`/`s3_protocol`/`vector`/`analytics` apagados).
-     - `_shared/cors.ts` (allowlist producción + `localhost:3000` + `*.vercel.app`, `Vary: Origin`) consumido por las 3 funciones.
-     - `quotes`: cache LRU con cap 1000, `normalizeSymbols` (dedupe, máx 50, sin MEP/CCL), AbortSignal/timeouts.
-     - `import-plan`: tope de `file_base64` (~5MB), reemplazo atómico vía RPC, `parseQuantity` robusto, mensajes genéricos.
-     - `0013_replace_plan_rpc.sql`: `replace_user_plan(uuid, jsonb)` SECURITY INVOKER con guard `auth.uid()`.
-     - `parse-summary`: UUID check, delete previo (idempotencia de re-parse), mensajes genéricos, signo PDF preservado, `setStatus` con try/catch.
-     - `categorize.ts` + `telecom` → Servicios (+ test).
-     - Frontend: `.eq('user_id', …)` en los 4 fetches + ~18 renders de `error.message` → mensajes amigables con `console.error`.
-  2. **Verificación unitaria verde**: frontend `CI=true npm test` 149/149 + build OK; backend `deno test` 28/28.
-  3. `git grep`: confirmado que el valor de la service role key nunca entró al historial.
-  4. **Pendientes anotados en `improvements.md`** (sección FASE 2): rotar key en dashboard, aplicar settings de auth en dashboard, deploy de las 3 funciones, `supabase db push`, y `supabase db reset` local (requiere stack docker — abortado en esta sesión por decisión del usuario; no se levantó `supabase start`).
+- **Qué se hizo** (Fase 2 de improvements.md — cierre por CLI + docs):
+  1. **Código de Fase 2 COMMITEADO** en `716e30a` (`feat: fase 2 de improvements.md — hardening de auth, funciones y datos`); tag `pre-fase2`.
+  2. **Suites verificadas antes del commit**: frontend `CI=true npm test` 149/149 + `npm run build` OK (dist 210 kB gzip); backend `deno test` 28/28.
+  3. **Deploy de las 3 Edge Functions** en hosting (`supabase functions deploy parse-summary import-plan quotes`): parse-summary **v17**, quotes **v7**, import-plan **v4**, todas ACTIVE.
+  4. **Migración aplicada** (`supabase db push`): `0013_replace_plan_rpc.sql` aplicada en remoto (confirmada en `supabase migration list`).
+  5. **Verificación en hosting**: request sin JWT a `quotes` → **401** (`verify_jwt` activo); preflight CORS desde `https://mandarina-fi.vercel.app` → refleja el origen con `Vary: Origin`; desde `https://evil.example.com` → sin `Allow-Origin`.
+  6. **Paso a paso manual para el usuario** escrito en `improvements.md` (sección FASE 2, "Paso a paso manual (usuario)"): rotar service role key, aplicar auth settings, verificar signup.
+  7. **Pendiente técnico**: `supabase start` local en background (descarga de imágenes Docker); cuando termine → `supabase db reset` para validar 0013 + config.
 
 ## En progreso
 
-- **FASE 2** de `improvements.md` — código listo; falta la parte de hosting/manual:
-  rotar service role key, aplicar auth settings en dashboard, deploy de funciones,
-  `supabase db push` y verificar `supabase db reset`. Detalle y checklist en
-  `improvements.md` (sección FASE 2, "Pendientes").
+- **FASE 2** de `improvements.md` — resto por hacer:
+  1. **Usuario (dashboard)**: rotar service role key + borrar `backend/.env`; aplicar auth settings (min 8, letters_digits, confirmaciones ON, secure_password_change ON, rate limit). PASO A PASO en `improvements.md`.
+  2. **Agente (local)**: `supabase db reset` cuando termine el stack local (`supabase start` en background).
 
 ## Próximo paso sugerido
 
-- Cerrar Fase 2: correr los pasos de hosting de `improvements.md` (rotar key,
-  settings de auth en dashboard, `supabase functions deploy`, `supabase db push`,
-  `supabase db reset` local) o pasar a **FASE 3 — Refactor del frontend**.
+- Cerrar Fase 2: correr `supabase db reset` (local) y esperar el checklist manual del
+  usuario; después marcar Fase 2 HECHA en `DONE.md` y pasar a **FASE 3 — Refactor del frontend**.
 
 ## Decisiones tomadas (a no re-litigar sin motivo)
 

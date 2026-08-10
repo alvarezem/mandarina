@@ -137,7 +137,7 @@ Hallazgos de la migración:
 
 ---
 
-## FASE 2 — Seguridad y secretos — EN CURSO (código hecho el 2026-08-09; falta verificación DB + deploy + dashboard)
+## FASE 2 — Seguridad y secretos — CASI CERRADA (código + deploy + migración hechos el 2026-08-09; falta tu checklist manual del dashboard)
 _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 
 ### 2.1 Service role / cliente huérfano
@@ -198,18 +198,49 @@ _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 
 **Verificación**:
 - [x] `git grep` no encuentra service role ni anon keys fuera de `.env` gitignored (verificado el 2026-08-09: el valor de la key nunca entró al historial).
-- [x] Todas las funciones tienen `verify_jwt = true` y CORS restringido en **código** (`config.toml` + `_shared/cors.ts`). ⚠️ Falta aplicarlo en hosting con `supabase functions deploy` (las 3 funciones).
-- [ ] `supabase db reset` corre (seed arreglado). **PENDIENTE** — no verificado: requiere el stack local (`supabase start` + `db reset`), abortado en la sesión. Validar también que aplica `0013_replace_plan_rpc.sql`.
+- [x] Todas las funciones tienen `verify_jwt = true` y CORS restringido en **código** (`config.toml` + `_shared/cors.ts`).
+- [x] Deploy aplicado en hosting (2026-08-09): `supabase functions deploy parse-summary import-plan quotes` → parse-summary v17, quotes v7, import-plan v4, todas **ACTIVE**.
+- [x] Migración aplicada en hosting (2026-08-09): `supabase db push` → `0013_replace_plan_rpc.sql` aplicada (confirmada en `migration list`); `replace_user_plan` disponible para import-plan.
+- [x] `supabase db reset` corre (seed arreglado). **VERIFICADO el 2026-08-09**: `supabase start` levantó el stack local y `supabase db reset` aplicó las 13 migraciones (0001–0013) sin errores; seed ya no rompe (`enabled = false`). Stack local apagado tras verificar.
 - [ ] Re-parse de un mismo resumen no duplica transacciones (test). **Implementado en código** (delete previo de `transactions` por `summary_id` en `parse-summary`). Faltan los tests unitarios del handler (planificados en Fase 5.4).
 - [x] Los mensajes de error en la UI no contienen detalles del backend (mensajes amigables + `console.error`; tests actualizados).
 
-**Pendientes de Fase 2 (acción manual / hosting)**:
-1. **Rotar la service role key** en el dashboard de Supabase (la de `backend/.env` expira 2036). Tras rotar, actualizar `backend/.env` o eliminar la variable.
-2. **Aplicar los mismos settings de auth en el dashboard de Supabase** (el `config.toml` solo afecta local): `minimum_password_length = 8`, password requirements `letters_digits`, email **Confirmations ON**, `secure_password_change ON`, rate limit de resets anti-spam.
-3. **Deploy de las Edge Functions**: `supabase functions deploy parse-summary import-plan quotes` (lleva `verify_jwt = true`, CORS restringido, y todo el hardening 2.3).
-4. **Aplicar la migración**: `supabase db push` (crea `replace_user_plan`; import-plan lo usa vía RPC).
-5. **Verificación local pendiente**: `supabase db reset` (docker) para validar migración + config.
-6. `backend/.env.example`: ya actualizado a `SUPABASE_ANON_KEY` (sin service role).
+**Pendientes de Fase 2 (tu checklist manual en el dashboard de Supabase)** — [PASO A PASO en la sección "Paso a paso manual (usuario)" más abajo]:
+1. **Rotar la service role key** (la de `backend/.env` expira 2036). Tras rotar, **borrar `backend/.env`** (ya no se usa: las funciones usan anon key + JWT del usuario).
+2. **Aplicar los settings de auth en el dashboard** (el `config.toml` solo afecta local): `minimum_password_length = 8`, password requirements `letters_digits`, email **Confirmations ON**, `secure_password_change ON`, rate limit de resets anti-spam.
+3. **Verificar el flujo de signup** con confirmación de email ON (cambia el flujo: el usuario debe confirmar el email antes de entrar).
+4. **Verificación local**: `supabase db reset` ✅ YA VERIFICADO (2026-08-09, stack local + 13 migraciones OK).
+5. `backend/.env.example`: ya actualizado a `SUPABASE_ANON_KEY` (sin service role).
+
+### Paso a paso manual (usuario) — dashboard de Supabase
+
+> Pasos 1 y 2 los hacés vos en el navegador. El resto ya está hecho por CLI. Entrá a https://supabase.com/dashboard/project/qfjehqaeagskxjulzhgx (proyecto **fimplify**).
+
+**1. Rotar la service role key**
+1. En el dashboard: **Settings → API Keys** (o **Project Settings → API**).
+2. En la sección `service_role`, tocá el ícono **⟳ (rotate)** en la línea `secret` (NO la publishable/anon).
+3. Confirmá la rotación en el modal. **La key vieja queda invalidada al instante.**
+4. ⚠️ IMPORTANTE: la key vieja está en `backend/.env` en tu disco. Ese archivo ya no se usa (las Edge Functions usan la anon key + JWT del usuario vía RLS). **Borralo**:
+   ```bash
+   rm backend/.env
+   ```
+5. Opcional pero recomendado: confirmá que nada en el repo referencia la key vieja: `git grep eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9`.
+
+**2. Aplicar los settings de auth** (mirror del `config.toml` en hosting)
+1. En el dashboard: **Authentication → Providers** → asegurate de que **Email** esté habilitado (debe estar).
+2. **Authentication → Sign In / Providers** → en **Email**, marcá:
+   - **Confirm email** ON (`enable_confirmations`).
+   - **Secure password change** ON.
+   - **Password Requirements**: `minimum password length = 8` y requerimiento `letters & digits`.
+3. **Authentication → Rate Limits** (o el equivalente del plan): subí el límite de **email OTP / password reset** a un valor anti-spam (ej. `10` por hora por IP). Si tu plan no expone rate limits, el default queda.
+4. Guardá los cambios.
+
+**3. Verificar el flujo de signup con confirmación**
+1. En incógnito o con un email de prueba, registrate en `mandarina-fi.vercel.app` (o `localhost:3000`).
+2. Confirmá que el email de confirmación llega y que el acceso se habilita solo tras confirmar.
+3. Si algo del flujo se rompe (los emails de producción los maneja el SMTP de Supabase), avisá para ajustar.
+
+**Estado del cierre**: una vez rotada la key + borrado `backend/.env`, y con el `supabase db reset` local verde, se marca Fase 2 como HECHA en `DONE.md` y se pasa a Fase 3.
 
 **Código realizado (2026-08-09)**:
 - Borrados: `backend/src/supabaseClient.js`, `backend/package*.json`, `backend/node_modules/`.

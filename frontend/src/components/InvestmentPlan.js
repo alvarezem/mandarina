@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
-import { buildPlan, distribute } from '../lib/plan'
+import { distribute } from '../lib/plan'
 import { fmt, fmtPct } from '../lib/format'
 import { ASSET_TYPES } from '../lib/constants'
 import { useToast } from './Toast'
 import SortableTh from './SortableTh'
 import AssetForm from './AssetForm'
+import { usePortfolioQuotes } from '../hooks/usePortfolioQuotes'
 import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR, SORT_KEYS } from '../lib/planSort'
 
 const RATE_LABELS = {
@@ -46,8 +47,6 @@ export default function InvestmentPlan({
 }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [quotes, setQuotes] = useState({})
-  const [rates, setRates] = useState({ MEP: null, CCL: null })
   const [budget, setBudget] = useState('')
   const [strategy, setStrategy] = useState('faltante')
   const [localSort, setLocalSort] = useState(DEFAULT_PLAN_SORT)
@@ -87,51 +86,12 @@ export default function InvestmentPlan({
     loadPlan()
   }, [])
 
-  const symbolsKey = useMemo(
-    () => items.map((i) => i.symbol).filter(Boolean).sort().join('|'),
-    [items],
-  )
-
-  useEffect(() => {
-    const symbols = items.map((i) => i.symbol).filter(Boolean)
-    let cancelled = false
-    supabase.functions
-      .invoke('quotes', { body: { symbols } })
-      .then(({ data }) => {
-        if (cancelled || !data) return
-        setQuotes(data.quotes || {})
-        setRates((r) => ({ ...r, ...(data.rates || {}) }))
-        onMarketClosed(data.marketClosed === true)
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbolsKey])
-
-  const rate = rates[rateMode]?.price || null
-
-  const resolvePrice = (item) => {
-    if (item.symbol === 'MEP') return rates.MEP?.price ?? null
-    if (item.symbol === 'CCL') return rates.CCL?.price ?? null
-    return quotes[item.symbol]?.price ?? null
-  }
-
-  const builtItems = useMemo(() => {
-    const scaled = items.map((item) => {
-      const price = resolvePrice(item)
-      const scaledPrice =
-        price != null && item.currency !== display && rate
-          ? display === 'ARS'
-            ? price * rate
-            : price / rate
-          : price
-      return { ...item, price: scaledPrice }
-    })
-    return buildPlan(scaled)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, quotes, rates, display, rateMode])
+  const { quotes, rates, rate, builtItems, refreshQuotes } = usePortfolioQuotes({
+    items,
+    display,
+    rateMode,
+    onMarketClosed,
+  })
 
   const total = builtItems.reduce((sum, item) => sum + item.value, 0)
 
@@ -161,21 +121,6 @@ export default function InvestmentPlan({
     () => distribute(Number(budget) || 0, builtItems, strategy),
     [budget, builtItems, strategy],
   )
-
-  const refreshQuotes = () => {
-    const symbols = items.map((i) => i.symbol).filter(Boolean)
-    if (symbols.length === 0) return
-    supabase.functions
-      .invoke('quotes', { body: { symbols } })
-      .then(({ data }) => {
-        if (!data) return
-        setQuotes(data.quotes || {})
-        setRates((r) => ({ ...r, ...(data.rates || {}) }))
-        onMarketClosed(data.marketClosed === true)
-        pushToast({ type: 'success', message: 'Precios actualizados' })
-      })
-      .catch(() => pushToast({ type: 'error', message: 'No se pudieron actualizar los precios' }))
-  }
 
   const handleImport = (file) => {
     if (!file) return

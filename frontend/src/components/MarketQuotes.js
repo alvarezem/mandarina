@@ -1,13 +1,13 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import supabase from '../lib/supabaseClient'
-import { buildPlan, portfolioChangePct } from '../lib/plan'
+import { portfolioChangePct } from '../lib/plan'
 import { normalizeHistory } from '../lib/history'
 import { fmt, fmtPct } from '../lib/format'
 import { ASSET_TYPES, QUOTE_PALETTE } from '../lib/constants'
-import { useToast } from './Toast'
 import SortableTh from './SortableTh'
 import PriceChart from './PriceChart'
+import { usePortfolioQuotes } from '../hooks/usePortfolioQuotes'
 import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR, SORT_KEYS } from '../lib/planSort'
 
 export default function MarketQuotes({
@@ -21,8 +21,6 @@ export default function MarketQuotes({
 }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [quotes, setQuotes] = useState({})
-  const [rates, setRates] = useState({ MEP: null, CCL: null })
   const [localSort, setLocalSort] = useState(DEFAULT_PLAN_SORT)
   const sort = sortProp ?? localSort
   const onSort =
@@ -35,7 +33,6 @@ export default function MarketQuotes({
   const [chart, setChart] = useState(null)
   const [modal, setModal] = useState(null)
   const [chartData, setChartData] = useState({ loading: false, points: [], error: null })
-  const pushToast = useToast()
 
   const activeChart = modal ?? chart
   const activeChartKey = activeChart ? `${activeChart.symbol}:${activeChart.range}` : null
@@ -110,51 +107,12 @@ export default function MarketQuotes({
     loadPlan()
   }, [])
 
-  const symbolsKey = useMemo(
-    () => items.map((i) => i.symbol).filter(Boolean).sort().join('|'),
-    [items],
-  )
-
-  useEffect(() => {
-    const symbols = items.map((i) => i.symbol).filter(Boolean)
-    let cancelled = false
-    supabase.functions
-      .invoke('quotes', { body: { symbols } })
-      .then(({ data }) => {
-        if (cancelled || !data) return
-        setQuotes(data.quotes || {})
-        setRates((r) => ({ ...r, ...(data.rates || {}) }))
-        onMarketClosed(data.marketClosed === true)
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbolsKey])
-
-  const rate = rates[rateMode]?.price || null
-
-  const resolvePrice = (item) => {
-    if (item.symbol === 'MEP') return rates.MEP?.price ?? null
-    if (item.symbol === 'CCL') return rates.CCL?.price ?? null
-    return quotes[item.symbol]?.price ?? null
-  }
-
-  const builtItems = useMemo(() => {
-    const scaled = items.map((item) => {
-      const price = resolvePrice(item)
-      const scaledPrice =
-        price != null && item.currency !== display && rate
-          ? display === 'ARS'
-            ? price * rate
-            : price / rate
-          : price
-      return { ...item, price: scaledPrice }
-    })
-    return buildPlan(scaled)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, quotes, rates, display, rateMode])
+  const { quotes, rates, rate, builtItems, refreshQuotes } = usePortfolioQuotes({
+    items,
+    display,
+    rateMode,
+    onMarketClosed,
+  })
 
   const total = builtItems.reduce((sum, item) => sum + item.value, 0)
 
@@ -220,21 +178,6 @@ export default function MarketQuotes({
     })
     return arr
   }, [withChange, sort])
-
-  const refreshQuotes = () => {
-    const symbols = items.map((i) => i.symbol).filter(Boolean)
-    if (symbols.length === 0) return
-    supabase.functions
-      .invoke('quotes', { body: { symbols } })
-      .then(({ data }) => {
-        if (!data) return
-        setQuotes(data.quotes || {})
-        setRates((r) => ({ ...r, ...(data.rates || {}) }))
-        onMarketClosed(data.marketClosed === true)
-        pushToast({ type: 'success', message: 'Precios actualizados' })
-      })
-      .catch(() => pushToast({ type: 'error', message: 'No se pudieron actualizar los precios' }))
-  }
 
   const doughnutData = useMemo(
     () => ({

@@ -13,19 +13,18 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
   3. **Deploy de las 3 Edge Functions** en hosting (`supabase functions deploy parse-summary import-plan quotes`): parse-summary **v17**, quotes **v7**, import-plan **v4**, todas ACTIVE.
   4. **Migración aplicada** (`supabase db push`): `0013_replace_plan_rpc.sql` aplicada en remoto (confirmada en `supabase migration list`).
   5. **Verificación en hosting**: request sin JWT a `quotes` → **401** (`verify_jwt` activo); preflight CORS desde `https://mandarina-fi.vercel.app` → refleja el origen con `Vary: Origin`; desde `https://evil.example.com` → sin `Allow-Origin`.
-  6. **Paso a paso manual para el usuario** escrito en `improvements.md` (sección FASE 2, "Paso a paso manual (usuario)"): rotar service role key, aplicar auth settings, verificar signup.
-  7. **Pendiente técnico**: `supabase start` local en background (descarga de imágenes Docker); cuando termine → `supabase db reset` para validar 0013 + config.
+  6. **`supabase db reset` local VERIFICADO**: `supabase start` levantó el stack y las 13 migraciones (0001–0013) aplicaron sin errores; seed ya no rompe. Stack apagado tras verificar.
+  7. **Service role key FUERA DE DISCO**: `backend/.env` borrado. **Supabase ya no permite rotar legacy keys** (solo ver/copiar) — la rotación clásica quedó descartada (la key no estaba comprometida); la vía de rotación moderna (nuevas API keys `sb_publishable`/`sb_secret`) quedó anotada en `TODO.md` (deprecación legacy a fines 2026).
+  8. **Settings de auth aplicados por el usuario en el dashboard**: min 8 + letras + símbolos (`lower_upper_letters_digits_symbols`), confirmaciones ON, `secure_password_change` ON (pide la password actual al cambiarla). Se reflejó el requisito en `config.toml`.
 
 ## En progreso
 
-- **FASE 2** de `improvements.md` — resto por hacer:
-  1. **Usuario (dashboard)**: rotar service role key + borrar `backend/.env`; aplicar auth settings (min 8, letters_digits, confirmaciones ON, secure_password_change ON, rate limit). PASO A PASO en `improvements.md`.
-  2. **Agente (local)**: `supabase db reset` cuando termine el stack local (`supabase start` en background).
+- **FASE 2** de `improvements.md` — **solo falta que el usuario verifique el signup con confirmación de email** (todo lo demás cerrado: código commiteado, deploy, migración, `db reset` local, `backend/.env` borrado, settings de auth aplicados).
 
 ## Próximo paso sugerido
 
-- Cerrar Fase 2: correr `supabase db reset` (local) y esperar el checklist manual del
-  usuario; después marcar Fase 2 HECHA en `DONE.md` y pasar a **FASE 3 — Refactor del frontend**.
+- El usuario verifica el flujo de signup con confirmación; tras eso, marcar Fase 2 HECHA
+  en `DONE.md` y pasar a **FASE 3 — Refactor del frontend**.
 
 ## Decisiones tomadas (a no re-litigar sin motivo)
 

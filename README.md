@@ -57,7 +57,7 @@ npm install
 npm start
 ```
 
-Configurá `frontend/.env` y `backend/.env` según los `.env.example`.
+Configurá `frontend/.env` según `.env.example`. El backend es 100% Edge Functions + migraciones; no usa `.env` propio (ver `backend/.env.example`).
 
 ## Estado
 

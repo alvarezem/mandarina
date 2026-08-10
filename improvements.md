@@ -137,11 +137,16 @@ Hallazgos de la migración:
 
 ---
 
-## FASE 2 — Seguridad y secretos — CASI CERRADA (código + deploy + migración hechos el 2026-08-09; falta tu checklist manual del dashboard)
+## FASE 2 — Seguridad y secretos — ABIERTA (solo falta tu verificación del signup con confirmación)
 _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 
 ### 2.1 Service role / cliente huérfano
-1. **Rotar la service role key** en el dashboard de Supabase (el actual expira 2036).
+1. **Eliminar la service role key del disco** (`backend/.env`). ~~Rotar~~: **Supabase ya no
+   permite rotar las legacy keys** (`anon`/`service_role`) ni el JWT secret — solo ver/copiar
+   (verificado 2026-08-09, doc oficial "API Keys"). La key no está comprometida (nunca entró al
+   historial git ni se expuso), así que la vía correcta es **borrar `backend/.env`** (la única copia
+   local, gitignored). La migración a las nuevas API keys (`sb_publishable`/`sb_secret`) queda como
+   mejora futura en `TODO.md` (Supabase depreca las legacy keys a fines de 2026).
 2. Eliminar `backend/src/supabaseClient.js`, `backend/package.json`,
    `backend/package-lock.json`, `backend/node_modules/` (nada los usa; el README
    apunta a otro archivo). El backend pasa a ser 100% Edge Functions + migraciones.
@@ -151,9 +156,12 @@ _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 
 ### 2.2 Endurecer `backend/supabase/config.toml`
 1. Auth:
-   - `minimum_password_length = 8`, `password_requirements` con letra+número.
+   - `minimum_password_length = 8`, `password_requirements` con letra+número. **El usuario eligió
+     en el dashboard `lower_upper_letters_digits_symbols` (min 8 + letras + símbolos)**; se actualizó
+     el `config.toml` para que local coincida con hosting.
    - `enable_confirmations = true` (verificar impacto en flujo de signup/frontend).
-   - `secure_password_change = true`.
+   - `secure_password_change = true`. **Activado en el dashboard por el usuario** (2026-08-09):
+     al cambiar la password pide la actual.
    - `max_frequency` del email a un valor anti-spam (ej. `"10s"`/rate limit).
    - Evaluar captcha (gratis con hCaptcha/Turnstile) como mejora futura.
 2. Funciones: declarar `[functions.parse-summary]`, `[functions.quotes]`,
@@ -206,45 +214,40 @@ _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 - [x] Los mensajes de error en la UI no contienen detalles del backend (mensajes amigables + `console.error`; tests actualizados).
 
 **Pendientes de Fase 2 (tu checklist manual en el dashboard de Supabase)** — [PASO A PASO en la sección "Paso a paso manual (usuario)" más abajo]:
-1. **Rotar la service role key** (la de `backend/.env` expira 2036). Tras rotar, **borrar `backend/.env`** (ya no se usa: las funciones usan anon key + JWT del usuario).
-2. **Aplicar los settings de auth en el dashboard** (el `config.toml` solo afecta local): `minimum_password_length = 8`, password requirements `letters_digits`, email **Confirmations ON**, `secure_password_change ON`, rate limit de resets anti-spam.
-3. **Verificar el flujo de signup** con confirmación de email ON (cambia el flujo: el usuario debe confirmar el email antes de entrar).
+1. **`backend/.env` BORRADO** ✅ (2026-08-09): la service role key ya no está en disco. Nota: **Supabase ya no permite rotar las legacy keys** — la rotación quedó descartada; la key no estaba comprometida (nunca entró al historial git). La migración a nuevas API keys queda como mejora futura en `TODO.md`.
+2. **Aplicar los settings de auth en el dashboard** (el `config.toml` solo afecta local) — **HECHO por el usuario** (2026-08-09): `minimum_password_length = 8`, password requirements **`lower_upper_letters_digits_symbols`** (letras + símbolos), email **Confirmations ON**, **`secure_password_change` ON** (pide la password actual al cambiarla). Se reflejó el mismo requisito en `config.toml`.
+3. **Verificar el flujo de signup** con confirmación de email ON (cambia el flujo: el usuario debe confirmar el email antes de entrar). **PENDIENTE del usuario**.
 4. **Verificación local**: `supabase db reset` ✅ YA VERIFICADO (2026-08-09, stack local + 13 migraciones OK).
 5. `backend/.env.example`: ya actualizado a `SUPABASE_ANON_KEY` (sin service role).
 
 ### Paso a paso manual (usuario) — dashboard de Supabase
 
-> Pasos 1 y 2 los hacés vos en el navegador. El resto ya está hecho por CLI. Entrá a https://supabase.com/dashboard/project/qfjehqaeagskxjulzhgx (proyecto **fimplify**).
+> Entrá a https://supabase.com/dashboard/project/qfjehqaeagskxjulzhgx (proyecto **fimplify**).
 
-**1. Rotar la service role key**
-1. En el dashboard: **Settings → API Keys** (o **Project Settings → API**).
-2. En la sección `service_role`, tocá el ícono **⟳ (rotate)** en la línea `secret` (NO la publishable/anon).
-3. Confirmá la rotación en el modal. **La key vieja queda invalidada al instante.**
-4. ⚠️ IMPORTANTE: la key vieja está en `backend/.env` en tu disco. Ese archivo ya no se usa (las Edge Functions usan la anon key + JWT del usuario vía RLS). **Borralo**:
-   ```bash
-   rm backend/.env
-   ```
-5. Opcional pero recomendado: confirmá que nada en el repo referencia la key vieja: `git grep eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9`.
+**1. Service role key — ya no se rota (Supabase bloqueó la rotación de legacy keys)**
+- ✅ **`backend/.env` fue borrado** (2026-08-09): la única copia local de la `service_role` key ya no está en disco.
+- La key sigue existiendo en el dashboard (es la key estándar del proyecto, no está comprometida).
+- Opcional y recomendado a futuro: migrar a las **nuevas API keys** (`sb_publishable`/`sb_secret`), que sí permiten rotación individual — anotado en `TODO.md` (Supabase depreca las legacy keys a fines de 2026).
 
-**2. Aplicar los settings de auth** (mirror del `config.toml` en hosting)
-1. En el dashboard: **Authentication → Providers** → asegurate de que **Email** esté habilitado (debe estar).
-2. **Authentication → Sign In / Providers** → en **Email**, marcá:
-   - **Confirm email** ON (`enable_confirmations`).
-   - **Secure password change** ON.
-   - **Password Requirements**: `minimum password length = 8` y requerimiento `letters & digits`.
-3. **Authentication → Rate Limits** (o el equivalente del plan): subí el límite de **email OTP / password reset** a un valor anti-spam (ej. `10` por hora por IP). Si tu plan no expone rate limits, el default queda.
-4. Guardá los cambios.
+**2. Settings de auth — HECHO por el usuario (2026-08-09)**
+- `minimum password length = 8`, requerimiento **letras + símbolos** (`lower_upper_letters_digits_symbols`).
+- **Confirm email** ON.
+- **Secure password change** ON → al cambiar la password pide la actual.
+- Rate limits de resets anti-spam (si tu plan los expone).
+- `config.toml` actualizado para que local coincida.
 
-**3. Verificar el flujo de signup con confirmación**
+**3. Verificar el flujo de signup con confirmación — PENDIENTE**
 1. En incógnito o con un email de prueba, registrate en `mandarina-fi.vercel.app` (o `localhost:3000`).
 2. Confirmá que el email de confirmación llega y que el acceso se habilita solo tras confirmar.
 3. Si algo del flujo se rompe (los emails de producción los maneja el SMTP de Supabase), avisá para ajustar.
 
-**Estado del cierre**: una vez rotada la key + borrado `backend/.env`, y con el `supabase db reset` local verde, se marca Fase 2 como HECHA en `DONE.md` y se pasa a Fase 3.
+**Estado del cierre**: con `backend/.env` borrado, los settings de auth aplicados en el dashboard y el
+`supabase db reset` local verde, **solo falta tu verificación del signup con confirmación** para
+marcar Fase 2 como HECHA en `DONE.md` y pasar a Fase 3.
 
 **Código realizado (2026-08-09)**:
-- Borrados: `backend/src/supabaseClient.js`, `backend/package*.json`, `backend/node_modules/`.
-- `config.toml`: auth hardening (min 8, `letters_digits`, confirmations on, secure_password_change on, `max_frequency 10s`), `verify_jwt` en las 3 funciones, seed `enabled = false`, apagados `[realtime]`, `[storage.s3_protocol]`, `[storage.vector]`, `[analytics]`.
+- Borrados: `backend/src/supabaseClient.js`, `backend/package*.json`, `backend/node_modules/`, y `backend/.env` (service role key fuera de disco).
+- `config.toml`: auth hardening (min 8, `lower_upper_letters_digits_symbols`, confirmations on, secure_password_change on, `max_frequency 10s`), `verify_jwt` en las 3 funciones, seed `enabled = false`, apagados `[realtime]`, `[storage.s3_protocol]`, `[storage.vector]`, `[analytics]`.
 - `_shared/cors.ts`: `corsHeaders` + `json` con allowlist (producción, `localhost:3000`, `*.vercel.app`) y `Vary: Origin`; consumido por las 3 funciones.
 - `quotes/index.ts`: cache LRU con cap (1000), `normalizeSymbols` (strings, sin MEP/CCL, dedupe, máx 50), timeouts (AbortSignal) en dolarapi y byma.
 - `import-plan/index.ts`: tope de `file_base64` (~5MB) antes de `atob`, reemplazo atómico vía `supabase.rpc('replace_user_plan', …)`, mensajes genéricos, `parseQuantity` robusto (separador decimal ambiguo).
@@ -444,21 +447,29 @@ razonamiento de cada una, incluido por qué sumamos cosas que hoy no existen.
   los 111 usos de `jest.*` es mecánico y lo paga una vez; mantener Jest exigiría
   duplicar toolchain (babel, jest.config) que hoy provee CRA a escondidas.
 
-### D2. Rotar la service role key y eliminar el cliente huérfano
-- **Alternativas**: (a) rotar y borrar, (b) guardarla y seguir con el cliente, (c) moverla a un secret manager pago.
-- **Por qué rotar y borrar**: esa llave bypasea TODA la RLS (permite leer/escribir
-  cualquier fila sin autenticarse). Está en texto plano en `backend/.env` con
-  expiración 2036 y el único consumidor (`backend/src/supabaseClient.js`) es un
-  huérfano que nadie importa. Mantener llaves vivas que no se usan es el escenario
-  de un breach. Un secret manager pago (Vault) no aporta nada acá: la app no
-  necesita service role en ningún flujo (las Edge Functions usan la anon key +
-  JWT del usuario).
+### D2. Eliminar la service role key del disco (y borrar el cliente huérfano)
+- **Alternativas**: (a) rotar la key y borrar, (b) guardarla y seguir con el cliente, (c) moverla a un secret manager pago.
+- **Por qué no rotar**: **Supabase ya no permite rotar las legacy keys** (`anon`/`service_role`)
+  ni el JWT secret — el dashboard solo deja ver/copiar (verificado 2026-08-09). La rotación clásica
+  hoy se logra migrando a las **nuevas API keys** (`sb_publishable`/`sb_secret`), que sí son
+  revocables individualmente — se dejó como mejora futura en `TODO.md` (Supabase depreca las legacy
+  keys a fines de 2026).
+- **Por qué borrar en vez de migrar ya**: esa llave bypasea TODA la RLS (permite leer/escribir
+  cualquier fila sin autenticarse), pero **no está comprometida**: nunca entró al historial git ni se
+  expuso. El único consumidor (`backend/src/supabaseClient.js`) era un huérfano que nadie importa, y
+  se eliminó en Fase 2. La única copia local en `backend/.env` (gitignored, exp 2036) se **borró**,
+  así que la key queda solo en el dashboard (su lugar legítimo). Un secret manager pago (Vault) no
+  aporta nada acá: la app no necesita service role en ningún flujo (las Edge Functions usan la anon
+  key + JWT del usuario).
 
 ### D3. Endurecer auth en config.toml (password ≥8, confirmaciones, rate limits)
 - **Alternativas**: (a) dejarlo como está (defaults de Supabase), (b) endurecer con config gratis.
 - **Por qué endurecer**: hoy el servidor acepta contraseñas de 6 caracteres sin
   requisitos, sin confirmación de email y con `max_frequency` de 1s (spam de
-  resets). Endurecer es config pura, gratis y sin código. La única contra es que
+  resets). Endurecer es config pura, gratis y sin código. El usuario eligió en el
+  dashboard `lower_upper_letters_digits_symbols` (min 8 + letras + símbolos) y
+  `secure_password_change` ON (pide la password actual al cambiarla); el `config.toml`
+  se actualizó para que local coincida. La única contra es que
   `enable_confirmations = true` cambia el flujo de signup (hay que verificar el
   email); se mitiga con un check del flujo en la Fase 2.
 
@@ -562,7 +573,7 @@ razonamiento de cada una, incluido por qué sumamos cosas que hoy no existen.
 ## Orden sugerido de ejecución y seguridad por fase
 1. Fase 0 (baseline) → verificación: suite verde antes de tocar nada.
 2. Fase 1 (Vite/Vitest) → sin esto no hay arbol limpio ni CI estable.
-3. Fase 2 (seguridad) → rotar service role lo antes posible.
+3. Fase 2 (seguridad) → sacar la service role key del disco lo antes posible.
 4. Fases 3-4 (refactor/confiabilidad frontend) → incrementales, `npm test` verde
    después de cada extracción.
 5. Fase 5 (backend) → con `deno test` local funcionando.
@@ -572,7 +583,7 @@ razonamiento de cada una, incluido por qué sumamos cosas que hoy no existen.
 
 ## Checklist global de cierre
 - [ ] Ninguna dependencia de compromised.md en ningún árbol.
-- [ ] Sin service role ni anon keys fuera de `.env` gitignored; service key rotada.
+- [ ] Sin service role ni anon keys fuera de `.env` gitignored; `backend/.env` borrado (rotación legacy no disponible; migración a nuevas API keys en TODO).
 - [ ] RLS + filtros de `user_id` en todos los fetches.
 - [ ] CI verde (build + tests frontend, deno tests backend, lint).
 - [ ] Duplicación de helpers/lógica eliminada (grep de 1 sola definición).

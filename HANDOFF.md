@@ -15,7 +15,7 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
   5. **Verificación en hosting**: request sin JWT a `quotes` → **401** (`verify_jwt` activo); preflight CORS desde `https://mandarina-fi.vercel.app` → refleja el origen con `Vary: Origin`; desde `https://evil.example.com` → sin `Allow-Origin`.
   6. **`supabase db reset` local VERIFICADO**: `supabase start` levantó el stack y las 13 migraciones (0001–0013) aplicaron sin errores; seed ya no rompe. Stack apagado tras verificar.
   7. **Service role key FUERA DE DISCO**: `backend/.env` borrado. **Supabase ya no permite rotar legacy keys** (solo ver/copiar) — la rotación clásica quedó descartada (la key no estaba comprometida); la vía de rotación moderna (nuevas API keys `sb_publishable`/`sb_secret`) quedó anotada en `TODO.md` (deprecación legacy a fines 2026).
-  8. **Settings de auth aplicados por el usuario en el dashboard**: min 8 + letras + símbolos (`lower_upper_letters_digits_symbols`), confirmaciones ON, `secure_password_change` ON (pide la password actual al cambiarla). Se reflejó el requisito en `config.toml`.
+  8. **Settings de auth aplicados por el usuario en el dashboard**: min 8 + letras + números (`letters_digits`), confirmaciones ON, `secure_password_change` ON (pide la password actual al cambiarla). Se reflejó el requisito en `config.toml`.
 
 ## En progreso
 

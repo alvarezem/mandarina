@@ -157,7 +157,7 @@ _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 ### 2.2 Endurecer `backend/supabase/config.toml`
 1. Auth:
    - `minimum_password_length = 8`, `password_requirements` con letra+número. **El usuario eligió
-     en el dashboard `lower_upper_letters_digits_symbols` (min 8 + letras + símbolos)**; se actualizó
+     en el dashboard `letters_digits` (min 8 + letras + números)**; se actualizó
      el `config.toml` para que local coincida con hosting.
    - `enable_confirmations = true` (verificar impacto en flujo de signup/frontend).
    - `secure_password_change = true`. **Activado en el dashboard por el usuario** (2026-08-09):
@@ -215,7 +215,7 @@ _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 
 **Pendientes de Fase 2 (tu checklist manual en el dashboard de Supabase)** — [PASO A PASO en la sección "Paso a paso manual (usuario)" más abajo]:
 1. **`backend/.env` BORRADO** ✅ (2026-08-09): la service role key ya no está en disco. Nota: **Supabase ya no permite rotar las legacy keys** — la rotación quedó descartada; la key no estaba comprometida (nunca entró al historial git). La migración a nuevas API keys queda como mejora futura en `TODO.md`.
-2. **Aplicar los settings de auth en el dashboard** (el `config.toml` solo afecta local) — **HECHO por el usuario** (2026-08-09): `minimum_password_length = 8`, password requirements **`lower_upper_letters_digits_symbols`** (letras + símbolos), email **Confirmations ON**, **`secure_password_change` ON** (pide la password actual al cambiarla). Se reflejó el mismo requisito en `config.toml`.
+2. **Aplicar los settings de auth en el dashboard** (el `config.toml` solo afecta local) — **HECHO por el usuario** (2026-08-09): `minimum_password_length = 8`, password requirements **`letters_digits`** (letras + números), email **Confirmations ON**, **`secure_password_change` ON** (pide la password actual al cambiarla). Se reflejó el mismo requisito en `config.toml`.
 3. **Verificar el flujo de signup** con confirmación de email ON (cambia el flujo: el usuario debe confirmar el email antes de entrar). **PENDIENTE del usuario**.
 4. **Verificación local**: `supabase db reset` ✅ YA VERIFICADO (2026-08-09, stack local + 13 migraciones OK).
 5. `backend/.env.example`: ya actualizado a `SUPABASE_ANON_KEY` (sin service role).
@@ -230,7 +230,7 @@ _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 - Opcional y recomendado a futuro: migrar a las **nuevas API keys** (`sb_publishable`/`sb_secret`), que sí permiten rotación individual — anotado en `TODO.md` (Supabase depreca las legacy keys a fines de 2026).
 
 **2. Settings de auth — HECHO por el usuario (2026-08-09)**
-- `minimum password length = 8`, requerimiento **letras + símbolos** (`lower_upper_letters_digits_symbols`).
+- `minimum password length = 8`, requerimiento **letras + números** (`letters_digits`).
 - **Confirm email** ON.
 - **Secure password change** ON → al cambiar la password pide la actual.
 - Rate limits de resets anti-spam (si tu plan los expone).
@@ -247,7 +247,7 @@ marcar Fase 2 como HECHA en `DONE.md` y pasar a Fase 3.
 
 **Código realizado (2026-08-09)**:
 - Borrados: `backend/src/supabaseClient.js`, `backend/package*.json`, `backend/node_modules/`, y `backend/.env` (service role key fuera de disco).
-- `config.toml`: auth hardening (min 8, `lower_upper_letters_digits_symbols`, confirmations on, secure_password_change on, `max_frequency 10s`), `verify_jwt` en las 3 funciones, seed `enabled = false`, apagados `[realtime]`, `[storage.s3_protocol]`, `[storage.vector]`, `[analytics]`.
+- `config.toml`: auth hardening (min 8, `letters_digits`, confirmations on, secure_password_change on, `max_frequency 10s`), `verify_jwt` en las 3 funciones, seed `enabled = false`, apagados `[realtime]`, `[storage.s3_protocol]`, `[storage.vector]`, `[analytics]`.
 - `_shared/cors.ts`: `corsHeaders` + `json` con allowlist (producción, `localhost:3000`, `*.vercel.app`) y `Vary: Origin`; consumido por las 3 funciones.
 - `quotes/index.ts`: cache LRU con cap (1000), `normalizeSymbols` (strings, sin MEP/CCL, dedupe, máx 50), timeouts (AbortSignal) en dolarapi y byma.
 - `import-plan/index.ts`: tope de `file_base64` (~5MB) antes de `atob`, reemplazo atómico vía `supabase.rpc('replace_user_plan', …)`, mensajes genéricos, `parseQuantity` robusto (separador decimal ambiguo).
@@ -467,7 +467,7 @@ razonamiento de cada una, incluido por qué sumamos cosas que hoy no existen.
 - **Por qué endurecer**: hoy el servidor acepta contraseñas de 6 caracteres sin
   requisitos, sin confirmación de email y con `max_frequency` de 1s (spam de
   resets). Endurecer es config pura, gratis y sin código. El usuario eligió en el
-  dashboard `lower_upper_letters_digits_symbols` (min 8 + letras + símbolos) y
+  dashboard `letters_digits` (min 8 + letras + números) y
   `secure_password_change` ON (pide la password actual al cambiarla); el `config.toml`
   se actualizó para que local coincida. La única contra es que
   `enable_confirmations = true` cambia el flujo de signup (hay que verificar el

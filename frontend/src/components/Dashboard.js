@@ -18,6 +18,8 @@ import { fmt, fmtCompact } from '../lib/format'
 import { MONTHS, BRAND_HEX, BRAND_HEX_STRONG, brandRgba, PALETTE } from '../lib/constants'
 import Dropdown from './Dropdown'
 import FiltersBar from './FiltersBar'
+import SortableTh from './SortableTh'
+import Check, { itemBase, itemActive, itemInactive } from './Check'
 import { useToast } from './Toast'
 import useCountUp from '../hooks/useCountUp'
 
@@ -43,22 +45,6 @@ const CATEGORY_OPTIONS = [
   'Transferencias',
   'Transporte',
 ]
-
-const itemBase = 'flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-xs transition'
-const itemActive = 'bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
-const itemInactive = 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-
-function Check({ on }) {
-  return (
-    <span
-      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
-        on ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 text-transparent dark:border-slate-600'
-      }`}
-    >
-      ✓
-    </span>
-  )
-}
 
 function CategoryCell({ tx, options, onChange, onAddCustom }) {
   const [remember, setRemember] = useState(false)
@@ -249,30 +235,6 @@ function EmptyState({ title, hint }) {
       <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{title}</p>
       {hint && <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">{hint}</p>}
     </div>
-  )
-}
-
-function SortableTh({ label, sortKey, sort, onSort, align = 'left' }) {
-  const active = sort.key === sortKey
-  return (
-    <th
-      className={`px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 dark:text-slate-400 ${
-        align === 'right' ? 'text-right' : 'text-left'
-      }`}
-    >
-      <button
-        type="button"
-        onClick={() => onSort(sortKey)}
-        className={`inline-flex items-center gap-1 transition active:scale-[0.98] ${
-          active
-            ? 'text-brand-600 dark:text-brand-400'
-            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-        }`}
-      >
-        {label}
-        {active && <span className="text-[10px]">{sort.dir === 'asc' ? '▲' : '▼'}</span>}
-      </button>
-    </th>
   )
 }
 

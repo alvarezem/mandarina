@@ -90,9 +90,11 @@ export default function InvestmentPlan({
     const { data, error } = await supabase
       .from('portfolio_plan')
       .select('*')
+      .eq('user_id', session?.user?.id)
       .order('sort_order', { ascending: true })
     if (error) {
-      setError(error.message)
+      console.error('InvestmentPlan: error al cargar el plan', error)
+      setError('No se pudo cargar el plan de inversión')
     } else {
       setItems(data || [])
       setError(null)
@@ -204,11 +206,12 @@ export default function InvestmentPlan({
         const { data, error } = await supabase.functions.invoke('import-plan', {
           body: { file_base64 },
         })
-        if (error) throw new Error(error.message || 'No se pudo importar el plan')
+        if (error) throw new Error('No se pudo importar el plan')
         if (data?.error) throw new Error(data.error)
         pushToast({ type: 'success', message: `Plan importado (${data.count} activos)` })
         await loadPlan()
       } catch (e) {
+        console.error('InvestmentPlan: error al importar el plan', e)
         pushToast({ type: 'error', message: e.message || 'No se pudo importar el plan' })
       } finally {
         setImporting(false)
@@ -263,13 +266,15 @@ export default function InvestmentPlan({
         sort_order: items.length,
       })
       if (error) {
-        pushToast({ type: 'error', message: error.message })
+        console.error('InvestmentPlan: error al crear activo', error)
+        pushToast({ type: 'error', message: 'No se pudo agregar el activo' })
         return
       }
     } else {
       const { error } = await supabase.from('portfolio_plan').update(payload).eq('id', editingId)
       if (error) {
-        pushToast({ type: 'error', message: error.message })
+        console.error('InvestmentPlan: error al actualizar activo', error)
+        pushToast({ type: 'error', message: 'No se pudo actualizar el activo' })
         return
       }
     }
@@ -281,7 +286,8 @@ export default function InvestmentPlan({
   const removeItem = async (item) => {
     const { error } = await supabase.from('portfolio_plan').delete().eq('id', item.id)
     if (error) {
-      pushToast({ type: 'error', message: error.message })
+      console.error('InvestmentPlan: error al eliminar activo', error)
+      pushToast({ type: 'error', message: 'No se pudo eliminar el activo' })
       return
     }
     await loadPlan()
@@ -296,7 +302,8 @@ export default function InvestmentPlan({
       .update({ quantity: newQuantity })
       .eq('id', current.id)
     if (error) {
-      pushToast({ type: 'error', message: error.message })
+      console.error('InvestmentPlan: error al aplicar compra', error)
+      pushToast({ type: 'error', message: 'No se pudo registrar la compra' })
       return
     }
     setBudget(String(Math.max(0, (Number(budget) || 0) - step.amount)))

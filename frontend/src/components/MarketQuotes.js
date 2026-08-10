@@ -129,9 +129,11 @@ export default function MarketQuotes({
     const { data, error } = await supabase
       .from('portfolio_plan')
       .select('*')
+      .eq('user_id', session?.user?.id)
       .order('sort_order', { ascending: true })
     if (error) {
-      setError(error.message)
+      console.error('MarketQuotes: error al cargar el plan', error)
+      setError('No se pudo cargar el plan de inversión')
     } else {
       setItems(data || [])
       setError(null)

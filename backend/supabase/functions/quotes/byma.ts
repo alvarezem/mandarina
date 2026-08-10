@@ -4,6 +4,8 @@
 export const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
 
+const FETCH_TIMEOUT_MS = 10_000
+
 const BYMA_QUOTE_URL =
   'https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/fichatecnica/especies/cotizacion'
 
@@ -31,6 +33,7 @@ export async function bymaQuote(symbol: string) {
       Origin: 'https://open.bymadata.com.ar',
     },
     body: JSON.stringify({ symbol, settlementType: '2', 'Content-Type': 'application/json' }),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   })
   if (!res.ok) return null
   let data: any
@@ -75,6 +78,7 @@ export async function bymaHistory(symbol: string, range: string) {
   try {
     const res = await fetch(`${BYMA_HISTORY_URL}?${params.toString()}`, {
       headers: { 'User-Agent': UA, Accept: 'application/json', Origin: 'https://open.bymadata.com.ar' },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
     if (!res.ok) return null
     data = await res.json()

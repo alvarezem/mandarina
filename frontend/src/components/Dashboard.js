@@ -346,6 +346,7 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
   }, [userId, refreshKey])
 
   useEffect(() => {
+    if (!userId) return
     let active = true
     setLoading(true)
     setError(null)
@@ -353,10 +354,15 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
       const { data, error } = await supabase
         .from('transactions')
         .select('*, card_summaries(file_name, summary_type, period_month, period_year)')
+        .eq('user_id', userId)
         .order('date', { ascending: false })
       if (!active) return
-      setError(error ? error.message : null)
-      setAllTx(data ?? [])
+      if (error) {
+        console.error('Dashboard: error al cargar transacciones', error)
+        setError('No se pudieron cargar los gastos')
+      } else {
+        setAllTx(data ?? [])
+      }
       setLoading(false)
       if (!autoApplied.current) {
         autoApplied.current = true
@@ -372,7 +378,7 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
     return () => {
       active = false
     }
-  }, [refreshKey])
+  }, [refreshKey, userId])
 
   useEffect(() => {
     setPeriod('todo')
@@ -495,7 +501,8 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
       .update({ category })
       .eq('id', tx.id)
     if (error) {
-      pushToast({ type: 'error', message: error.message })
+      console.error('Dashboard: error al actualizar categoría', error)
+      pushToast({ type: 'error', message: 'No se pudo actualizar la categoría' })
       return
     }
     setAllTx((prev) => prev.map((t) => (t.id === tx.id ? { ...t, category } : t)))
@@ -532,7 +539,8 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
       .from('custom_categories')
       .upsert({ user_id: userId, name: trimmed }, { onConflict: 'user_id,name' })
     if (error) {
-      pushToast({ type: 'error', message: error.message })
+      console.error('Dashboard: error al crear categoría', error)
+      pushToast({ type: 'error', message: 'No se pudo crear la categoría' })
       return
     }
     setCustomCategories((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]))

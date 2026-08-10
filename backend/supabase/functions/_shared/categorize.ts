@@ -20,7 +20,7 @@ export const CATEGORY_RULES: Array<[RegExp, string]> = [
   [/simplicity/i, 'Salud'],
   [/pedidosya/i, 'Delivery'],
   [/google|apple|youtube|spotify|netflix|suscripcion|streaming/i, 'Suscripciones'],
-  [/natury|naturgy|energia|agua|internet|telefon|telecentro|fibertel|movistar|claro|servicio/i, 'Servicios'],
+  [/natury|naturgy|energia|agua|internet|telefon|telecom|telecentro|fibertel|movistar|claro|servicio/i, 'Servicios'],
   [/pago con qr/i, 'Compras'],
 ]
 

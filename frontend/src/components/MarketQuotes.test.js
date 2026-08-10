@@ -22,7 +22,8 @@ const ITEMS = [
 
 function mockPlan(items = ITEMS, quotes = {}, rates = {}) {
   const order = vi.fn().mockResolvedValue({ data: items, error: null })
-  const select = vi.fn().mockReturnValue({ order })
+  const eq = vi.fn().mockReturnValue({ order })
+  const select = vi.fn().mockReturnValue({ eq })
   supabase.from.mockImplementation((table) => (table === 'portfolio_plan' ? { select } : {}))
   supabase.functions.invoke.mockImplementation((fn, { body } = {}) => {
     if (body?.history) {

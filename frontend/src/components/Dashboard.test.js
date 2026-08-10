@@ -15,7 +15,8 @@ function mockTx(data, { overrides = [], customCategories = [] } = {}) {
   const eq = vi.fn().mockResolvedValue({ data: null, error: null })
   const update = vi.fn().mockReturnValue({ eq })
   const order = vi.fn().mockResolvedValue({ data, error: null })
-  const select = vi.fn().mockReturnValue({ order })
+  const txEq = vi.fn().mockReturnValue({ order })
+  const select = vi.fn().mockReturnValue({ eq: txEq })
 
   const ovUpsert = vi.fn().mockResolvedValue({ data: null, error: null })
   const ovEq = vi.fn().mockResolvedValue({ data: overrides, error: null })
@@ -47,7 +48,7 @@ const txs = [
 function renderDashboard(props = {}) {
   return render(
     <ToastProvider>
-      <Dashboard summaryId={null} {...props} />
+      <Dashboard summaryId={null} session={{ user: { id: 'user-1' } }} {...props} />
     </ToastProvider>,
   )
 }

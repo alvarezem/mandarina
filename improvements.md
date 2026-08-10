@@ -137,7 +137,7 @@ Hallazgos de la migración:
 
 ---
 
-## FASE 2 — Seguridad y secretos
+## FASE 2 — Seguridad y secretos — EN CURSO (código hecho el 2026-08-09; falta verificación DB + deploy + dashboard)
 _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
 
 ### 2.1 Service role / cliente huérfano
@@ -197,11 +197,31 @@ _Objetivo: sin llaves en disco, auth fuerte, funciones y storage endurecidos._
    (Dashboard, UploadSummaries, InvestmentPlan, MarketQuotes).
 
 **Verificación**:
-- [x] `git grep` no encuentra service role ni anon keys fuera de `.env` gitignored.
-- [x] Todas las funciones tienen `verify_jwt = true` y CORS restringido.
-- [x] `supabase db reset` corre (seed arreglado).
-- [x] Re-parse de un mismo resumen no duplica transacciones (test).
-- [x] Los mensajes de error en la UI no contienen detalles del backend.
+- [x] `git grep` no encuentra service role ni anon keys fuera de `.env` gitignored (verificado el 2026-08-09: el valor de la key nunca entró al historial).
+- [x] Todas las funciones tienen `verify_jwt = true` y CORS restringido en **código** (`config.toml` + `_shared/cors.ts`). ⚠️ Falta aplicarlo en hosting con `supabase functions deploy` (las 3 funciones).
+- [ ] `supabase db reset` corre (seed arreglado). **PENDIENTE** — no verificado: requiere el stack local (`supabase start` + `db reset`), abortado en la sesión. Validar también que aplica `0013_replace_plan_rpc.sql`.
+- [ ] Re-parse de un mismo resumen no duplica transacciones (test). **Implementado en código** (delete previo de `transactions` por `summary_id` en `parse-summary`). Faltan los tests unitarios del handler (planificados en Fase 5.4).
+- [x] Los mensajes de error en la UI no contienen detalles del backend (mensajes amigables + `console.error`; tests actualizados).
+
+**Pendientes de Fase 2 (acción manual / hosting)**:
+1. **Rotar la service role key** en el dashboard de Supabase (la de `backend/.env` expira 2036). Tras rotar, actualizar `backend/.env` o eliminar la variable.
+2. **Aplicar los mismos settings de auth en el dashboard de Supabase** (el `config.toml` solo afecta local): `minimum_password_length = 8`, password requirements `letters_digits`, email **Confirmations ON**, `secure_password_change ON`, rate limit de resets anti-spam.
+3. **Deploy de las Edge Functions**: `supabase functions deploy parse-summary import-plan quotes` (lleva `verify_jwt = true`, CORS restringido, y todo el hardening 2.3).
+4. **Aplicar la migración**: `supabase db push` (crea `replace_user_plan`; import-plan lo usa vía RPC).
+5. **Verificación local pendiente**: `supabase db reset` (docker) para validar migración + config.
+6. `backend/.env.example`: ya actualizado a `SUPABASE_ANON_KEY` (sin service role).
+
+**Código realizado (2026-08-09)**:
+- Borrados: `backend/src/supabaseClient.js`, `backend/package*.json`, `backend/node_modules/`.
+- `config.toml`: auth hardening (min 8, `letters_digits`, confirmations on, secure_password_change on, `max_frequency 10s`), `verify_jwt` en las 3 funciones, seed `enabled = false`, apagados `[realtime]`, `[storage.s3_protocol]`, `[storage.vector]`, `[analytics]`.
+- `_shared/cors.ts`: `corsHeaders` + `json` con allowlist (producción, `localhost:3000`, `*.vercel.app`) y `Vary: Origin`; consumido por las 3 funciones.
+- `quotes/index.ts`: cache LRU con cap (1000), `normalizeSymbols` (strings, sin MEP/CCL, dedupe, máx 50), timeouts (AbortSignal) en dolarapi y byma.
+- `import-plan/index.ts`: tope de `file_base64` (~5MB) antes de `atob`, reemplazo atómico vía `supabase.rpc('replace_user_plan', …)`, mensajes genéricos, `parseQuantity` robusto (separador decimal ambiguo).
+- `0013_replace_plan_rpc.sql`: `replace_user_plan(uuid, jsonb)` SECURITY INVOKER con guard `auth.uid()`, delete+insert transaccional.
+- `parse-summary/index.ts`: validación de UUID, delete previo (idempotencia), mensajes genéricos + `console.error`, signo preservado en PDF (`amount`), `setStatus` con try/catch.
+- `_shared/categorize.ts`: `telecom` → Servicios + `categorize_test.ts`.
+- Frontend: `.eq('user_id', …)` en los 4 fetches (transactions, portfolio_plan ×2, card_summaries) y ~18 renders de `error.message` reemplazados por mensajes amigables. Tests actualizados (149/149 verdes).
+- Backend: 28 tests Deno verdes (26 + 2 de categorize).
 
 ---
 

@@ -35,9 +35,11 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
     const { data, error } = await supabase
       .from('card_summaries')
       .select('*')
+      .eq('user_id', session?.user?.id)
       .order('created_at', { ascending: false })
     if (error) {
-      setError(error.message)
+      console.error('UploadSummaries: error al cargar resúmenes', error)
+      setError('No se pudieron cargar los resúmenes')
     } else {
       setFiles(data)
     }
@@ -140,7 +142,8 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
     }
     const { error } = await supabase.from('card_summaries').delete().eq('id', file.id)
     if (error) {
-      pushToast({ type: 'error', message: error.message })
+      console.error('UploadSummaries: error al eliminar resumen', error)
+      pushToast({ type: 'error', message: 'No se pudo eliminar el resumen' })
       return
     }
     if (selectedId === file.id) onSelect?.(null)
@@ -161,7 +164,8 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
 
     const { error } = await supabase.from('card_summaries').update({ file_name: name }).eq('id', id)
     if (error) {
-      pushToast({ type: 'error', message: error.message })
+      console.error('UploadSummaries: error al renombrar resumen', error)
+      pushToast({ type: 'error', message: 'No se pudo renombrar el resumen' })
       return
     }
     setFiles((list) => list.map((f) => (f.id === id ? { ...f, file_name: name } : f)))
@@ -204,7 +208,8 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
     }
     const { error } = await supabase.from('card_summaries').update(payload).eq('id', id)
     if (error) {
-      pushToast({ type: 'error', message: error.message })
+      console.error('UploadSummaries: error al clasificar resumen', error)
+      pushToast({ type: 'error', message: 'No se pudo actualizar la clasificación' })
       return
     }
     setFiles((list) => list.map((f) => (f.id === id ? { ...f, ...payload } : f)))

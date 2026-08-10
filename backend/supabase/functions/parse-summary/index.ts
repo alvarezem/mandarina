@@ -4,17 +4,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { getDocumentProxy, extractTextItems } from 'https://esm.sh/unpdf@1.8.0'
 import { categorize } from '../_shared/categorize.ts'
 import { detectPeriod, detectSummaryType } from './detection.ts'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-const json = (body, status, extraHeaders = {}) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...extraHeaders },
-  })
+import { corsHeaders, json } from '../_shared/cors.ts'
 
 const HEADER_ALIASES = {
   date: [
@@ -32,9 +22,13 @@ const HEADER_ALIASES = {
   ],
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req.headers.get('Origin'))
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: cors })
   }
 
   let summaryId
@@ -42,10 +36,13 @@ Deno.serve(async (req) => {
     const body = await req.json()
     summaryId = body?.summary_id
   } catch {
-    return json({ error: 'Body JSON inválido' }, 400, corsHeaders)
+    return json({ error: 'Body JSON inválido' }, 400, cors)
   }
   if (!summaryId) {
-    return json({ error: 'summary_id es requerido' }, 400, corsHeaders)
+    return json({ error: 'summary_id es requerido' }, 400, cors)
+  }
+  if (typeof summaryId !== 'string' || !UUID_RE.test(summaryId)) {
+    return json({ error: 'summary_id inválido' }, 400, cors)
   }
 
   const authHeader = req.headers.get('Authorization')
@@ -61,11 +58,16 @@ Deno.serve(async (req) => {
     .eq('id', summaryId)
     .single()
   if (sumError || !summary) {
-    return json({ error: 'Resumen no encontrado' }, 404, corsHeaders)
+    return json({ error: 'Resumen no encontrado' }, 404, cors)
   }
 
-  const setStatus = (status, error = null) =>
-    supabase.from('card_summaries').update({ status, error }).eq('id', summaryId)
+  const setStatus = async (status, error = null) => {
+    try {
+      await supabase.from('card_summaries').update({ status, error }).eq('id', summaryId)
+    } catch (e) {
+      console.error('parse-summary: no se pudo actualizar el status del resumen', e)
+    }
+  }
 
   await setStatus('parsing')
 
@@ -75,7 +77,7 @@ Deno.serve(async (req) => {
   if (dlError || !blob) {
     const message = 'No se pudo leer el archivo desde storage'
     await setStatus('error', message)
-    return json({ error: message }, 500, corsHeaders)
+    return json({ error: message }, 500, cors)
   }
 
   let transactions
@@ -94,15 +96,16 @@ Deno.serve(async (req) => {
       }))
     }
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Error al procesar el archivo'
+    console.error('parse-summary: error al procesar el archivo', e)
+    const message = 'Error al procesar el archivo'
     await setStatus('error', message)
-    return json({ error: message }, 400, corsHeaders)
+    return json({ error: message }, 400, cors)
   }
 
   if (transactions.length === 0) {
     const message = 'No se encontraron transacciones con el formato esperado (Fecha | Descripción | Importe)'
     await setStatus('error', message)
-    return json({ error: message }, 400, corsHeaders)
+    return json({ error: message }, 400, cors)
   }
 
   const { data: overrides } = await supabase
@@ -115,13 +118,25 @@ Deno.serve(async (req) => {
     category: overrideMap.get(t.merchant.toLowerCase()) ?? t.category,
   }))
 
+  // Idempotencia: un re-parse del mismo resumen no debe duplicar transacciones.
+  const { error: delError } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('summary_id', summaryId)
+  if (delError) {
+    const message = 'Error al preparar el resumen'
+    await setStatus('error', message)
+    return json({ error: message }, 500, cors)
+  }
+
   const { error: insError } = await supabase.from('transactions').insert(
     transactions.map((t) => ({ summary_id: summaryId, ...t })),
   )
   if (insError) {
+    console.error('parse-summary: error al insertar transacciones', insError)
     const message = 'Error al guardar transacciones'
     await setStatus('error', message)
-    return json({ error: message }, 500, corsHeaders)
+    return json({ error: message }, 500, cors)
   }
 
   const result = buildAnalysis(transactions)
@@ -132,7 +147,7 @@ Deno.serve(async (req) => {
   if (anError) {
     const message = 'Error al guardar el análisis de consumo'
     await setStatus('error', message)
-    return json({ error: message }, 500, corsHeaders)
+    return json({ error: message }, 500, cors)
   }
 
   const { error: metaError } = await supabase.from('card_summaries').update({
@@ -141,11 +156,11 @@ Deno.serve(async (req) => {
   }).eq('id', summaryId)
   if (metaError) {
     await setStatus('error', 'Error al guardar la metadata del resumen')
-    return json({ error: 'Error al guardar la metadata del resumen' }, 500, corsHeaders)
+    return json({ error: 'Error al guardar la metadata del resumen' }, 500, cors)
   }
 
   await setStatus('done')
-  return json({ ok: true, count: transactions.length }, 200, corsHeaders)
+  return json({ ok: true, count: transactions.length }, 200, cors)
 })
 
 function computeTotals(txs) {
@@ -302,7 +317,7 @@ async function extractPdfTransactions(blob) {
         date: parseDate(first.s),
         merchant,
         currency: parts.dolares ? 'USD' : 'ARS',
-        amount: -Math.abs(amount),
+        amount,
         category: categorize(merchant),
       })
     }

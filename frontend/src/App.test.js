@@ -28,21 +28,18 @@ const EMPTY_STATE = 'Subí un resumen para empezar.'
 
 function mockData(table, data) {
   const order = vi.fn().mockResolvedValue({ data, error: null })
-  const select = vi.fn().mockReturnValue({ order })
-  return { select, order }
+  const eq = vi.fn().mockReturnValue({ order })
+  const select = vi.fn().mockReturnValue({ eq })
+  return { select, eq, order }
 }
 
 function mockApp(txs, summaries = []) {
   const tx = mockData('transactions', txs)
   const summariesData = mockData('card_summaries', summaries)
-  const metaChain = () => {
-    const order = vi.fn().mockResolvedValue({ data: [], error: null })
-    const eq = vi.fn().mockResolvedValue({ data: [], error: null })
-    return { order, eq }
-  }
   const meta = (table) => {
-    const chain = metaChain()
-    const select = vi.fn().mockReturnValue(chain)
+    const order = vi.fn().mockResolvedValue({ data: [], error: null })
+    const eq = vi.fn().mockReturnValue({ order })
+    const select = vi.fn().mockReturnValue({ eq })
     return { select }
   }
   supabase.from.mockImplementation((table) => {

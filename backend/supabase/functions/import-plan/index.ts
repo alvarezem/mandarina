@@ -1,20 +1,13 @@
 // Importa el plan de inversión desde un archivo XLSX.
 // Detecta la fila de encabezados (Ticker | % Meta | Tenencia), ignora metadatos
-// previos y REEMPLAZA todo el plan del usuario.
+// previos y REEMPLAZA todo el plan del usuario (de forma atómica vía RPC).
 
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { corsHeaders, json } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-const json = (body, status, extraHeaders = {}) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...extraHeaders },
-  })
+// ~5MB binario (base64 ≈ +33%). Un plan de inversión real pesa KBs.
+const MAX_BASE64_LENGTH = 7 * 1024 * 1024
 
 const HEADER_ALIASES = {
   symbol: ['ticker', 'symbol', 'simbolo', 'activo', 'codigo', 'especie'],
@@ -77,10 +70,34 @@ function parsePercent(value) {
   return n <= 1 ? n * 100 : n
 }
 
+// Cantidad con separador decimal/comma ambiguo. Misma lógica que parseAmount
+// de parse-summary: si hay punto y coma, el último es el separador decimal;
+// si solo punto, es decimal si tiene <=2 dígitos (1.5 → 1.5, 1.234 → 1234).
 function parseQuantity(value) {
   if (value === null || value === undefined || value === '') return 0
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0
-  const n = Number(String(value).replace(/\./g, '').replace(',', '.'))
+  const cleaned = String(value).replace(/[^\d.,\-]/g, '')
+  if (cleaned === '' || cleaned === '-') return 0
+  const sign = cleaned.startsWith('-') ? -1 : 1
+  const digits = cleaned.replace(/-/g, '')
+
+  let normalized
+  if (digits.includes('.') && digits.includes(',')) {
+    const lastComma = digits.lastIndexOf(',')
+    const lastDot = digits.lastIndexOf('.')
+    normalized = lastComma > lastDot
+      ? digits.replace(/\./g, '').replace(',', '.')
+      : digits.replace(/,/g, '')
+  } else if (digits.includes(',')) {
+    normalized = digits.replace(',', '.')
+  } else if (digits.includes('.')) {
+    const parts = digits.split('.')
+    normalized = parts.length === 2 && parts[1].length <= 2 ? digits : digits.replace(/\./g, '')
+  } else {
+    normalized = digits
+  }
+
+  const n = Number(normalized) * sign
   return Number.isFinite(n) ? n : 0
 }
 
@@ -112,8 +129,10 @@ function extractPlan(rows) {
 }
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req.headers.get('Origin'))
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: cors })
   }
 
   let fileBase64
@@ -121,10 +140,13 @@ Deno.serve(async (req) => {
     const body = await req.json()
     fileBase64 = body?.file_base64
   } catch {
-    return json({ error: 'Body JSON inválido' }, 400, corsHeaders)
+    return json({ error: 'Body JSON inválido' }, 400, cors)
   }
   if (!fileBase64 || typeof fileBase64 !== 'string') {
-    return json({ error: 'file_base64 es requerido' }, 400, corsHeaders)
+    return json({ error: 'file_base64 es requerido' }, 400, cors)
+  }
+  if (fileBase64.length > MAX_BASE64_LENGTH) {
+    return json({ error: 'El archivo es demasiado grande' }, 413, cors)
   }
 
   const authHeader = req.headers.get('Authorization')
@@ -136,7 +158,7 @@ Deno.serve(async (req) => {
 
   const { data: userData, error: authError } = await supabase.auth.getUser()
   if (authError || !userData?.user) {
-    return json({ error: 'No autenticado' }, 401, corsHeaders)
+    return json({ error: 'No autenticado' }, 401, cors)
   }
   const userId = userData.user.id
 
@@ -145,7 +167,7 @@ Deno.serve(async (req) => {
     const bytes = Uint8Array.from(atob(fileBase64), (c) => c.charCodeAt(0))
     wb = XLSX.read(bytes, { type: 'array' })
   } catch {
-    return json({ error: 'No se pudo leer el archivo XLSX' }, 400, corsHeaders)
+    return json({ error: 'No se pudo leer el archivo XLSX' }, 400, cors)
   }
 
   const ws = wb.Sheets[wb.SheetNames[0]]
@@ -156,15 +178,14 @@ Deno.serve(async (req) => {
     return json(
       { error: 'No se encontró la fila de encabezados (Ticker | % Meta | Tenencia)' },
       400,
-      corsHeaders,
+      cors,
     )
   }
   if (items.length === 0) {
-    return json({ error: 'El archivo no tiene activos para importar' }, 400, corsHeaders)
+    return json({ error: 'El archivo no tiene activos para importar' }, 400, cors)
   }
 
   const rowsToInsert = items.map((item, i) => ({
-    user_id: userId,
     symbol: item.symbol,
     name: item.symbol,
     asset_type: 'otro',
@@ -174,42 +195,15 @@ Deno.serve(async (req) => {
     sort_order: i,
   }))
 
-  const { data: previousRows, error: readError } = await supabase
-    .from('portfolio_plan')
-    .select('*')
-    .eq('user_id', userId)
-  if (readError) {
-    return json({ error: 'No se pudo leer el plan actual' }, 500, corsHeaders)
-  }
-
-  const { error: delError } = await supabase
-    .from('portfolio_plan')
-    .delete()
-    .eq('user_id', userId)
-  if (delError) {
-    return json({ error: 'No se pudo reemplazar el plan' }, 500, corsHeaders)
-  }
-
-  const { error: insError } = await supabase.from('portfolio_plan').insert(rowsToInsert)
-  if (insError) {
-    const rollbackRows = (previousRows ?? []).map((r) => ({
-      user_id: userId,
-      symbol: r.symbol,
-      name: r.name ?? r.symbol,
-      asset_type: r.asset_type ?? 'otro',
-      currency: r.currency ?? 'ARS',
-      target_weight: r.target_weight ?? 0,
-      quantity: r.quantity ?? 0,
-      sort_order: r.sort_order ?? 0,
-    }))
-    if (rollbackRows.length > 0) {
-      await supabase.from('portfolio_plan').insert(rollbackRows)
-    }
-    return json(
-      { error: `Error al guardar el plan: ${insError.message}` },
-      500,
-      corsHeaders,
-    )
+  // Reemplazo atómico: delete + insert en una sola transacción (RPC SECURITY
+  // INVOKER, respeta RLS del caller). Sin ventana de datos perdidos.
+  const { error: rpcError } = await supabase.rpc('replace_user_plan', {
+    p_user_id: userId,
+    p_items: rowsToInsert,
+  })
+  if (rpcError) {
+    console.error('import-plan: replace_user_plan falló', rpcError.message)
+    return json({ error: 'No se pudo reemplazar el plan' }, 500, cors)
   }
 
   return json(
@@ -223,6 +217,6 @@ Deno.serve(async (req) => {
       })),
     },
     200,
-    corsHeaders,
+    cors,
   )
 })

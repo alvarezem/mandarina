@@ -19,7 +19,8 @@ vi.mock('../lib/supabaseClient', () => ({
 
 function mockSummaries(list) {
   const order = vi.fn().mockResolvedValue({ data: list, error: null })
-  const select = vi.fn().mockReturnValue({ order })
+  const eq = vi.fn().mockReturnValue({ order })
+  const select = vi.fn().mockReturnValue({ eq })
   supabase.from.mockImplementation((table) =>
     table === 'card_summaries' ? { select } : {},
   )
@@ -61,7 +62,11 @@ describe('UploadSummaries', () => {
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: [], error: null }) }),
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }),
           insert,
         }
       }
@@ -106,7 +111,11 @@ describe('UploadSummaries', () => {
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
         return {
-          select: vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: [], error: null }) }),
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }),
           insert,
         }
       }
@@ -137,11 +146,13 @@ describe('UploadSummaries', () => {
       if (table === 'card_summaries') {
         return {
           select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [
-                { id: 'a', file_name: 'Nacion.csv', file_path: 'u1/Nacion.csv', status: 'done', error: null, created_at: '2026-07-01' },
-              ],
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [
+                  { id: 'a', file_name: 'Nacion.csv', file_path: 'u1/Nacion.csv', status: 'done', error: null, created_at: '2026-07-01' },
+                ],
+                error: null,
+              }),
             }),
           }),
           insert,
@@ -170,9 +181,11 @@ describe('UploadSummaries', () => {
       if (table === 'card_summaries') {
         return {
           select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+                error: null,
+              }),
             }),
           }),
           update,
@@ -203,9 +216,11 @@ describe('UploadSummaries', () => {
       if (table === 'card_summaries') {
         return {
           select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+                error: null,
+              }),
             }),
           }),
           update,
@@ -238,9 +253,11 @@ describe('UploadSummaries', () => {
       if (table === 'card_summaries') {
         return {
           select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+                error: null,
+              }),
             }),
           }),
           delete: del,
@@ -294,9 +311,11 @@ describe('UploadSummaries', () => {
       if (table === 'card_summaries') {
         return {
           select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+                error: null,
+              }),
             }),
           }),
           delete: del,
@@ -311,7 +330,7 @@ describe('UploadSummaries', () => {
     await userEvent.click(screen.getByRole('button', { name: /Eliminar visa-julio/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Sí' }))
 
-    expect(await screen.findByRole('status')).toHaveTextContent('denied')
+    expect(await screen.findByRole('status')).toHaveTextContent('No se pudo eliminar el resumen')
   })
 
   it('muestra el badge de tipo y período (y "Sin clasificar" si no hay metadata)', async () => {
@@ -334,9 +353,11 @@ describe('UploadSummaries', () => {
       if (table === 'card_summaries') {
         return {
           select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
+                error: null,
+              }),
             }),
           }),
           update,
@@ -370,9 +391,11 @@ describe('UploadSummaries', () => {
       if (table === 'card_summaries') {
         return {
           select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
+                error: null,
+              }),
             }),
           }),
           update,

@@ -16,7 +16,8 @@ vi.mock('../lib/supabaseClient', () => ({
 
 function mockPlan(items, prices = {}) {
   const order = vi.fn().mockResolvedValue({ data: items, error: null })
-  const select = vi.fn().mockReturnValue({ order })
+  const eq = vi.fn().mockReturnValue({ order })
+  const select = vi.fn().mockReturnValue({ eq })
   const update = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }))
   const insert = vi.fn().mockResolvedValue({ error: null })
   const del = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }))

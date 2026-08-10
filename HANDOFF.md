@@ -21,6 +21,9 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 - **FASE 2** de `improvements.md` — **solo falta que el usuario verifique el signup con confirmación de email** (todo lo demás cerrado: código commiteado, deploy, migración, `db reset` local, `backend/.env` borrado, settings de auth aplicados).
 
+- **Auth UX — signup con email ya registrado**: con confirmaciones ON, Supabase devuelve un usuario fake (`identities: []`, anti-enumeración) si el email ya tiene cuenta confirmada. **IMPLEMENTADO** (2026-08-10): `Auth.js` distingue `identities.length > 0` (cuenta nueva → "Casi listo") de `=== 0` (email existente → "Ya existe una cuenta" + botones **Volver a iniciar sesión** y **Recuperar contraseña** vía `resetPasswordForEmail`); link **"¿Olvidaste tu contraseña?"** agregado en el login normal (formulario de reset). **Ampliado** (2026-08-10): nuevo helper `lib/authErrors.js` (`authErrorToSpanish`) traduce errores de Supabase por `error.code` (con fallback por texto) — cubre `invalid_credentials`, `weak_password`, `email_not_confirmed`, `user_already_exists`, rate limits; `Auth.js` valida password `letters_digits` en cliente ("debe incluir letras y números") y maneja `error.code === 'user_already_exists'` → misma pantalla `emailTaken` (el fake user con `identities: []` no es el único camino: con SMS confirmations OFF la doc indica que Supabase devuelve el error). Tests 160/160 OK + build OK. **Pendiente de verificar en hosting**: qué responde realmente signUp para email existente (error `user_already_exists` vs fake user) y que el email de reset llega. Sin commit aún.
+  - **Tarea aparte**: flujo de **cambio de contraseña** (link del email → pantalla de nueva contraseña; hoy no existe, el redirect maneja el token de Supabase).
+
 ## Próximo paso sugerido
 
 - El usuario verifica el flujo de signup con confirmación; tras eso, marcar Fase 2 HECHA

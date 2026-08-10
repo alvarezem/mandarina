@@ -10,6 +10,7 @@ vi.mock('../lib/supabaseClient', () => ({
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
       signInWithOAuth: vi.fn(),
+      resetPasswordForEmail: vi.fn(),
     },
   },
 }))
@@ -19,12 +20,14 @@ describe('Auth', () => {
     supabase.auth.signUp.mockReset()
     supabase.auth.signInWithPassword.mockReset()
     supabase.auth.signInWithOAuth.mockReset()
+    supabase.auth.resetPasswordForEmail.mockReset()
     supabase.auth.signInWithPassword.mockResolvedValue({ data: {}, error: null })
     supabase.auth.signUp.mockResolvedValue({
-      data: { user: { id: 'u1' }, session: null },
+      data: { user: { id: 'u1', identities: [{ id: 'i1' }] }, session: null },
       error: null,
     })
     supabase.auth.signInWithOAuth.mockResolvedValue({ data: {}, error: null })
+    supabase.auth.resetPasswordForEmail.mockResolvedValue({ error: null })
   })
 
   it('muestra el formulario de login por defecto', () => {
@@ -102,6 +105,117 @@ describe('Auth', () => {
       password: 'password123',
     })
     expect(screen.getByRole('button', { name: /Volver a iniciar sesión/i })).toBeInTheDocument()
+  })
+
+  it('bloquea el signup con contraseña sin números', async () => {
+    render(<Auth />)
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    await userEvent.type(screen.getByLabelText('Email'), 'c@d.com')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'onlyletters')
+    await userEvent.type(screen.getByLabelText('Confirmar contraseña'), 'onlyletters')
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    expect(await screen.findByText('La contraseña debe incluir letras y números')).toBeInTheDocument()
+    expect(supabase.auth.signUp).not.toHaveBeenCalled()
+  })
+
+  it('traduce el error de login a español', async () => {
+    supabase.auth.signInWithPassword.mockResolvedValue({
+      error: { message: 'Invalid login credentials', code: 'invalid_credentials' },
+    })
+    render(<Auth />)
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'wrong')
+    await userEvent.click(screen.getByRole('button', { name: /Iniciar sesión/i }))
+    expect(await screen.findByText('Email o contraseña incorrectos')).toBeInTheDocument()
+  })
+
+  it('traduce el error de weak password del servidor a español', async () => {
+    supabase.auth.signUp.mockResolvedValue({
+      data: { user: null, session: null },
+      error: { message: 'Password should be at least 8 characters', code: 'weak_password' },
+    })
+    render(<Auth />)
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    await userEvent.type(screen.getByLabelText('Email'), 'c@d.com')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'password123')
+    await userEvent.type(screen.getByLabelText('Confirmar contraseña'), 'password123')
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    expect(
+      await screen.findByText(
+        'La contraseña no cumple los requisitos: al menos 8 caracteres con letras y números',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('muestra "Ya existe una cuenta" cuando signup devuelve user_already_exists', async () => {
+    supabase.auth.signUp.mockResolvedValue({
+      data: { user: null, session: null },
+      error: { message: 'User already registered', code: 'user_already_exists' },
+    })
+    render(<Auth />)
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    await userEvent.type(screen.getByLabelText('Email'), 'c@d.com')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'password123')
+    await userEvent.type(screen.getByLabelText('Confirmar contraseña'), 'password123')
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: /Ya existe una cuenta/i })).toBeInTheDocument(),
+    )
+    expect(screen.queryByText(/Casi listo/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Recuperar contraseña/i })).toBeInTheDocument()
+  })
+
+  it('muestra "Ya existe una cuenta" si el email ya está registrado', async () => {
+    supabase.auth.signUp.mockResolvedValue({
+      data: { user: { id: 'u1', identities: [] }, session: null },
+      error: null,
+    })
+    render(<Auth />)
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    await userEvent.type(screen.getByLabelText('Email'), 'c@d.com')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'password123')
+    await userEvent.type(screen.getByLabelText('Confirmar contraseña'), 'password123')
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: /Ya existe una cuenta/i })).toBeInTheDocument(),
+    )
+    expect(screen.queryByText(/Casi listo/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Recuperar contraseña/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /Volver a iniciar sesión/i })).toHaveLength(1)
+  })
+
+  it('envía el reset de contraseña desde la pantalla de email existente', async () => {
+    supabase.auth.signUp.mockResolvedValue({
+      data: { user: { id: 'u1', identities: [] }, session: null },
+      error: null,
+    })
+    render(<Auth />)
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    await userEvent.type(screen.getByLabelText('Email'), 'c@d.com')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'password123')
+    await userEvent.type(screen.getByLabelText('Confirmar contraseña'), 'password123')
+    await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /Recuperar contraseña/i }))
+    await waitFor(() =>
+      expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith('c@d.com', {
+        redirectTo: 'http://localhost',
+      }),
+    )
+    expect(await screen.findByText(/Te enviamos un link de recuperación/i)).toBeInTheDocument()
+  })
+
+  it('muestra "¿Olvidaste tu contraseña?" en el login y envía el reset', async () => {
+    render(<Auth />)
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com')
+    await userEvent.click(screen.getByRole('button', { name: /¿Olvidaste tu contraseña\?/i }))
+    expect(screen.getByRole('heading', { name: /Recuperar contraseña/i })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Enviar link de recuperación/i }))
+    await waitFor(() =>
+      expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith('a@b.com', {
+        redirectTo: 'http://localhost',
+      }),
+    )
+    expect(await screen.findByText(/Te enviamos un link a/i)).toBeInTheDocument()
   })
 
   it('inicia OAuth con Google', async () => {

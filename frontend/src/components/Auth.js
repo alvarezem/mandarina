@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import supabase from '../lib/supabaseClient'
+import { authErrorToSpanish } from '../lib/authErrors'
 import ThemeToggle from './ThemeToggle'
 import { Logo } from './Sidebar'
 
@@ -61,6 +62,9 @@ export default function Auth({ dark, onToggleTheme }) {
   const [fieldErrors, setFieldErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [signupSuccess, setSignupSuccess] = useState(false)
+  const [emailTaken, setEmailTaken] = useState(false)
+  const [forgotMode, setForgotMode] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   const strength = useMemo(() => strengthOf(password), [password])
 
@@ -68,6 +72,9 @@ export default function Auth({ dark, onToggleTheme }) {
     setIsSignUp((prev) => !prev)
     setFieldErrors({})
     setError(null)
+    setEmailTaken(false)
+    setForgotMode(false)
+    setResetSent(false)
   }
 
   const validate = () => {
@@ -75,6 +82,8 @@ export default function Auth({ dark, onToggleTheme }) {
     if (!EMAIL_RE.test(email)) errors.email = 'Ingresá un email válido'
     if (isSignUp) {
       if (password.length < 8) errors.password = 'La contraseña debe tener al menos 8 caracteres'
+      else if (!/[A-Za-z]/.test(password) || !/\d/.test(password))
+        errors.password = 'La contraseña debe incluir letras y números'
       if (confirm !== password) errors.confirm = 'Las contraseñas no coinciden'
     } else if (!password) {
       errors.password = 'Ingresá tu contraseña'
@@ -93,12 +102,35 @@ export default function Auth({ dark, onToggleTheme }) {
       : await supabase.auth.signInWithPassword({ email, password })
     setSubmitting(false)
     if (error) {
-      setError(error.message)
+      if (isSignUp && error.code === 'user_already_exists') {
+        setEmailTaken(true)
+        return
+      }
+      setError(authErrorToSpanish(error))
       return
     }
     if (isSignUp && data.user && !data.session) {
-      setSignupSuccess(true)
+      if (data.user.identities && data.user.identities.length === 0) {
+        setEmailTaken(true)
+      } else {
+        setSignupSuccess(true)
+      }
     }
+  }
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setSubmitting(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    })
+    setSubmitting(false)
+    if (error) {
+      setError(authErrorToSpanish(error))
+      return
+    }
+    setResetSent(true)
   }
 
   const handleGoogle = async () => {
@@ -109,7 +141,7 @@ export default function Auth({ dark, onToggleTheme }) {
       options: { redirectTo: window.location.origin },
     })
     setSubmitting(false)
-    if (error) setError(error.message)
+    if (error) setError(authErrorToSpanish(error))
   }
 
   const fieldClass = (invalid) =>
@@ -165,6 +197,90 @@ export default function Auth({ dark, onToggleTheme }) {
                 Volver a iniciar sesión
               </button>
             </div>
+          ) : emailTaken ? (
+            <div className="text-center animate-fade-in-up" role="status">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/50">
+                <svg className="h-7 w-7 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Ya existe una cuenta</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Ya existe una cuenta con el email{' '}
+                <span className="font-medium text-slate-700 dark:text-slate-200">{email}</span>. Si es tuya, podés
+                iniciar sesión o recuperar tu contraseña.
+              </p>
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                disabled={submitting}
+                className="mt-6 w-full rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition hover:from-brand-600 hover:to-brand-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-70"
+              >
+                {submitting ? 'Enviando…' : 'Recuperar contraseña'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmailTaken(false)
+                  setIsSignUp(false)
+                  setPassword('')
+                  setConfirm('')
+                }}
+                className="mt-3 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Volver a iniciar sesión
+              </button>
+              {resetSent && (
+                <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 animate-fade-in dark:bg-emerald-950/50 dark:text-emerald-400">
+                  Te enviamos un link de recuperación a <span className="font-medium">{email}</span>. Revisá tu bandeja de entrada.
+                </p>
+              )}
+            </div>
+          ) : forgotMode ? (
+            <form onSubmit={handleResetPassword} className="animate-fade-in-up" noValidate>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Recuperar contraseña</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Ingresá tu email y te enviamos un link para crear una nueva contraseña.
+              </p>
+              <label className="mb-1 mt-5 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="reset-email">
+                Email
+              </label>
+              <input
+                id="reset-email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setError(null)
+                }}
+                placeholder="tu@email.com"
+                autoComplete="email"
+                className={fieldClass(false)}
+              />
+              <button
+                type="submit"
+                disabled={submitting || !EMAIL_RE.test(email)}
+                className="mt-6 w-full rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition hover:from-brand-600 hover:to-brand-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-70"
+              >
+                {submitting ? 'Enviando…' : 'Enviar link de recuperación'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotMode(false)
+                  setResetSent(false)
+                  setError(null)
+                }}
+                className="mt-3 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Volver
+              </button>
+              {resetSent && (
+                <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 animate-fade-in dark:bg-emerald-950/50 dark:text-emerald-400">
+                  Te enviamos un link a <span className="font-medium">{email}</span>. Revisá tu bandeja de entrada.
+                </p>
+              )}
+            </form>
           ) : (
             <>
               <button
@@ -251,6 +367,21 @@ export default function Auth({ dark, onToggleTheme }) {
                   </div>
                   <FieldError id="password-error" message={fieldErrors.password} />
 
+                  {!isSignUp && (
+                    <div className="mt-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForgotMode(true)
+                          setError(null)
+                        }}
+                        className="text-sm font-medium text-brand-600 transition hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+                  )}
+
                   {isSignUp && (
                     <>
                       <div className="mt-2 flex items-center gap-2">
@@ -313,7 +444,7 @@ export default function Auth({ dark, onToggleTheme }) {
             </>
           )}
 
-          {!signupSuccess && (
+          {!signupSuccess && !emailTaken && !forgotMode && (
             <button
               type="button"
               onClick={toggleMode}

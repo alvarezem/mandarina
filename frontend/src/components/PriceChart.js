@@ -1,18 +1,8 @@
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Filler,
-} from 'chart.js'
 import { Line } from 'react-chartjs-2'
+import '../lib/chartjs'
 import { RANGES, formatPointDate } from '../lib/history'
 import { fmt } from '../lib/format'
 import { BRAND_HEX } from '../lib/constants'
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
 export default function PriceChart({
   symbol,

@@ -1,17 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Chart as ChartJS,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
 import { Line, Doughnut, Bar } from 'react-chartjs-2'
+import '../lib/chartjs'
 import supabase from '../lib/supabaseClient'
 import { buildAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
 import { fmt, fmtCompact } from '../lib/format'
@@ -138,18 +127,7 @@ function CategoryCell({ tx, options, onChange, onAddCustom }) {
   )
 }
 
-ChartJS.register(
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-  Filler,
-)
-
+const SORT_DEFAULTS = { date: 'desc', amount: 'asc', merchant: 'asc', category: 'asc', currency: 'asc', summary: 'asc' }
 function parseYmd(s) {
   const [y, m, d] = s.split('-').map(Number)
   return new Date(y, m - 1, d)
@@ -393,8 +371,6 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
   }, [working, currency, categories, query])
 
   const analysis = useMemo(() => buildAnalysis(filtered), [filtered])
-
-  const SORT_DEFAULTS = { date: 'desc', amount: 'asc', merchant: 'asc', category: 'asc', currency: 'asc', summary: 'asc' }
 
   const onSort = (key) =>
     setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULTS[key] }))

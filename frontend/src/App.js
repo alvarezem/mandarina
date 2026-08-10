@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import supabase from './lib/supabaseClient'
+import { useTheme } from './hooks/useTheme'
 import Auth from './components/Auth'
 import UploadSummaries from './components/UploadSummaries'
 import Dashboard from './components/Dashboard'
@@ -21,7 +22,7 @@ const isFirstLogin = (user) => {
   return !Number.isFinite(created) || !Number.isFinite(last) || last - created < 60_000
 }
 
-async function pushTopPositions(session, pushToast) {
+async function pushTopPositions(pushToast) {
   try {
     const { data: plan, error } = await supabase
       .from('portfolio_plan')
@@ -61,19 +62,7 @@ function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [greeting, setGreeting] = useState(null)
-  const [dark, setDark] = useState(() => {
-    const stored =
-      localStorage.getItem('mandarina-theme') ??
-      localStorage.getItem('mandarine-theme') ??
-      localStorage.getItem('fimplify-theme')
-    if (stored) return stored === 'dark'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-    localStorage.setItem('mandarina-theme', dark ? 'dark' : 'light')
-  }, [dark])
+  const [dark, setDark] = useTheme()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -139,7 +128,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
       icon: greeting === 'first' ? 'wave' : 'none',
       message: greeting === 'first' ? '¡Bienvenido/a a Mandarina!' : '¡Volviste! 😂',
     })
-    if (session) pushTopPositions(session, pushToast)
+    if (session) pushTopPositions(pushToast)
     setGreeting(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [greeting])

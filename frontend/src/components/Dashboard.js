@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { buildAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
 import { fileOf } from '../lib/format'
+import { useAsync } from '../hooks/useAsync'
 import FiltersBar from './FiltersBar'
 import SpendingCharts from './SpendingCharts'
 import TransactionsTable from './TransactionsTable'
@@ -72,9 +73,6 @@ function EmptyState({ title, hint }) {
 
 export default function Dashboard({ session, summaryId, dark, refreshKey, resetKey, onSummarySelect }) {
   const pushToast = useToast()
-  const [allTx, setAllTx] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [overrides, setOverrides] = useState([])
   const [customCategories, setCustomCategories] = useState([])
   const [period, setPeriod] = useState('todo')
@@ -90,56 +88,54 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
 
   const filterKey = `${period}|${customFrom}|${customTo}|${currency}|${summaryId ?? 'all'}|${categories.join(',')}`
 
-  useEffect(() => {
-    if (!userId) return
-    let active = true
-    ;(async () => {
-      const [ov, cc] = await Promise.all([
-        supabase.from('merchant_overrides').select('merchant, category').eq('user_id', userId),
-        supabase.from('custom_categories').select('name').eq('user_id', userId),
-      ])
-      if (!active) return
-      if (!ov.error) setOverrides(ov.data ?? [])
-      if (!cc.error) setCustomCategories((cc.data ?? []).map((c) => c.name))
-    })()
-    return () => {
-      active = false
-    }
-  }, [userId, refreshKey])
-
-  useEffect(() => {
-    if (!userId) return
-    let active = true
-    setLoading(true)
-    setError(null)
-    ;(async () => {
+  const { data: txData, setData: setAllTx, loading, error } = useAsync(async () => {
+    if (!userId) return []
+    try {
       const { data, error } = await supabase
         .from('transactions')
         .select('*, card_summaries(file_name, summary_type, period_month, period_year)')
         .order('date', { ascending: false })
-      if (!active) return
       if (error) {
         console.error('Dashboard: error al cargar transacciones', error)
-        setError('No se pudieron cargar los gastos')
-      } else {
-        setAllTx(data ?? [])
+        throw new Error('No se pudieron cargar los gastos')
       }
-      setLoading(false)
-      if (!autoApplied.current) {
-        autoApplied.current = true
-        const dates = (data ?? []).map((t) => t.date).filter(Boolean).sort()
-        if (dates.length) {
-          const first = parseYmd(dates[0])
-          const cutoff = new Date()
-          cutoff.setFullYear(cutoff.getFullYear() - 1)
-          if (first < cutoff) setPeriod('last12m')
-        }
-      }
-    })()
-    return () => {
-      active = false
+      return data ?? []
+    } catch (e) {
+      console.error('Dashboard: error al cargar transacciones', e)
+      throw new Error('No se pudieron cargar los gastos')
     }
-  }, [refreshKey, userId])
+  }, [userId, refreshKey])
+  const allTx = txData ?? []
+
+  const { data: refs } = useAsync(async () => {
+    if (!userId) return { overrides: [], customCategories: [] }
+    const [ov, cc] = await Promise.all([
+      supabase.from('merchant_overrides').select('merchant, category').eq('user_id', userId),
+      supabase.from('custom_categories').select('name').eq('user_id', userId),
+    ])
+    return {
+      overrides: ov.error ? [] : (ov.data ?? []),
+      customCategories: cc.error ? [] : (cc.data ?? []).map((c) => c.name),
+    }
+  }, [userId, refreshKey])
+
+  useEffect(() => {
+    if (!refs) return
+    setOverrides(refs.overrides)
+    setCustomCategories(refs.customCategories)
+  }, [refs])
+
+  useEffect(() => {
+    if (autoApplied.current || !Array.isArray(txData)) return
+    autoApplied.current = true
+    const dates = (txData ?? []).map((t) => t.date).filter(Boolean).sort()
+    if (dates.length) {
+      const first = parseYmd(dates[0])
+      const cutoff = new Date()
+      cutoff.setFullYear(cutoff.getFullYear() - 1)
+      if (first < cutoff) setPeriod('last12m')
+    }
+  }, [txData])
 
   useEffect(() => {
     setPeriod('todo')
@@ -255,55 +251,65 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
   const scrollToTable = () => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   const changeCategory = async (tx, category, remember = false) => {
-    const { error } = await supabase
-      .from('transactions')
-      .update({ category })
-      .eq('id', tx.id)
-    if (error) {
-      console.error('Dashboard: error al actualizar categoría', error)
-      pushToast({ type: 'error', message: 'No se pudo actualizar la categoría' })
-      return
-    }
-    setAllTx((prev) => prev.map((t) => (t.id === tx.id ? { ...t, category } : t)))
-
-    if (remember && tx.merchant && category) {
-      const { error: ovError } = await supabase
-        .from('merchant_overrides')
-        .upsert(
-          { user_id: userId, merchant: tx.merchant, category },
-          { onConflict: 'user_id,merchant' },
-        )
-      if (!ovError) {
-        setOverrides((prev) => [
-          ...prev.filter((o) => o.merchant.toLowerCase() !== tx.merchant.toLowerCase()),
-          { merchant: tx.merchant, category },
-        ])
-        const { data: all } = await supabase
-          .from('transactions')
-          .update({ category })
-          .eq('merchant', tx.merchant)
-        if (all) setAllTx((prev) => prev.map((t) => (t.merchant === tx.merchant ? { ...t, category } : t)))
-        pushToast({ type: 'success', message: `Guardado: ${tx.merchant} → ${category}` })
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .update({ category })
+        .eq('id', tx.id)
+      if (error) {
+        console.error('Dashboard: error al actualizar categoría', error)
+        pushToast({ type: 'error', message: 'No se pudo actualizar la categoría' })
         return
       }
-    }
+      setAllTx((prev) => (prev ?? []).map((t) => (t.id === tx.id ? { ...t, category } : t)))
 
-    pushToast({ type: 'success', message: 'Categoría actualizada' })
+      if (remember && tx.merchant && category) {
+        const { error: ovError } = await supabase
+          .from('merchant_overrides')
+          .upsert(
+            { user_id: userId, merchant: tx.merchant, category },
+            { onConflict: 'user_id,merchant' },
+          )
+        if (!ovError) {
+          setOverrides((prev) => [
+            ...prev.filter((o) => o.merchant.toLowerCase() !== tx.merchant.toLowerCase()),
+            { merchant: tx.merchant, category },
+          ])
+          const { data: all } = await supabase
+            .from('transactions')
+            .update({ category })
+            .eq('merchant', tx.merchant)
+          if (all) setAllTx((prev) => (prev ?? []).map((t) => (t.merchant === tx.merchant ? { ...t, category } : t)))
+          pushToast({ type: 'success', message: `Guardado: ${tx.merchant} → ${category}` })
+          return
+        }
+      }
+
+      pushToast({ type: 'success', message: 'Categoría actualizada' })
+    } catch (e) {
+      console.error('Dashboard: error al actualizar categoría', e)
+      pushToast({ type: 'error', message: 'No se pudo actualizar la categoría' })
+    }
   }
 
   const addCustomCategory = async (name) => {
     const trimmed = name.trim()
     if (!trimmed) return
-    const { error } = await supabase
-      .from('custom_categories')
-      .upsert({ user_id: userId, name: trimmed }, { onConflict: 'user_id,name' })
-    if (error) {
-      console.error('Dashboard: error al crear categoría', error)
+    try {
+      const { error } = await supabase
+        .from('custom_categories')
+        .upsert({ user_id: userId, name: trimmed }, { onConflict: 'user_id,name' })
+      if (error) {
+        console.error('Dashboard: error al crear categoría', error)
+        pushToast({ type: 'error', message: 'No se pudo crear la categoría' })
+        return
+      }
+      setCustomCategories((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]))
+      pushToast({ type: 'success', message: `Categoría creada: ${trimmed}` })
+    } catch (e) {
+      console.error('Dashboard: error al crear categoría', e)
       pushToast({ type: 'error', message: 'No se pudo crear la categoría' })
-      return
     }
-    setCustomCategories((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]))
-    pushToast({ type: 'success', message: `Categoría creada: ${trimmed}` })
   }
 
   if (loading) {

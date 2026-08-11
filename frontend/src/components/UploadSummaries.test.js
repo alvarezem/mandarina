@@ -414,4 +414,13 @@ describe('UploadSummaries', () => {
     expect(update).not.toHaveBeenCalled()
     expect(screen.getByText('VISA · jul 2026')).toBeInTheDocument()
   })
+
+  it('muestra un error si no se pueden cargar los resúmenes', async () => {
+    const order = vi.fn().mockRejectedValue(new Error('red'))
+    const eq = vi.fn().mockReturnValue({ order })
+    const select = vi.fn().mockReturnValue({ eq })
+    supabase.from.mockImplementation((table) => (table === 'card_summaries' ? { select } : {}))
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    expect(await screen.findByText('No se pudieron cargar los resúmenes')).toBeInTheDocument()
+  })
 })

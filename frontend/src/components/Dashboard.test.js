@@ -73,6 +73,21 @@ describe('Dashboard', () => {
     expect(select.mock.results[0].value.eq).not.toHaveBeenCalled()
   })
 
+  it('muestra un error si no se pueden cargar los gastos', async () => {
+    supabase.from.mockImplementation((table) => {
+      if (table === 'transactions') {
+        return {
+          select: vi.fn().mockReturnValue({ order: vi.fn().mockRejectedValue(new Error('red')) }),
+        }
+      }
+      return {
+        select: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: [], error: null }) }),
+      }
+    })
+    renderDashboard()
+    expect(await screen.findByText('No se pudieron cargar los gastos')).toBeInTheDocument()
+  })
+
   it('renderiza cards y excluye pagos de tarjeta', async () => {
     renderDashboard()
     expect(await screen.findByText('Débitos')).toBeInTheDocument()

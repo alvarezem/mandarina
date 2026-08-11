@@ -6,6 +6,7 @@ import { useToast } from '../components/Toast'
 export function usePortfolioQuotes({ items, display, rateMode, onMarketClosed = () => {} }) {
   const [quotes, setQuotes] = useState({})
   const [rates, setRates] = useState({ MEP: null, CCL: null })
+  const [quotesError, setQuotesError] = useState(false)
   const pushToast = useToast()
 
   const symbolsKey = useMemo(
@@ -20,11 +21,14 @@ export function usePortfolioQuotes({ items, display, rateMode, onMarketClosed = 
       .invoke('quotes', { body: { symbols } })
       .then(({ data }) => {
         if (cancelled || !data) return
+        setQuotesError(false)
         setQuotes(data.quotes || {})
         setRates((r) => ({ ...r, ...(data.rates || {}) }))
         onMarketClosed(data.marketClosed === true)
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setQuotesError(true)
+      })
     return () => {
       cancelled = true
     }
@@ -61,12 +65,16 @@ export function usePortfolioQuotes({ items, display, rateMode, onMarketClosed = 
       .invoke('quotes', { body: { symbols } })
       .then(({ data }) => {
         if (!data) return
+        setQuotesError(false)
         setQuotes(data.quotes || {})
         setRates((r) => ({ ...r, ...(data.rates || {}) }))
         onMarketClosed(data.marketClosed === true)
         pushToast({ type: 'success', message: 'Precios actualizados' })
       })
-      .catch(() => pushToast({ type: 'error', message: 'No se pudieron actualizar los precios' }))
+      .catch(() => {
+        setQuotesError(true)
+        pushToast({ type: 'error', message: 'No se pudieron actualizar los precios' })
+      })
   }
 
-  return { quotes, rates, rate, resolvePrice, builtItems, refreshQuotes }}
+  return { quotes, rates, rate, resolvePrice, builtItems, refreshQuotes, quotesError }}

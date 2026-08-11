@@ -65,10 +65,16 @@ function App() {
   const [dark, setDark] = useTheme()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setSession(session)
+        setLoading(false)
+      })
+      .catch(() => {
+        setSession(null)
+        setLoading(false)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
@@ -141,8 +147,12 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
   }
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    pushToast({ type: 'success', icon: 'wave', message: '¡Nos vemos!' })
+    try {
+      await supabase.auth.signOut()
+      pushToast({ type: 'success', icon: 'wave', message: '¡Nos vemos!' })
+    } catch {
+      pushToast({ type: 'error', message: 'No se pudo cerrar la sesión' })
+    }
   }
 
   if (!session) return <Auth dark={dark} onToggleTheme={() => setDark((d) => !d)} />

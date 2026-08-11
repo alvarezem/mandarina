@@ -241,4 +241,21 @@ describe('MarketQuotes', () => {
     await screen.findByText('Patrimonio total')
     expect(screen.queryByText(/activos con precio/)).not.toBeInTheDocument()
   })
+
+  it('muestra un error si no se puede cargar el plan', async () => {
+    const order = vi.fn().mockRejectedValue(new Error('red'))
+    const eq = vi.fn().mockReturnValue({ order })
+    const select = vi.fn().mockReturnValue({ eq })
+    supabase.from.mockImplementation((table) => (table === 'portfolio_plan' ? { select } : {}))
+    supabase.functions.invoke.mockResolvedValue({ data: { quotes: {}, rates: {} }, error: null })
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
+    expect(await screen.findByText('No se pudo cargar el plan de inversión')).toBeInTheDocument()
+  })
+
+  it('muestra "Sin conexión" al fallar las cotizaciones', async () => {
+    mockPlan(ITEMS)
+    supabase.functions.invoke.mockRejectedValue(new Error('red'))
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
+    expect(await screen.findByTestId('quotes-error-notice')).toBeInTheDocument()
+  })
 })

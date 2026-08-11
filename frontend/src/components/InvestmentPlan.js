@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { distribute } from '../lib/plan'
 import { fmt } from '../lib/format'
+import { useAsync } from '../hooks/useAsync'
 import { useToast } from './Toast'
 import PlanTable from './PlanTable'
 import DistributionPanel from './DistributionPanel'
+import QuotesErrorNotice from './QuotesErrorNotice'
 import { usePortfolioQuotes } from '../hooks/usePortfolioQuotes'
 import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR, SORT_KEYS } from '../lib/planSort'
 
@@ -35,8 +37,6 @@ export default function InvestmentPlan({
   onSort: onSortProp,
   onMarketClosed = () => {},
 }) {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
   const [budget, setBudget] = useState('')
   const [strategy, setStrategy] = useState('faltante')
   const [localSort, setLocalSort] = useState(DEFAULT_PLAN_SORT)
@@ -49,34 +49,31 @@ export default function InvestmentPlan({
       ))
   const [editingId, setEditingId] = useState(null)
   const [draft, setDraft] = useState(newDraft())
-  const [error, setError] = useState(null)
   const [showRateInfo, setShowRateInfo] = useState(false)
   const [importing, setImporting] = useState(false)
   const inputRef = useRef(null)
   const pushToast = useToast()
 
-  const loadPlan = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('portfolio_plan')
-      .select('*')
-      .eq('user_id', session?.user?.id)
-      .order('sort_order', { ascending: true })
-    if (error) {
-      console.error('InvestmentPlan: error al cargar el plan', error)
-      setError('No se pudo cargar el plan de inversión')
-    } else {
-      setItems(data || [])
-      setError(null)
+  const { data: planData, loading, error, reload: reloadPlan } = useAsync(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('portfolio_plan')
+        .select('*')
+        .eq('user_id', session?.user?.id)
+        .order('sort_order', { ascending: true })
+      if (error) {
+        console.error('InvestmentPlan: error al cargar el plan', error)
+        throw new Error('No se pudo cargar el plan de inversión')
+      }
+      return data || []
+    } catch (e) {
+      console.error('InvestmentPlan: error al cargar el plan', e)
+      throw new Error('No se pudo cargar el plan de inversión')
     }
-    setLoading(false)
-  }
+  }, [session?.user?.id])
+  const items = planData ?? []
 
-  useEffect(() => {
-    loadPlan()
-  }, [])
-
-  const { quotes, rates, rate, builtItems, refreshQuotes } = usePortfolioQuotes({
+  const { quotes, rates, rate, builtItems, refreshQuotes, quotesError } = usePortfolioQuotes({
     items,
     display,
     rateMode,
@@ -125,7 +122,7 @@ export default function InvestmentPlan({
         if (error) throw new Error('No se pudo importar el plan')
         if (data?.error) throw new Error(data.error)
         pushToast({ type: 'success', message: `Plan importado (${data.count} activos)` })
-        await loadPlan()
+        reloadPlan()
       } catch (e) {
         console.error('InvestmentPlan: error al importar el plan', e)
         pushToast({ type: 'error', message: e.message || 'No se pudo importar el plan' })
@@ -175,56 +172,71 @@ export default function InvestmentPlan({
       quantity,
     }
 
-    if (editingId === '__new__') {
-      const { error } = await supabase.from('portfolio_plan').insert({
-        user_id: session.user.id,
-        ...payload,
-        sort_order: items.length,
-      })
-      if (error) {
-        console.error('InvestmentPlan: error al crear activo', error)
-        pushToast({ type: 'error', message: 'No se pudo agregar el activo' })
-        return
+    try {
+      if (editingId === '__new__') {
+        const { error } = await supabase.from('portfolio_plan').insert({
+          user_id: session.user.id,
+          ...payload,
+          sort_order: items.length,
+        })
+        if (error) {
+          console.error('InvestmentPlan: error al crear activo', error)
+          pushToast({ type: 'error', message: 'No se pudo agregar el activo' })
+          return
+        }
+      } else {
+        const { error } = await supabase.from('portfolio_plan').update(payload).eq('id', editingId)
+        if (error) {
+          console.error('InvestmentPlan: error al actualizar activo', error)
+          pushToast({ type: 'error', message: 'No se pudo actualizar el activo' })
+          return
+        }
       }
-    } else {
-      const { error } = await supabase.from('portfolio_plan').update(payload).eq('id', editingId)
-      if (error) {
-        console.error('InvestmentPlan: error al actualizar activo', error)
-        pushToast({ type: 'error', message: 'No se pudo actualizar el activo' })
-        return
-      }
-    }
 
-    cancelEdit()
-    await loadPlan()
+      cancelEdit()
+      reloadPlan()
+    } catch (e) {
+      console.error('InvestmentPlan: error al guardar activo', e)
+      pushToast({ type: 'error', message: 'No se pudo guardar el activo' })
+    }
   }
 
   const removeItem = async (item) => {
-    const { error } = await supabase.from('portfolio_plan').delete().eq('id', item.id)
-    if (error) {
-      console.error('InvestmentPlan: error al eliminar activo', error)
+    try {
+      const { error } = await supabase.from('portfolio_plan').delete().eq('id', item.id)
+      if (error) {
+        console.error('InvestmentPlan: error al eliminar activo', error)
+        pushToast({ type: 'error', message: 'No se pudo eliminar el activo' })
+        return
+      }
+      reloadPlan()
+    } catch (e) {
+      console.error('InvestmentPlan: error al eliminar activo', e)
       pushToast({ type: 'error', message: 'No se pudo eliminar el activo' })
-      return
     }
-    await loadPlan()
   }
 
   const applyBuy = async (step) => {
     const current = items.find((i) => i.symbol === step.symbol)
     if (!current) return
     const newQuantity = (Number(current.quantity) || 0) + step.qty
-    const { error } = await supabase
-      .from('portfolio_plan')
-      .update({ quantity: newQuantity })
-      .eq('id', current.id)
-    if (error) {
-      console.error('InvestmentPlan: error al aplicar compra', error)
+    try {
+      const { error } = await supabase
+        .from('portfolio_plan')
+        .update({ quantity: newQuantity })
+        .eq('id', current.id)
+      if (error) {
+        console.error('InvestmentPlan: error al aplicar compra', error)
+        pushToast({ type: 'error', message: 'No se pudo registrar la compra' })
+        return
+      }
+      setBudget(String(Math.max(0, (Number(budget) || 0) - step.amount)))
+      pushToast({ type: 'success', message: `${step.symbol}: compraste ≈${step.qty} (${fmt(step.amount, display)})` })
+      reloadPlan()
+    } catch (e) {
+      console.error('InvestmentPlan: error al aplicar compra', e)
       pushToast({ type: 'error', message: 'No se pudo registrar la compra' })
-      return
     }
-    setBudget(String(Math.max(0, (Number(budget) || 0) - step.amount)))
-    pushToast({ type: 'success', message: `${step.symbol}: compraste ≈${step.qty} (${fmt(step.amount, display)})` })
-    await loadPlan()
   }
 
   return (
@@ -238,6 +250,7 @@ export default function InvestmentPlan({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {quotesError && <QuotesErrorNotice />}
           <button
             type="button"
             onClick={() => inputRef.current?.click()}

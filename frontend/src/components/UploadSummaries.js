@@ -1,41 +1,42 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
+import { useAsync } from '../hooks/useAsync'
 import { useToast } from './Toast'
 import { sanitizeStoragePath, uniqueStoragePath } from '../lib/sanitizeFileName'
 import SummaryItem from './SummaryItem'
 
+const NOW_YEAR = new Date().getFullYear()
+
 export default function UploadSummaries({ session, selectedId, onSelect, onDataChanged }) {
   const inputRef = useRef(null)
-  const [files, setFiles] = useState([])
-  const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [confirmingId, setConfirmingId] = useState(null)
   const [draft, setDraft] = useState('')
   const [metaEditingId, setMetaEditingId] = useState(null)
-  const [metaDraft, setMetaDraft] = useState({ type: '', month: 1, year: 2026 })
+  const [metaDraft, setMetaDraft] = useState({ type: '', month: 1, year: NOW_YEAR })
   const pushToast = useToast()
 
-  const loadSummaries = useCallback(async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('card_summaries')
-      .select('*')
-      .eq('user_id', session?.user?.id)
-      .order('created_at', { ascending: false })
-    if (error) {
-      console.error('UploadSummaries: error al cargar resúmenes', error)
-      setError('No se pudieron cargar los resúmenes')
-    } else {
-      setFiles(data)
+  const { data, setData: setFiles, loading, error: loadError, reload: reloadSummaries } = useAsync(async () => {
+    if (!session?.user?.id) return []
+    try {
+      const { data, error } = await supabase
+        .from('card_summaries')
+        .select('*')
+        .eq('user_id', session?.user?.id)
+        .order('created_at', { ascending: false })
+      if (error) {
+        console.error('UploadSummaries: error al cargar resúmenes', error)
+        throw new Error('No se pudieron cargar los resúmenes')
+      }
+      return data ?? []
+    } catch (e) {
+      console.error('UploadSummaries: error al cargar resúmenes', e)
+      throw new Error('No se pudieron cargar los resúmenes')
     }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    loadSummaries()
-  }, [loadSummaries])
+  }, [session?.user?.id])
+  const files = data ?? []
 
   const parse = async (summaryId) => {
     try {
@@ -44,7 +45,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
       setError('No se pudo iniciar el procesamiento del archivo')
       pushToast({ type: 'error', message: 'No se pudo iniciar el procesamiento del archivo' })
     }
-    await loadSummaries()
+    await reloadSummaries()
   }
 
   const friendlyUploadError = (error) => {
@@ -63,43 +64,53 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
     setUploading(true)
     setError(null)
 
-    const existingPaths = (files ?? []).map((f) => f.file_path).filter(Boolean)
+    const existingPaths = files.map((f) => f.file_path).filter(Boolean)
     const path = uniqueStoragePath(session.user.id, file.name, existingPaths)
     const renamed = path !== sanitizeStoragePath(session.user.id, file.name)
-    const { error: uploadError } = await supabase.storage
-      .from('card-resumes')
-      .upload(path, file, { upsert: false })
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('card-resumes')
+        .upload(path, file, { upsert: false })
 
-    if (uploadError) {
-      const friendly = friendlyUploadError(uploadError)
-      setError(friendly)
-      pushToast({ type: 'error', message: friendly })
-      setUploading(false)
-      return
-    }
+      if (uploadError) {
+        const friendly = friendlyUploadError(uploadError)
+        setError(friendly)
+        pushToast({ type: 'error', message: friendly })
+        return
+      }
 
-    const { data: summary, error: insertError } = await supabase
-      .from('card_summaries')
-      .insert({
-        user_id: session.user.id,
-        file_name: file.name,
-        file_path: path,
-      })
-      .select()
-      .single()
+      const { data: summary, error: insertError } = await supabase
+        .from('card_summaries')
+        .insert({
+          user_id: session.user.id,
+          file_name: file.name,
+          file_path: path,
+        })
+        .select()
+        .single()
 
-    setUploading(false)
-    if (insertError) {
-      setError(insertError.message)
-      pushToast({ type: 'error', message: insertError.message })
-    } else {
+      if (insertError) {
+        console.error('UploadSummaries: error al registrar resumen', insertError)
+        const friendly = 'No se pudo registrar el resumen'
+        setError(friendly)
+        pushToast({ type: 'error', message: friendly })
+        return
+      }
+
       const successMsg = renamed
         ? `Resumen ${file.name} subido como ${path.split('/').pop()} (ya existía un archivo con ese nombre)`
         : `Resumen ${file.name} subido`
       pushToast({ type: 'success', message: successMsg })
-      await loadSummaries()
+      await reloadSummaries()
       await parse(summary.id)
       onDataChanged?.()
+    } catch (e) {
+      console.error('UploadSummaries: error al subir el archivo', e)
+      const friendly = 'No se pudo subir el archivo'
+      setError(friendly)
+      pushToast({ type: 'error', message: friendly })
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -124,19 +135,28 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
 
   const removeSummary = async (file) => {
     setConfirmingId(null)
-    if (file.file_path) {
-      await supabase.storage.from('card-resumes').remove([file.file_path])
-    }
-    const { error } = await supabase.from('card_summaries').delete().eq('id', file.id)
-    if (error) {
-      console.error('UploadSummaries: error al eliminar resumen', error)
+    try {
+      if (file.file_path) {
+        try {
+          await supabase.storage.from('card-resumes').remove([file.file_path])
+        } catch {
+          // tolerar: el archivo puede no existir o el storage no responder
+        }
+      }
+      const { error } = await supabase.from('card_summaries').delete().eq('id', file.id)
+      if (error) {
+        console.error('UploadSummaries: error al eliminar resumen', error)
+        pushToast({ type: 'error', message: 'No se pudo eliminar el resumen' })
+        return
+      }
+      if (selectedId === file.id) onSelect?.(null)
+      onDataChanged?.()
+      await reloadSummaries()
+      pushToast({ type: 'success', message: `Resumen ${file.file_name} eliminado` })
+    } catch (e) {
+      console.error('UploadSummaries: error al eliminar resumen', e)
       pushToast({ type: 'error', message: 'No se pudo eliminar el resumen' })
-      return
     }
-    if (selectedId === file.id) onSelect?.(null)
-    onDataChanged?.()
-    await loadSummaries()
-    pushToast({ type: 'success', message: `Resumen ${file.file_name} eliminado` })
   }
 
   const saveRename = async () => {
@@ -149,14 +169,19 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
     const original = files.find((f) => f.id === id)
     if (!original || name === original.file_name) return
 
-    const { error } = await supabase.from('card_summaries').update({ file_name: name }).eq('id', id)
-    if (error) {
-      console.error('UploadSummaries: error al renombrar resumen', error)
+    try {
+      const { error } = await supabase.from('card_summaries').update({ file_name: name }).eq('id', id)
+      if (error) {
+        console.error('UploadSummaries: error al renombrar resumen', error)
+        pushToast({ type: 'error', message: 'No se pudo renombrar el resumen' })
+        return
+      }
+      setFiles((list) => (list ?? []).map((f) => (f.id === id ? { ...f, file_name: name } : f)))
+      pushToast({ type: 'success', message: 'Nombre actualizado' })
+    } catch (e) {
+      console.error('UploadSummaries: error al renombrar resumen', e)
       pushToast({ type: 'error', message: 'No se pudo renombrar el resumen' })
-      return
     }
-    setFiles((list) => list.map((f) => (f.id === id ? { ...f, file_name: name } : f)))
-    pushToast({ type: 'success', message: 'Nombre actualizado' })
   }
 
   const submitRename = (e) => {
@@ -178,7 +203,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
 
   const cancelMetaEdit = () => {
     setMetaEditingId(null)
-    setMetaDraft({ type: '', month: 1, year: 2026 })
+    setMetaDraft({ type: '', month: 1, year: NOW_YEAR })
   }
 
   const saveMeta = async () => {
@@ -193,14 +218,19 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
       period_month: metaDraft.month,
       period_year: metaDraft.year,
     }
-    const { error } = await supabase.from('card_summaries').update(payload).eq('id', id)
-    if (error) {
-      console.error('UploadSummaries: error al clasificar resumen', error)
+    try {
+      const { error } = await supabase.from('card_summaries').update(payload).eq('id', id)
+      if (error) {
+        console.error('UploadSummaries: error al clasificar resumen', error)
+        pushToast({ type: 'error', message: 'No se pudo actualizar la clasificación' })
+        return
+      }
+      setFiles((list) => (list ?? []).map((f) => (f.id === id ? { ...f, ...payload } : f)))
+      pushToast({ type: 'success', message: 'Clasificación actualizada' })
+    } catch (e) {
+      console.error('UploadSummaries: error al clasificar resumen', e)
       pushToast({ type: 'error', message: 'No se pudo actualizar la clasificación' })
-      return
     }
-    setFiles((list) => list.map((f) => (f.id === id ? { ...f, ...payload } : f)))
-    pushToast({ type: 'success', message: 'Clasificación actualizada' })
   }
 
   const submitMeta = (e) => {
@@ -251,9 +281,9 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
         />
       </div>
 
-      {error && (
+      {(error || loadError) && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/50 dark:text-red-400">
-          {error}
+          {error || loadError}
         </p>
       )}
 

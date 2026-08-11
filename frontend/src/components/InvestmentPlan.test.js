@@ -204,4 +204,43 @@ describe('InvestmentPlan', () => {
     const vistRow = rows.find((r) => within(r).queryByText('VIST'))
     expect(within(vistRow).getByText('—')).toBeInTheDocument()
   })
+
+  it('muestra un error si no se puede cargar el plan', async () => {
+    const order = vi.fn().mockRejectedValue(new Error('red'))
+    const eq = vi.fn().mockReturnValue({ order })
+    const select = vi.fn().mockReturnValue({ eq })
+    supabase.from.mockImplementation((table) => (table === 'portfolio_plan' ? { select } : {}))
+    supabase.functions.invoke.mockResolvedValue({ data: { quotes: {}, rates: {} }, error: null })
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    expect(await screen.findByText('No se pudo cargar el plan de inversión')).toBeInTheDocument()
+  })
+
+  it('muestra un toast de error si falla el guardado de un activo', async () => {
+    mockPlan([], {})
+    supabase.from('portfolio_plan').insert.mockRejectedValue(new Error('red'))
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText(/Todavía no cargaste tu plan/i)
+
+    await userEvent.click(screen.getByRole('button', { name: /Agregar activo/i }))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Ticker' }), 'GGAL')
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Meta %' }), '3')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar activo' }))
+    expect(await screen.findByText('No se pudo guardar el activo')).toBeInTheDocument()
+  })
+
+  it('muestra "Sin conexión" al fallar las cotizaciones y la oculta al refrescar', async () => {
+    mockPlan(
+      [
+        { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 9, quantity: 8, sort_order: 0 },
+      ],
+      { VIST: 34920 },
+    )
+    supabase.functions.invoke.mockRejectedValue(new Error('red'))
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    expect(await screen.findByTestId('quotes-error-notice')).toBeInTheDocument()
+
+    supabase.functions.invoke.mockResolvedValue({ data: { quotes: {}, rates: {} }, error: null })
+    await userEvent.click(screen.getByRole('button', { name: 'Actualizar precios' }))
+    await waitFor(() => expect(screen.queryByTestId('quotes-error-notice')).not.toBeInTheDocument())
+  })
 })

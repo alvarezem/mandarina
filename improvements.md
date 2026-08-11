@@ -316,22 +316,32 @@ _Objetivo: una sola fuente de verdad para lógica repetida; componentes razonabl
 
 ---
 
-## FASE 4 — Confiabilidad del frontend
+## FASE 4 — Confiabilidad del frontend — HECHA el 2026-08-11
 _Objetivo: sin unhandled rejections, estados de carga/error consistentes._
 
-1. `App.js:79`: `.catch()` en `getSession().then()` (fallback a sesión nula).
-2. `handleSignOut` con try/catch (App.js:154).
-3. try/catch + estados de error en todas las mutaciones:
-   `InvestmentPlan.js:88-101,242-305`, `MarketQuotes.js:127-140`,
-   `UploadSummaries.js:33-45,72-115,136-150`, `Dashboard.js:492-526`.
-4. Helper compartido `runAsync`/`withError` o un hook `useAsync` para estandarizar
-   el patrón loading/error/success en los fetch.
-5. Eliminar hardcode del año `2026` en `UploadSummaries.js:30,190` (usar el año actual).
-6. Toast de error unificado ante fallas de red (no dejar silenciosas).
+1. ✅ `App.js:79`: `.catch()` en `getSession().then()` (fallback a sesión nula → Auth, sin splash infinito).
+2. ✅ `handleSignOut` con try/catch (App.js:154) + toast de error (no cierra sesión si falla).
+3. ✅ try/catch + estados de error en todas las mutaciones:
+   `InvestmentPlan` (guardar activo/borrar/aplicar compra), `Dashboard` (cambiar categoría/crear categoría),
+   `UploadSummaries` (subir/borrar/renombrar/clasificar), `Auth` (login/signup/reset/Google con `authErrorToSpanish`).
+4. ✅ Helper compartido: nuevo hook `hooks/useAsync.js` (`{ data, setData, loading, error, reload }`,
+   cancelación en unmount) estandariza el patrón loading/error/success en los fetch.
+   Consumido por: `Dashboard` (transacciones + overrides/custom_categories), `InvestmentPlan`,
+   `MarketQuotes` y `UploadSummaries` (resúmenes). Los fetch fallidos muestran mensaje amigable
+   (try/catch interno re-lanza el mensaje estable ante rechazos de red).
+5. ✅ Eliminar hardcode del año `2026` en `UploadSummaries.js` (ahora `new Date().getFullYear()`; `MetaForm` ya era dinámico).
+6. ✅ Toast de error unificado ante fallas de red (no dejar silenciosas): **cotizaciones** —
+   nuevo `usePortfolioQuotes.quotesError` + componente `QuotesErrorNotice` ("Sin conexión") junto al
+   botón refrescar en Plan y Cotizaciones; se limpia al recuperar (el refresh mantiene su toast).
 
 **Verificación**:
-- [x] Sin `.then()` sin `.catch()` y sin `await` sin try/catch en `src/` (grep).
+- [x] Sin `.then()` sin `.catch()` y sin `await` sin try/catch en `src/` (grep: 4 `.then(` — App, usePortfolioQuotes ×2, MarketQuotes — todas con `.catch`).
 - [x] Tests: simular rechazo de fetch en cada componente → muestra error, no splash infinito.
+  - App (getSession/signOut), Dashboard (transactions), InvestmentPlan (carga + guardado),
+    MarketQuotes (carga), UploadSummaries (carga), `useAsync` (éxito/error/reload/setData/cancelación),
+    `usePortfolioQuotes` (quotesError inicial + limpieza al refrescar).
+  - **`npm test`: 183/183 verdes (18 suites).** `npm run build` OK.
+- [x] Vue "Sin conexión" en cotizaciones: tests en InvestmentPlan (aparece al fallar, se oculta al refrescar) y MarketQuotes.
 
 ---
 

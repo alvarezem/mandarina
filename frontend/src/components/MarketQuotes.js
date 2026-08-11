@@ -3,8 +3,10 @@ import supabase from '../lib/supabaseClient'
 import { portfolioChangePct } from '../lib/plan'
 import { normalizeHistory } from '../lib/history'
 import { fmt } from '../lib/format'
+import { useAsync } from '../hooks/useAsync'
 import QuotesTable from './QuotesTable'
 import QuoteModal from './QuoteModal'
+import QuotesErrorNotice from './QuotesErrorNotice'
 import { usePortfolioQuotes } from '../hooks/usePortfolioQuotes'
 import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR, SORT_KEYS } from '../lib/planSort'
 
@@ -17,8 +19,6 @@ export default function MarketQuotes({
   onSort: onSortProp,
   onMarketClosed = () => {},
 }) {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
   const [localSort, setLocalSort] = useState(DEFAULT_PLAN_SORT)
   const sort = sortProp ?? localSort
   const onSort =
@@ -27,7 +27,6 @@ export default function MarketQuotes({
       setLocalSort((s) =>
         s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' },
       ))
-  const [error, setError] = useState(null)
   const [chart, setChart] = useState(null)
   const [modal, setModal] = useState(null)
   const [chartData, setChartData] = useState({ loading: false, points: [], error: null })
@@ -84,28 +83,26 @@ export default function MarketQuotes({
     return () => window.removeEventListener('keydown', onKey)
   }, [modal])
 
-  const loadPlan = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('portfolio_plan')
-      .select('*')
-      .eq('user_id', session?.user?.id)
-      .order('sort_order', { ascending: true })
-    if (error) {
-      console.error('MarketQuotes: error al cargar el plan', error)
-      setError('No se pudo cargar el plan de inversión')
-    } else {
-      setItems(data || [])
-      setError(null)
+  const { data: planData, loading, error } = useAsync(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('portfolio_plan')
+        .select('*')
+        .eq('user_id', session?.user?.id)
+        .order('sort_order', { ascending: true })
+      if (error) {
+        console.error('MarketQuotes: error al cargar el plan', error)
+        throw new Error('No se pudo cargar el plan de inversión')
+      }
+      return data || []
+    } catch (e) {
+      console.error('MarketQuotes: error al cargar el plan', e)
+      throw new Error('No se pudo cargar el plan de inversión')
     }
-    setLoading(false)
-  }
+  }, [session?.user?.id])
+  const items = planData ?? []
 
-  useEffect(() => {
-    loadPlan()
-  }, [])
-
-  const { quotes, rates, rate, builtItems, refreshQuotes } = usePortfolioQuotes({
+  const { quotes, rates, rate, builtItems, refreshQuotes, quotesError } = usePortfolioQuotes({
     items,
     display,
     rateMode,
@@ -189,6 +186,7 @@ export default function MarketQuotes({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {quotesError && <QuotesErrorNotice />}
           <button
             type="button"
             onClick={refreshQuotes}

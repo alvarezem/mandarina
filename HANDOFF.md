@@ -6,19 +6,20 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 ## Última sesión
 
-- **Fecha**: 2026-08-10
-- **Qué se hizo**:
-  1. **Auth UX en español** (commit `03f8986`): `lib/authErrors.js` (`authErrorToSpanish` por `error.code` + fallback por texto), validación `letters_digits` en cliente, email existente (`identities: []` o `user_already_exists`) → pantalla "Ya existe una cuenta" con botones **Volver a iniciar sesión** / **Recuperar contraseña**; link **"¿Olvidaste tu contraseña?"** en login. Tests 160/160 + build OK.
-  2. **Verificado en hosting por el usuario**: signup con confirmación de email, "Ya existe una cuenta" para email ya registrado, y email de recuperación → **FASE 2 CERRADA** (marcada HECHA en `improvements.md`/`DONE.md`).
-  3. **Fix de bug en Costos**: el fetch de `transactions` en `Dashboard.js` filtraba `.eq('user_id', …)` pero esa tabla **no tiene columna `user_id`** → "No se pudieron cargar los gastos". Se quitó el filtro (RLS ya filtra vía `summary_id`) + test de regresión.
-  4. **FASE 3 CERRADA** (commits `60ccfa8`…`a806c58`): se terminó la descomposición de los 4 god components. Dashboard 405 (SummaryCards/SpendingCharts/TransactionsTable), InvestmentPlan 399 (PlanTable/DistributionPanel), MarketQuotes 323 (QuotesTable/QuoteModal), UploadSummaries 332 (SummaryItem/MetaForm). `fileOf` movido a `lib/format.js`. `npm test` 167/167 y `npm run build` OK. Dir huérfano `frontend/frontend/` eliminado.
-  5. **Docs**: borrado `CONTEXT.md` (redundante con AGENTS.md; movido a `/tmp/opencode/`); se mantiene `AGENTS_TEAM.md` como blueprint (sin `.opencode/agent/*.md` todavía). Se habilitó `rm` (deny → ask) en `~/.config/opencode/opencode.json` para poder borrar los archivos movidos a `/tmp/opencode/`.
+- **Fecha**: 2026-08-11
+- **Qué se hizo** — **FASE 4 CERRADA** (confiabilidad del frontend):
+  1. **App.js**: `.catch()` en `getSession().then()` (fallback sesión nula → Auth, sin splash infinito) + `handleSignOut` con try/catch y toast de error (logout exitoso sigue con "¡Nos vemos!" verde).
+  2. **Nuevo hook `hooks/useAsync.js`** (`{ data, setData, loading, error, reload }`, cancelación en unmount): estandariza loading/error/success. Consumido por los loads de Dashboard (transacciones + overrides/custom_categories), InvestmentPlan, MarketQuotes y UploadSummaries. Los fetch fallidos re-lanzan el **mensaje amigable** (try/catch interno) y se **muestran en pantalla**.
+  3. **Mutaciones**: sendas con try/catch + toasts en InvestmentPlan, Dashboard, UploadSummaries; Auth (login/signup/reset/Google) con `setSubmitting` en `finally`.
+  4. **Año dinámico**: hardcode `2026` eliminado de UploadSummaries (`new Date().getFullYear()`).
+  5. **Cotizaciones no silenciosas**: `usePortfolioQuotes.quotesError` + componente `QuotesErrorNotice` ("Sin conexión") junto al botón refrescar en Plan y Cotizaciones; se limpia al recuperar.
+  6. **Verificado**: `npm test` **183/183** (18 suites, +15 tests) y `npm run build` OK. `npm run lint` **no corre** (eslint no está instalado — Fase 7 pendiente).
 
 ## En progreso
 
-- **PRIMER PASO al volver**: borrar con `rm` los archivos movidos con `mv` (el `rm` ahora pide confirmación): `/tmp/opencode/CONTEXT.md` y `/tmp/opencode/frontend-orphan/`. Agente: intentar `rm /tmp/opencode/CONTEXT.md && rm -rf /tmp/opencode/frontend-orphan`.
+- **Cleanup `/tmp/opencode/`**: ya no existen `CONTEXT.md` ni `frontend-orphan/` (el directorio quedó vacío — verificado el 2026-08-11); el primer paso anotado se descarta.
 - **Tarea aparte** (anotada, sin empezar): flujo de **cambio de contraseña** (link del email → pantalla de nueva contraseña; hoy el redirect maneja el token de Supabase).
-- Siguiente por roadmap: **FASE 4** — Confiabilidad del frontend (try/catch + estados de error en fetch/mutaciones, helper `useAsync`/`runAsync`, año dinámico en UploadSummaries, toast de error de red).
+- Siguiente por roadmap: **FASE 5** — Refactor y confiabilidad del backend (edges: `_shared` común, responses `{ok,error}`, idempotencia de parse-summary con tests unitarios del handler, límites de tamaño, `telecom`→Servicios, signo de PDF preservado — parte ya aplicada en Fase 2, ver `improvements.md`).
 
 ## Decisiones tomadas (a no re-litigar sin motivo)
 
@@ -38,3 +39,6 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
   futuro se refactoriza a `.jsx`, se elimina el plugin.
 - **localStorage en tests**: mock in-memory en `setupTests.js` (Node 26 expone un
   global experimental undefined).
+- **Fase 4**: los mensajes de error de fetch son **amigables y estables** (el try/catch
+  interno de cada load re-lanza el mensaje estable tanto ante `error` de Supabase como
+  ante rechazo de red). No se expone `e.message` crudo del backend en la UI.

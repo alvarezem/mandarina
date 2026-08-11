@@ -97,24 +97,29 @@ export default function Auth({ dark, onToggleTheme }) {
     setError(null)
     if (!validate()) return
     setSubmitting(true)
-    const { data, error } = isSignUp
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password })
-    setSubmitting(false)
-    if (error) {
-      if (isSignUp && error.code === 'user_already_exists') {
-        setEmailTaken(true)
+    try {
+      const { data, error } = isSignUp
+        ? await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        if (isSignUp && error.code === 'user_already_exists') {
+          setEmailTaken(true)
+          return
+        }
+        setError(authErrorToSpanish(error))
         return
       }
-      setError(authErrorToSpanish(error))
-      return
-    }
-    if (isSignUp && data.user && !data.session) {
-      if (data.user.identities && data.user.identities.length === 0) {
-        setEmailTaken(true)
-      } else {
-        setSignupSuccess(true)
+      if (isSignUp && data.user && !data.session) {
+        if (data.user.identities && data.user.identities.length === 0) {
+          setEmailTaken(true)
+        } else {
+          setSignupSuccess(true)
+        }
       }
+    } catch {
+      setError('No se pudo conectar con el servidor. Intentá de nuevo.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -122,26 +127,36 @@ export default function Auth({ dark, onToggleTheme }) {
     e.preventDefault()
     setError(null)
     setSubmitting(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin,
-    })
-    setSubmitting(false)
-    if (error) {
-      setError(authErrorToSpanish(error))
-      return
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      })
+      if (error) {
+        setError(authErrorToSpanish(error))
+        return
+      }
+      setResetSent(true)
+    } catch {
+      setError('No se pudo enviar el email. Intentá de nuevo.')
+    } finally {
+      setSubmitting(false)
     }
-    setResetSent(true)
   }
 
   const handleGoogle = async () => {
     setError(null)
     setSubmitting(true)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    })
-    setSubmitting(false)
-    if (error) setError(authErrorToSpanish(error))
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      })
+      if (error) setError(authErrorToSpanish(error))
+    } catch {
+      setError('No se pudo conectar con Google. Intentá de nuevo.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const fieldClass = (invalid) =>

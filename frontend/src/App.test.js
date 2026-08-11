@@ -361,4 +361,20 @@ describe('App', () => {
       expect(screen.getByRole('button', { name: 'Ver guía' }).getAttribute('data-tour')).toBe('help')
     })
   })
+
+  it('muestra la pantalla de auth si getSession falla (sin quedarse en splash)', async () => {
+    supabase.auth.getSession.mockRejectedValue(new Error('red'))
+    render(<App />)
+    expect(await screen.findByRole('button', { name: /Iniciar sesión/i })).toBeInTheDocument()
+  })
+
+  it('muestra un toast de error si cerrar sesión falla', async () => {
+    supabase.auth.signOut.mockRejectedValue(new Error('red'))
+    render(<App />)
+    await screen.findByText(EMPTY_STATE)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    expect(await screen.findByText('No se pudo cerrar la sesión')).toBeInTheDocument()
+    expect(screen.queryByText('¡Nos vemos!')).not.toBeInTheDocument()
+  })
 })

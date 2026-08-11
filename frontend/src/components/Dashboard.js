@@ -1,14 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Line, Doughnut, Bar } from 'react-chartjs-2'
-import '../lib/chartjs'
 import supabase from '../lib/supabaseClient'
 import { buildAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
-import { fmt, fmtCompact } from '../lib/format'
-import { MONTHS, BRAND_HEX, BRAND_HEX_STRONG, brandRgba, PALETTE } from '../lib/constants'
-import Dropdown from './Dropdown'
+import { fmt, fileOf } from '../lib/format'
 import FiltersBar from './FiltersBar'
-import SortableTh from './SortableTh'
-import Check, { itemBase, itemActive, itemInactive } from './Check'
+import SpendingCharts from './SpendingCharts'
+import TransactionsTable from './TransactionsTable'
 import { useToast } from './Toast'
 import useCountUp from '../hooks/useCountUp'
 
@@ -34,98 +30,6 @@ const CATEGORY_OPTIONS = [
   'Transferencias',
   'Transporte',
 ]
-
-function CategoryCell({ tx, options, onChange, onAddCustom }) {
-  const [remember, setRemember] = useState(false)
-  const [showNew, setShowNew] = useState(false)
-  const [newName, setNewName] = useState('')
-
-  const submitNew = (close) => {
-    const name = newName.trim()
-    if (!name) return
-    onChange(tx, name, remember)
-    onAddCustom(name)
-    setNewName('')
-    setShowNew(false)
-    close()
-  }
-
-  return (
-    <Dropdown
-      label=""
-      summary={tx.category ?? 'Sin categoría'}
-      searchable
-      className="[&>button]:border-0 [&>button]:bg-transparent [&>button]:px-0 [&>button]:py-0.5 [&>button]:hover:bg-transparent dark:[&>button]:bg-transparent"
-    >
-      {({ close, query }) => (
-        <>
-          {options
-            .filter((cat) => !query || cat.toLowerCase().includes(query))
-            .map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => {
-                  onChange(tx, cat, remember)
-                  close()
-                }}
-                className={`${itemBase} ${tx.category === cat ? itemActive : itemInactive}`}
-              >
-                <Check on={tx.category === cat} />
-                {cat}
-              </button>
-            ))}
-          <div data-pinned className="my-1 border-t border-slate-100 dark:border-slate-800" />
-          {showNew ? (
-            <div data-pinned className="px-1 pb-1">
-              <input
-                autoFocus
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') submitNew(close)
-                }}
-                placeholder="Nombre de la categoría…"
-                className="w-full rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
-              />
-            </div>
-          ) : (
-            <button
-              data-pinned
-              type="button"
-              onClick={() => setShowNew(true)}
-              className={`${itemBase} ${itemInactive}`}
-            >
-              + Nueva categoría…
-            </button>
-          )}
-          <label data-pinned className={`${itemBase} cursor-pointer`}>
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-              className="h-3.5 w-3.5 shrink-0 accent-brand-600"
-            />
-            Recordar para este comercio
-          </label>
-          <button
-            data-pinned
-            type="button"
-            onClick={() => {
-              onChange(tx, null, false)
-              close()
-            }}
-            className={`${itemBase} ${tx.category == null ? itemActive : itemInactive}`}
-          >
-            <Check on={tx.category == null} />
-            Sin categoría
-          </button>
-        </>
-      )}
-    </Dropdown>
-  )
-}
 
 const SORT_DEFAULTS = { date: 'desc', amount: 'asc', merchant: 'asc', category: 'asc', currency: 'asc', summary: 'asc' }
 function parseYmd(s) {
@@ -155,28 +59,6 @@ function periodRange(period) {
     default:
       return null
   }
-}
-
-function fileOf(t) {
-  const cs = t.card_summaries
-  if (!cs) return null
-  return Array.isArray(cs) ? cs[0]?.file_name ?? null : cs.file_name ?? null
-}
-
-function SummaryMeta({ t }) {
-  const cs = t.card_summaries
-  if (!cs) return null
-  const m = Array.isArray(cs) ? cs[0] : cs
-  if (!m) return null
-  const parts = []
-  if (m.summary_type) parts.push(m.summary_type)
-  if (m.period_month) parts.push(`${MONTHS[m.period_month - 1] ?? m.period_month} ${m.period_year}`)
-  if (parts.length === 0) return null
-  return (
-    <span className="mt-0.5 inline-flex w-fit items-center rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
-      {parts.join(' · ')}
-    </span>
-  )
 }
 
 function CountUp({ value, format }) {
@@ -558,67 +440,24 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div
-              className="animate-fade-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-              style={{ animationDelay: '160ms' }}
-            >
-              <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gastos acumulados</h3>
-              <div className="h-64">
-                <Line
-                  data={lineData(analysis.expenseTrend)}
-                  options={lineOptions(dark, (date) => {
-                    setPeriod('custom')
-                    setCustomFrom(date)
-                    setCustomTo(date)
-                    scrollToTable()
-                  })}
-                />
-              </div>
-              <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
-                Clic en un punto filtra el detalle de ese día.
-              </p>
-            </div>
-            <div
-              className="animate-fade-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-              style={{ animationDelay: '460ms' }}
-            >
-              <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gasto por categoría</h3>
-              <div className="h-64">
-                <Doughnut
-                  data={doughnutData(analysis.byCategory)}
-                  options={doughnutOptions(dark, (cat) => {
-                    focusCategory(cat)
-                    scrollToTable()
-                  })}
-                />
-              </div>
-              <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
-                Clic en un segmento filtra el detalle por categoría.
-              </p>
-            </div>
-          </div>
-
-          <div
-            className="animate-fade-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-            style={{ animationDelay: '360ms' }}
-          >
-              <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Top comercios con mayor gasto
-              </h3>
-              <div className="h-72">
-                <Bar
-                  data={barData(analysis.byMerchant)}
-                  options={barOptions(dark, (merchant) => {
-                    setQuery(merchant)
-                    scrollToTable()
-                  })}
-                />
-              </div>
-              <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
-                Clic en una barra filtra el detalle por comercio.
-              </p>
-            </div>
+          <SpendingCharts
+            analysis={analysis}
+            dark={dark}
+            onPoint={(date) => {
+              setPeriod('custom')
+              setCustomFrom(date)
+              setCustomTo(date)
+              scrollToTable()
+            }}
+            onSlice={(cat) => {
+              focusCategory(cat)
+              scrollToTable()
+            }}
+            onBar={(merchant) => {
+              setQuery(merchant)
+              scrollToTable()
+            }}
+          />
 
           <div
             ref={tableRef}
@@ -628,192 +467,19 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
             <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Detalle</h3>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <thead className="bg-slate-50 dark:bg-slate-800/50">
-                  <tr>
-                    <SortableTh label="Fecha" sortKey="date" sort={sort} onSort={onSort} />
-                    <SortableTh label="Descripción" sortKey="merchant" sort={sort} onSort={onSort} />
-                    {!summaryId && (
-                      <SortableTh label="Resumen" sortKey="summary" sort={sort} onSort={onSort} />
-                    )}
-                    <SortableTh label="Categoría" sortKey="category" sort={sort} onSort={onSort} />
-                    <SortableTh label="Moneda" sortKey="currency" sort={sort} onSort={onSort} />
-                    <SortableTh label="Monto" sortKey="amount" sort={sort} onSort={onSort} align="right" />
-                  </tr>
-                </thead>
-                <tbody key={filterKey} className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
-                  {sorted.map((t, i) => (
-                    <tr
-                      key={t.id}
-                      className="animate-fade-in transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
-                      style={{ animationDelay: `${Math.min(i * 20, 500)}ms` }}
-                    >
-                      <td className="px-4 py-3 text-sm text-slate-600 tabular-nums dark:text-slate-400">{t.date}</td>
-                      <td className="px-4 py-3 text-sm text-slate-800 dark:text-slate-200">{t.merchant}</td>
-                      {!summaryId && (
-                        <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-                          <span className="flex flex-col items-start gap-0.5">
-                            <span>{fileOf(t) ?? '—'}</span>
-                            <SummaryMeta t={t} />
-                          </span>
-                        </td>
-                      )}
-                      <td className="px-4 py-3">
-                        <CategoryCell tx={t} options={allCategoryOptions} onChange={changeCategory} onAddCustom={addCustomCategory} />
-                      </td>
-                      <td className="px-4 py-3">
-                        {t.currency === 'USD' ? (
-                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">USD</span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">ARS</span>
-                        )}
-                      </td>
-                      <td
-                        className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${
-                          t.amount < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'
-                        }`}
-                      >
-                        {fmt(t.amount, t.currency)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <TransactionsTable
+              summaryId={summaryId}
+              sort={sort}
+              onSort={onSort}
+              sorted={sorted}
+              filterKey={filterKey}
+              allCategoryOptions={allCategoryOptions}
+              changeCategory={changeCategory}
+              addCustomCategory={addCustomCategory}
+            />
           </div>
         </>
       )}
     </div>
   )
-}
-
-function lineData(expenseTrend) {
-  const gradient = (context) => {
-    const { ctx, chartArea } = context.chart
-    if (!chartArea) return brandRgba(0.15)
-    const g = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top)
-    g.addColorStop(0, brandRgba(0.02))
-    g.addColorStop(1, brandRgba(0.18))
-    return g
-  }
-  return {
-    labels: expenseTrend.map((d) => d.date),
-    datasets: [
-      {
-        label: 'Gastos acumulados',
-        data: expenseTrend.map((d) => d.accumulated),
-        borderColor: BRAND_HEX,
-        backgroundColor: gradient,
-        tension: 0.35,
-        fill: true,
-        pointRadius: 2,
-        pointHoverRadius: 4,
-        borderWidth: 2,
-      },
-    ],
-  }
-}
-
-function doughnutData(byCategory) {
-  return {
-    labels: byCategory.map((c) => c.category),
-    datasets: [
-      {
-        data: byCategory.map((c) => Math.abs(c.total)),
-        backgroundColor: [BRAND_HEX, ...PALETTE],
-        borderWidth: 0,
-        hoverOffset: 6,
-      },
-    ],
-  }
-}
-
-function barData(byMerchant) {
-  const top = byMerchant.filter((m) => m.total < 0).slice(0, 8)
-  return {
-    labels: top.map((m) => m.merchant),
-    datasets: [
-      {
-        label: 'Gasto por comercio',
-        data: top.map((m) => m.total),
-        backgroundColor: BRAND_HEX,
-        hoverBackgroundColor: BRAND_HEX_STRONG,
-        borderRadius: 4,
-        maxBarThickness: 28,
-      },
-    ],
-  }
-}
-
-function axisTicks(dark, currency = 'ARS') {
-  return {
-    color: dark ? '#64748b' : '#94a3b8',
-    font: { size: 11 },
-    callback: (value) => fmtCompact(value, currency),
-  }
-}
-
-function lineOptions(dark, onPoint) {
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    onClick: (event, elements, chart) => {
-      const [el] = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false)
-      if (el) onPoint(chart.data.labels[el.index])
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: { label: (ctx) => ` Gasto acumulado: ${fmt(ctx.parsed.y)}` },
-      },
-    },
-    scales: {
-      x: { grid: { display: false }, ticks: { color: dark ? '#64748b' : '#94a3b8', font: { size: 11 } } },
-      y: { suggestedMin: 0, grid: { color: dark ? '#1e293b' : '#f1f5f9' }, ticks: axisTicks(dark) },
-    },
-  }
-}
-
-function doughnutOptions(dark, onSlice) {
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '62%',
-    onClick: (event, elements, chart) => {
-      const [el] = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false)
-      if (el) onSlice(chart.data.labels[el.index])
-    },
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { color: dark ? '#cbd5e1' : '#475569', boxWidth: 10, boxHeight: 10, font: { size: 11 } },
-      },
-      tooltip: {
-        callbacks: { label: (ctx) => ` ${ctx.label}: ${fmt(ctx.parsed)}` },
-      },
-    },
-  }
-}
-
-function barOptions(dark, onBar) {
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    indexAxis: 'y',
-    onClick: (event, elements, chart) => {
-      const [el] = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false)
-      if (el) onBar(chart.data.labels[el.index])
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: { label: (ctx) => ` ${fmt(ctx.parsed.x)}` },
-      },
-    },
-    scales: {
-      x: { grid: { color: dark ? '#1e293b' : '#f1f5f9' }, ticks: axisTicks(dark) },
-      y: { grid: { display: false }, ticks: { color: dark ? '#cbd5e1' : '#475569', font: { size: 11 } } },
-    },
-  }
 }

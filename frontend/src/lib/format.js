@@ -20,3 +20,9 @@ export function fmtCompact(n, currency = 'ARS') {
 export function fmtPct(n) {
   return `${(Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 })}%`
 }
+
+export function fileOf(t) {
+  const cs = t.card_summaries
+  if (!cs) return null
+  return Array.isArray(cs) ? cs[0]?.file_name ?? null : cs.file_name ?? null
+}

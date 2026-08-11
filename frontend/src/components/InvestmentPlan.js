@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { distribute } from '../lib/plan'
-import { fmt, fmtPct } from '../lib/format'
-import { ASSET_TYPES } from '../lib/constants'
+import { fmt } from '../lib/format'
 import { useToast } from './Toast'
-import SortableTh from './SortableTh'
-import AssetForm from './AssetForm'
+import PlanTable from './PlanTable'
+import DistributionPanel from './DistributionPanel'
 import { usePortfolioQuotes } from '../hooks/usePortfolioQuotes'
 import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR, SORT_KEYS } from '../lib/planSort'
 
@@ -25,15 +24,6 @@ const newDraft = () => ({
   target_weight: '',
   quantity: '',
 })
-
-const STRATEGY_OPTIONS = [
-  { key: 'faltante', label: 'Mayor faltante ($)' },
-  { key: 'gap', label: 'Mayor faltante (%)' },
-  { key: 'billetera', label: 'Mayor % de cartera' },
-  { key: 'peso', label: 'Mayor peso objetivo' },
-  { key: 'barato', label: 'Más barato' },
-  { key: 'caro', label: 'Más caro' },
-]
 
 export default function InvestmentPlan({
   session,
@@ -237,9 +227,6 @@ export default function InvestmentPlan({
     await loadPlan()
   }
 
-  const progressWidth = (item) =>
-    item.target_weight > 0 ? Math.min(100, (item.actualPct / item.target_weight) * 100) : 0
-
   return (
     <div className="mx-auto max-w-4xl animate-fade-in-up">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -379,236 +366,33 @@ export default function InvestmentPlan({
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white/70 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <SortableTh label="Activo" sortKey="symbol" sort={sort} onSort={onSort} />
-                  <SortableTh label="Precio" sortKey="price" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
-                  <SortableTh label="Meta" sortKey="target_weight" sort={sort} onSort={onSort} align="right" />
-                  <SortableTh label="Actual" sortKey="actualPct" sort={sort} onSort={onSort} align="right" />
-                  <SortableTh label="Gap" sortKey="gap" sort={sort} onSort={onSort} align="right" />
-                  <SortableTh label="Cantidad" sortKey="quantity" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
-                  <SortableTh label="Valor" sortKey="value" sort={sort} onSort={onSort} align="right" />
-                  <SortableTh label="A comprar" sortKey="buy" sort={sort} onSort={onSort} align="right" />
-                  <th className="px-3 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {sortedItems.map((item) =>
-                  editingId === item.id ? (
-                    <tr key={item.id} className="bg-brand-50/50 dark:bg-brand-950/20">
-                      <td colSpan={9} className="px-4 py-3">
-                        <AssetForm
-                          draft={draft}
-                          onChange={(key, value) => setDraft((d) => ({ ...d, [key]: value }))}
-                          onSave={saveEdit}
-                          onCancel={cancelEdit}
-                        />
-                      </td>
-                    </tr>
-                  ) : (
-                    <tr key={item.id} className="transition hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-800 dark:text-slate-100">{item.symbol}</span>
-                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                            {ASSET_TYPES[item.asset_type] ?? item.asset_type}
-                          </span>
-                        </div>
-                        {item.name && item.name !== item.symbol && (
-                          <p className="truncate text-xs text-slate-400 dark:text-slate-500">{item.name}</p>
-                        )}
-                        <div className="mt-1.5 h-1 w-full rounded bg-slate-200 dark:bg-slate-700">
-                          <div
-                            className="h-1 rounded bg-brand-500"
-                            style={{ width: `${progressWidth(item)}%` }}
-                          />
-                        </div>
-                      </td>
-                      <td className="hidden px-3 py-3 sm:table-cell">
-                        {item.price != null ? (
-                          <span>
-                            {fmt(item.price, display)}
-                            {quotes[item.symbol]?.changePct != null && (
-                              <span
-                                className={`ml-1.5 text-xs ${
-                                  quotes[item.symbol].changePct >= 0
-                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                    : 'text-red-600 dark:text-red-400'
-                                }`}
-                              >
-                                {quotes[item.symbol].changePct >= 0 ? '▲' : '▼'}
-                                {Math.abs(quotes[item.symbol].changePct).toFixed(1)}%
-                              </span>
-                            )}
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                            sin precio
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-right font-medium text-slate-700 dark:text-slate-200">
-                        {fmtPct(item.target_weight)}
-                      </td>
-                      <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">{fmtPct(item.actualPct)}</td>
-                      <td
-                        className={`px-3 py-3 text-right ${
-                          item.over
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : item.gap > 0
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-slate-500 dark:text-slate-400'
-                        }`}
-                      >
-                        {item.over ? `${fmtPct(item.gap)}` : item.gap > 0 ? `+${fmtPct(item.gap)}` : '—'}
-                      </td>
-                      <td className="hidden px-3 py-3 text-slate-600 dark:text-slate-300 sm:table-cell">
-                        {item.quantity}
-                      </td>
-                      <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-200">{fmt(item.value, display)}</td>
-                      <td className="px-3 py-3 text-right">
-                        {item.buy > 0 ? (
-                          <span className="font-medium text-brand-700 dark:text-brand-300">≈{item.buyQty} u</span>
-                        ) : (
-                          <span className="text-slate-400 dark:text-slate-500">—</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => startEdit(item)}
-                            aria-label={`Editar ${item.symbol}`}
-                            title="Editar"
-                            className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-                          >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeItem(item)}
-                            aria-label={`Eliminar ${item.symbol}`}
-                            title="Eliminar"
-                            className="rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
-                          >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ),
-                )}
-                {editingId === '__new__' && (
-                  <tr className="bg-brand-50/50 dark:bg-brand-950/20">
-                    <td colSpan={9} className="px-4 py-3">
-                      <AssetForm
-                        draft={draft}
-                        onChange={(key, value) => setDraft((d) => ({ ...d, [key]: value }))}
-                        onSave={saveEdit}
-                        onCancel={cancelEdit}
-                        autoFocusSymbol
-                      />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <PlanTable
+            items={sortedItems}
+            sort={sort}
+            onSort={onSort}
+            editingId={editingId}
+            draft={draft}
+            onDraftChange={(key, value) => setDraft((d) => ({ ...d, [key]: value }))}
+            onSave={saveEdit}
+            onCancel={cancelEdit}
+            onEdit={startEdit}
+            onRemove={removeItem}
+            quotes={quotes}
+            display={display}
+          />
         </div>
       )}
 
       {items.length > 0 && (
-        <section className="mt-4 rounded-2xl border border-slate-200 bg-white/70 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-          <div className="mb-3 flex flex-wrap items-center gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Tengo para comprar
-            </h2>
-            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              Priorizar por
-              <select
-                value={strategy}
-                onChange={(e) => setStrategy(e.target.value)}
-                aria-label="Prioridad de compra"
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              >
-                {STRATEGY_OPTIONS.map((o) => (
-                  <option key={o.key} value={o.key}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <input
-                type="number"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                placeholder={display === 'USD' ? '0' : '0'}
-                aria-label="Presupuesto para comprar"
-                min={0}
-                className="w-32 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              />
-              <span className="text-xs text-slate-400">{display}</span>
-            </label>
-          </div>
-
-          {Number(budget) > 0 ? (
-            dist.steps.length > 0 ? (
-              <>
-                <ul className="flex flex-col gap-1.5">
-                  {dist.steps.map((step, i) => (
-                    <li
-                      key={`${step.symbol}-${i}`}
-                      className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/60"
-                    >
-                      <div className="min-w-0">
-                        <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{step.symbol}</span>
-                        <span className="ml-2 text-xs text-slate-400">≈{step.qty} u</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{fmt(step.amount, display)}</span>
-                        <button
-                          type="button"
-                          onClick={() => applyBuy(step)}
-                          className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-emerald-500 active:scale-[0.98] dark:bg-emerald-500 dark:hover:bg-emerald-400"
-                        >
-                          Comprar
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                  {dist.covered
-                    ? `Te sobran ${fmt(dist.remaining, display)} para llegar a la meta.`
-                    : `Con ${fmt(Number(budget) || 0, display)} cubrís ${fmt((Number(budget) || 0) - dist.remaining, display)} de ${fmt(dist.totalNeeded, display)} de faltantes.`}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                No hay faltantes: ya estás en la meta o con exceso.
-              </p>
-            )
-          ) : (
-            <p className="text-sm text-slate-400 dark:text-slate-500">
-              Ingresá cuánto tenés disponible y te ordenamos qué comprar primero según tu prioridad (se recalcula en vivo al comprar).
-            </p>
-          )}
-        </section>
+        <DistributionPanel
+          budget={budget}
+          onBudget={setBudget}
+          strategy={strategy}
+          onStrategy={setStrategy}
+          dist={dist}
+          display={display}
+          onBuy={applyBuy}
+        />
       )}
     </div>
   )

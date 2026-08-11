@@ -263,6 +263,10 @@ el flujo de **cambio de contraseña** desde el link del email (pantalla de nueva
 
 ## FASE 3 — Refactor del frontend: duplicación y god components
 _Objetivo: una sola fuente de verdad para lógica repetida; componentes razonables._
+> **HECHA** el 2026-08-10 (commits `60ccfa8`…`a806c58`). Dashboard 405, InvestmentPlan 399,
+> MarketQuotes 323, UploadSummaries 332 líneas; `npm test` 167/167 y build de producción OK.
+> Nota: los ítems de 3.5 sobre `SORT_DIRS` y el prop `session` de MarketQuotes quedaron obsoletos
+> (ambos se usan) y no se tocaron.
 
 ### 3.1 Lógica de inversiones compartida (mayor duplicación)
 1. Nuevo hook `src/hooks/usePortfolioQuotes.js` que unifique lo duplicado entre

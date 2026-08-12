@@ -2,7 +2,9 @@ import { authErrorToSpanish } from './authErrors'
 
 describe('authErrorToSpanish', () => {
   it('mapea por código los errores conocidos', () => {
-    expect(authErrorToSpanish({ code: 'invalid_credentials' })).toBe('Email o contraseña incorrectos')
+    expect(authErrorToSpanish({ code: 'invalid_credentials' })).toBe(
+      'Email o contraseña incorrectos',
+    )
     expect(authErrorToSpanish({ code: 'weak_password' })).toBe(
       'La contraseña no cumple los requisitos: al menos 8 caracteres con letras y números',
     )

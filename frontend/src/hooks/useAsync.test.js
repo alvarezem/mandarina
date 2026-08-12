@@ -21,11 +21,10 @@ describe('useAsync', () => {
   })
 
   it('setea un mensaje de error cuando la promesa rechaza', async () => {
-    const { result } = renderHook(
-      () =>
-        useAsync(async () => {
-          throw new Error('boom')
-        }, []),
+    const { result } = renderHook(() =>
+      useAsync(async () => {
+        throw new Error('boom')
+      }, []),
     )
     await waitFor(() => expect(result.current.error).toBe('boom'))
     expect(result.current.loading).toBe(false)

@@ -18,7 +18,9 @@ describe('usePortfolioQuotes', () => {
 
   it('marca quotesError cuando el fetch inicial falla', async () => {
     supabase.functions.invoke.mockRejectedValue(new Error('red'))
-    const { result } = renderHook(() => usePortfolioQuotes({ items, display: 'ARS', rateMode: 'CCL' }))
+    const { result } = renderHook(() =>
+      usePortfolioQuotes({ items, display: 'ARS', rateMode: 'CCL' }),
+    )
     await waitFor(() => expect(result.current.quotesError).toBe(true))
     expect(result.current.quotes).toEqual({})
   })
@@ -27,7 +29,9 @@ describe('usePortfolioQuotes', () => {
     supabase.functions.invoke
       .mockRejectedValueOnce(new Error('red'))
       .mockResolvedValueOnce({ data: { quotes: { VIST: { price: 100 } }, rates: {} }, error: null })
-    const { result } = renderHook(() => usePortfolioQuotes({ items, display: 'ARS', rateMode: 'CCL' }))
+    const { result } = renderHook(() =>
+      usePortfolioQuotes({ items, display: 'ARS', rateMode: 'CCL' }),
+    )
     await waitFor(() => expect(result.current.quotesError).toBe(true))
     act(() => result.current.refreshQuotes())
     await waitFor(() => expect(result.current.quotesError).toBe(false))

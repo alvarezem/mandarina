@@ -45,7 +45,9 @@ export default function InvestmentPlan({
     onSortProp ??
     ((key) =>
       setLocalSort((s) =>
-        s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' },
+        s.key === key
+          ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' }
+          : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' },
       ))
   const [editingId, setEditingId] = useState(null)
   const [draft, setDraft] = useState(newDraft())
@@ -54,7 +56,12 @@ export default function InvestmentPlan({
   const inputRef = useRef(null)
   const pushToast = useToast()
 
-  const { data: planData, loading, error, reload: reloadPlan } = useAsync(async () => {
+  const {
+    data: planData,
+    loading,
+    error,
+    reload: reloadPlan,
+  } = useAsync(async () => {
     try {
       const { data, error } = await supabase
         .from('portfolio_plan')
@@ -86,7 +93,8 @@ export default function InvestmentPlan({
     if (!sort.key) return builtItems
     const { key, dir } = SORT_KEYS.has(sort.key) ? sort : DEFAULT_PLAN_SORT
     const arr = [...builtItems]
-    const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
+    const cmpStr = (x, y) =>
+      String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
     arr.sort((a, b) => {
       let cmp = 0
       if (key === 'symbol') {
@@ -231,7 +239,10 @@ export default function InvestmentPlan({
         return
       }
       setBudget(String(Math.max(0, (Number(budget) || 0) - step.amount)))
-      pushToast({ type: 'success', message: `${step.symbol}: compraste ≈${step.qty} (${fmt(step.amount, display)})` })
+      pushToast({
+        type: 'success',
+        message: `${step.symbol}: compraste ≈${step.qty} (${fmt(step.amount, display)})`,
+      })
       reloadPlan()
     } catch (e) {
       console.error('InvestmentPlan: error al aplicar compra', e)
@@ -243,8 +254,12 @@ export default function InvestmentPlan({
     <div className="mx-auto max-w-4xl animate-fade-in-up">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Plan de inversión</h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Meta vs actual, en vivo</p>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            Plan de inversión
+          </h1>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            Meta vs actual, en vivo
+          </p>
           <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
             Orden: % Meta mayor→menor · cambiá con los encabezados de la tabla (se recuerda)
           </p>
@@ -273,7 +288,13 @@ export default function InvestmentPlan({
             aria-label="Actualizar precios"
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.8}
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -329,8 +350,18 @@ export default function InvestmentPlan({
               title="Qué diferencia hay entre CCL y MEP"
               className="inline-flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                />
               </svg>
             </button>
           </label>

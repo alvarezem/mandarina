@@ -1,6 +1,14 @@
 import PriceChart from './PriceChart'
 
-export default function QuoteModal({ modal, chartQuote, chartPoints, chartData, display, onRange, onClose }) {
+export default function QuoteModal({
+  modal,
+  chartQuote,
+  chartPoints,
+  chartData,
+  display,
+  onRange,
+  onClose,
+}) {
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
@@ -20,7 +28,13 @@ export default function QuoteModal({ modal, chartQuote, chartPoints, chartData, 
             aria-label="Cerrar gráfico"
             className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>

@@ -31,8 +31,8 @@ const TOUR_STEPS = [
     title: '¡Eso es todo!',
     body: (
       <>
-        Cuando lo necesites, volvé a abrir esta guía desde el ícono ? del encabezado. Ahora sí, a sacarle todo el jugo.{' '}
-        <Logo className="inline h-5 w-5 align-[-3px]" />
+        Cuando lo necesites, volvé a abrir esta guía desde el ícono ? del encabezado. Ahora sí, a
+        sacarle todo el jugo. <Logo className="inline h-5 w-5 align-[-3px]" />
       </>
     ),
     icon: <Logo className="h-9 w-9" />,
@@ -47,9 +47,18 @@ export default function OnboardingTour({ open, onClose }) {
   const [target, setTarget] = useState(null)
   const cardRef = useRef(null)
 
+  // Ajustes en render (patrón de React): reinicia el paso al reabrir y deriva
+  // el target nulo sin setState síncrono en effects.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open && open !== prevOpen) {
+    setPrevOpen(open)
+    setStep(0)
+  }
+  const targetKey = TOUR_STEPS[step]?.target
+  const shownTarget = targetKey ? target : null
+
   useEffect(() => {
     if (!open) return
-    setStep(0)
     cardRef.current?.focus()
     const onKey = (e) => {
       if (e.key === 'Escape') onClose()
@@ -61,10 +70,7 @@ export default function OnboardingTour({ open, onClose }) {
   useEffect(() => {
     if (!open) return
     const key = TOUR_STEPS[step]?.target
-    if (!key) {
-      setTarget(null)
-      return
-    }
+    if (!key) return
     const compute = () => {
       const els = document.querySelectorAll(`[data-tour="${key}"]`)
       if (els.length === 0) return
@@ -88,15 +94,17 @@ export default function OnboardingTour({ open, onClose }) {
 
   const stepData = TOUR_STEPS[step]
   const isLast = step === TOUR_STEPS.length - 1
-  const holeR = target ? Math.max(target.w, target.h) / 2 + PAD + 8 : 0
-  const mask = target
-    ? `radial-gradient(circle at ${target.x}px ${target.y}px, transparent ${holeR}px, black ${holeR + 40}px)`
+  const holeR = shownTarget ? Math.max(shownTarget.w, shownTarget.h) / 2 + PAD + 8 : 0
+  const mask = shownTarget
+    ? `radial-gradient(circle at ${shownTarget.x}px ${shownTarget.y}px, transparent ${holeR}px, black ${holeR + 40}px)`
     : undefined
 
   return (
     <div
       className={`fixed inset-0 z-[80] overflow-y-auto ${
-        target ? 'flex items-start justify-center p-4 pt-20 pb-32 lg:items-center lg:py-4' : 'flex items-center justify-center p-4'
+        shownTarget
+          ? 'flex items-start justify-center p-4 pt-20 pb-32 lg:items-center lg:py-4'
+          : 'flex items-center justify-center p-4'
       }`}
     >
       <div
@@ -105,16 +113,16 @@ export default function OnboardingTour({ open, onClose }) {
         style={{ WebkitMaskImage: mask, maskImage: mask }}
         onClick={onClose}
       />
-      {target && (
+      {shownTarget && (
         <div
           data-testid="tour-target-ring"
           aria-hidden="true"
           className="pointer-events-none absolute z-10 animate-pulse rounded-xl ring-2 ring-brand-500 shadow-[0_0_0_6px_rgba(249,115,22,0.25)]"
           style={{
-            left: target.x - target.w / 2 - PAD,
-            top: target.y - target.h / 2 - PAD,
-            width: target.w + PAD * 2,
-            height: target.h + PAD * 2,
+            left: shownTarget.x - shownTarget.w / 2 - PAD,
+            top: shownTarget.y - shownTarget.h / 2 - PAD,
+            width: shownTarget.w + PAD * 2,
+            height: shownTarget.h + PAD * 2,
           }}
         />
       )}
@@ -129,7 +137,13 @@ export default function OnboardingTour({ open, onClose }) {
         <div className="flex items-start justify-between gap-3 p-6 pb-0 sm:p-8 sm:pb-0">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
             {stepData.icon ?? (
-              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+              <svg
+                className="h-7 w-7"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -156,7 +170,13 @@ export default function OnboardingTour({ open, onClose }) {
               title="Omitir"
               className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -164,8 +184,12 @@ export default function OnboardingTour({ open, onClose }) {
         </div>
 
         <div className="p-6 pt-4 sm:p-8 sm:pt-5">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">{stepData.title}</h2>
-          <p className="mt-3 text-base leading-7 text-slate-600 dark:text-slate-300">{stepData.body}</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            {stepData.title}
+          </h2>
+          <p className="mt-3 text-base leading-7 text-slate-600 dark:text-slate-300">
+            {stepData.body}
+          </p>
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-slate-100 p-5 dark:border-slate-800 sm:p-6">

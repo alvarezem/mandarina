@@ -16,7 +16,9 @@ export default function MetaForm({ draft, onChange, onSubmit, onCancel }) {
       >
         <option value="">Tipo…</option>
         {TYPES.map((t) => (
-          <option key={t} value={t}>{t}</option>
+          <option key={t} value={t}>
+            {t}
+          </option>
         ))}
       </select>
       <select
@@ -26,7 +28,9 @@ export default function MetaForm({ draft, onChange, onSubmit, onCancel }) {
         className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
       >
         {MONTHS.map((m, i) => (
-          <option key={m} value={i + 1}>{m}</option>
+          <option key={m} value={i + 1}>
+            {m}
+          </option>
         ))}
       </select>
       <select
@@ -36,7 +40,9 @@ export default function MetaForm({ draft, onChange, onSubmit, onCancel }) {
         className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
       >
         {YEARS.map((y) => (
-          <option key={y} value={y}>{y}</option>
+          <option key={y} value={y}>
+            {y}
+          </option>
         ))}
       </select>
       <button
@@ -44,7 +50,13 @@ export default function MetaForm({ draft, onChange, onSubmit, onCancel }) {
         aria-label="Guardar clasificación"
         className="shrink-0 rounded-md p-1.5 text-emerald-600 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
         </svg>
       </button>
@@ -55,7 +67,13 @@ export default function MetaForm({ draft, onChange, onSubmit, onCancel }) {
         aria-label="Cancelar clasificación"
         className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>

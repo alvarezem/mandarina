@@ -21,9 +21,7 @@ function mockSummaries(list) {
   const order = vi.fn().mockResolvedValue({ data: list, error: null })
   const eq = vi.fn().mockReturnValue({ order })
   const select = vi.fn().mockReturnValue({ eq })
-  supabase.from.mockImplementation((table) =>
-    table === 'card_summaries' ? { select } : {},
-  )
+  supabase.from.mockImplementation((table) => (table === 'card_summaries' ? { select } : {}))
 }
 
 describe('UploadSummaries', () => {
@@ -40,8 +38,20 @@ describe('UploadSummaries', () => {
 
   it('lista los resúmenes con su status', async () => {
     mockSummaries([
-      { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
-      { id: 'b', file_name: 'mc-junio.csv', status: 'error', error: 'parse failed', created_at: '2026-06-01' },
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+      },
+      {
+        id: 'b',
+        file_name: 'mc-junio.csv',
+        status: 'error',
+        error: 'parse failed',
+        created_at: '2026-06-01',
+      },
     ])
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
     expect(await screen.findByText('visa-julio.pdf')).toBeInTheDocument()
@@ -79,7 +89,9 @@ describe('UploadSummaries', () => {
     const input = document.querySelector('input[type="file"]')
     await userEvent.upload(input, file)
 
-    await waitFor(() => expect(upload).toHaveBeenCalledWith('u1/resumen.csv', file, { upsert: false }))
+    await waitFor(() =>
+      expect(upload).toHaveBeenCalledWith('u1/resumen.csv', file, { upsert: false }),
+    )
     expect(supabase.functions.invoke).toHaveBeenCalledWith('parse-summary', {
       body: { summary_id: 'new-id' },
     })
@@ -127,9 +139,15 @@ describe('UploadSummaries', () => {
     const input = document.querySelector('input[type="file"]')
     await userEvent.upload(input, file)
 
-    await waitFor(() => expect(upload).toHaveBeenCalledWith('u1/Nacion.csv', file, { upsert: false }))
+    await waitFor(() =>
+      expect(upload).toHaveBeenCalledWith('u1/Nacion.csv', file, { upsert: false }),
+    )
     expect(insert).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: 'u1', file_name: 'Nación.csv', file_path: 'u1/Nacion.csv' }),
+      expect.objectContaining({
+        user_id: 'u1',
+        file_name: 'Nación.csv',
+        file_path: 'u1/Nacion.csv',
+      }),
     )
     expect(await screen.findByText('Resumen Nación.csv subido')).toBeInTheDocument()
   })
@@ -149,7 +167,14 @@ describe('UploadSummaries', () => {
             eq: vi.fn().mockReturnValue({
               order: vi.fn().mockResolvedValue({
                 data: [
-                  { id: 'a', file_name: 'Nacion.csv', file_path: 'u1/Nacion.csv', status: 'done', error: null, created_at: '2026-07-01' },
+                  {
+                    id: 'a',
+                    file_name: 'Nacion.csv',
+                    file_path: 'u1/Nacion.csv',
+                    status: 'done',
+                    error: null,
+                    created_at: '2026-07-01',
+                  },
                 ],
                 error: null,
               }),
@@ -167,14 +192,24 @@ describe('UploadSummaries', () => {
     const input = document.querySelector('input[type="file"]')
     await userEvent.upload(input, file)
 
-    await waitFor(() => expect(upload).toHaveBeenCalledWith('u1/Nacion_1.csv', file, { upsert: false }))
+    await waitFor(() =>
+      expect(upload).toHaveBeenCalledWith('u1/Nacion_1.csv', file, { upsert: false }),
+    )
     expect(
       await screen.findByText(/subido como Nacion_1\.csv \(ya existía un archivo con ese nombre\)/),
     ).toBeInTheDocument()
   })
 
   it('renombra un resumen existente', async () => {
-    mockSummaries([{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }])
+    mockSummaries([
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+      },
+    ])
     const eq = vi.fn().mockResolvedValue({ error: null })
     const update = vi.fn().mockReturnValue({ eq })
     supabase.from.mockImplementation((table) => {
@@ -183,7 +218,15 @@ describe('UploadSummaries', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               order: vi.fn().mockResolvedValue({
-                data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+                data: [
+                  {
+                    id: 'a',
+                    file_name: 'visa-julio.pdf',
+                    status: 'done',
+                    error: null,
+                    created_at: '2026-07-01',
+                  },
+                ],
                 error: null,
               }),
             }),
@@ -210,7 +253,15 @@ describe('UploadSummaries', () => {
   })
 
   it('no guarda un nombre vacío', async () => {
-    mockSummaries([{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }])
+    mockSummaries([
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+      },
+    ])
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     supabase.from.mockImplementation((table) => {
       if (table === 'card_summaries') {
@@ -218,7 +269,15 @@ describe('UploadSummaries', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               order: vi.fn().mockResolvedValue({
-                data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+                data: [
+                  {
+                    id: 'a',
+                    file_name: 'visa-julio.pdf',
+                    status: 'done',
+                    error: null,
+                    created_at: '2026-07-01',
+                  },
+                ],
                 error: null,
               }),
             }),
@@ -243,7 +302,14 @@ describe('UploadSummaries', () => {
 
   it('borra el archivo de storage y la fila con confirmación inline', async () => {
     mockSummaries([
-      { id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        file_path: 'u1/visa-julio.pdf',
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+      },
     ])
     const remove = vi.fn().mockResolvedValue({ data: null, error: null })
     const eq = vi.fn().mockResolvedValue({ error: null })
@@ -255,7 +321,16 @@ describe('UploadSummaries', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               order: vi.fn().mockResolvedValue({
-                data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+                data: [
+                  {
+                    id: 'a',
+                    file_name: 'visa-julio.pdf',
+                    file_path: 'u1/visa-julio.pdf',
+                    status: 'done',
+                    error: null,
+                    created_at: '2026-07-01',
+                  },
+                ],
                 error: null,
               }),
             }),
@@ -268,7 +343,13 @@ describe('UploadSummaries', () => {
     const onDataChanged = vi.fn()
     const onSelect = vi.fn()
 
-    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} onDataChanged={onDataChanged} onSelect={onSelect} />)
+    wrap(
+      <UploadSummaries
+        session={{ user: { id: 'u1' } }}
+        onDataChanged={onDataChanged}
+        onSelect={onSelect}
+      />,
+    )
     await screen.findByText('visa-julio.pdf')
 
     await userEvent.click(screen.getByRole('button', { name: /Eliminar visa-julio/ }))
@@ -284,7 +365,14 @@ describe('UploadSummaries', () => {
 
   it('cancela la confirmación de borrado', async () => {
     mockSummaries([
-      { id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        file_path: 'u1/visa-julio.pdf',
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+      },
     ])
     const remove = vi.fn()
     supabase.storage.from.mockReturnValue({ remove })
@@ -301,7 +389,14 @@ describe('UploadSummaries', () => {
 
   it('muestra toast de error si falla el borrado de la fila', async () => {
     mockSummaries([
-      { id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' },
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        file_path: 'u1/visa-julio.pdf',
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+      },
     ])
     const remove = vi.fn().mockResolvedValue({ data: null, error: null })
     const eq = vi.fn().mockResolvedValue({ error: { message: 'denied' } })
@@ -313,7 +408,16 @@ describe('UploadSummaries', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               order: vi.fn().mockResolvedValue({
-                data: [{ id: 'a', file_name: 'visa-julio.pdf', file_path: 'u1/visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01' }],
+                data: [
+                  {
+                    id: 'a',
+                    file_name: 'visa-julio.pdf',
+                    file_path: 'u1/visa-julio.pdf',
+                    status: 'done',
+                    error: null,
+                    created_at: '2026-07-01',
+                  },
+                ],
                 error: null,
               }),
             }),
@@ -335,7 +439,16 @@ describe('UploadSummaries', () => {
 
   it('muestra el badge de tipo y período (y "Sin clasificar" si no hay metadata)', async () => {
     mockSummaries([
-      { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 },
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+        summary_type: 'VISA',
+        period_month: 7,
+        period_year: 2026,
+      },
       { id: 'b', file_name: 'mc-junio.csv', status: 'done', error: null, created_at: '2026-06-01' },
     ])
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
@@ -345,7 +458,16 @@ describe('UploadSummaries', () => {
 
   it('edita el tipo y período de un resumen', async () => {
     mockSummaries([
-      { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 },
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+        summary_type: 'VISA',
+        period_month: 7,
+        period_year: 2026,
+      },
     ])
     const eq = vi.fn().mockResolvedValue({ error: null })
     const update = vi.fn().mockReturnValue({ eq })
@@ -355,7 +477,18 @@ describe('UploadSummaries', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               order: vi.fn().mockResolvedValue({
-                data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
+                data: [
+                  {
+                    id: 'a',
+                    file_name: 'visa-julio.pdf',
+                    status: 'done',
+                    error: null,
+                    created_at: '2026-07-01',
+                    summary_type: 'VISA',
+                    period_month: 7,
+                    period_year: 2026,
+                  },
+                ],
                 error: null,
               }),
             }),
@@ -370,13 +503,23 @@ describe('UploadSummaries', () => {
     await screen.findByText('VISA · jul 2026')
 
     await userEvent.click(screen.getByRole('button', { name: /Clasificar visa-julio/ }))
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Tipo de resumen/i }), 'Broker')
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: /Tipo de resumen/i }),
+      'Broker',
+    )
     await userEvent.selectOptions(screen.getByRole('combobox', { name: /Mes del período/i }), '8')
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Año del período/i }), '2026')
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: /Año del período/i }),
+      '2026',
+    )
     await userEvent.click(screen.getByRole('button', { name: 'Guardar clasificación' }))
 
     await waitFor(() =>
-      expect(update).toHaveBeenCalledWith({ summary_type: 'Broker', period_month: 8, period_year: 2026 }),
+      expect(update).toHaveBeenCalledWith({
+        summary_type: 'Broker',
+        period_month: 8,
+        period_year: 2026,
+      }),
     )
     expect(eq).toHaveBeenCalledWith('id', 'a')
     expect(await screen.findByText('Broker · ago 2026')).toBeInTheDocument()
@@ -384,7 +527,16 @@ describe('UploadSummaries', () => {
 
   it('cancela la edición de metadata sin guardar', async () => {
     mockSummaries([
-      { id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 },
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+        summary_type: 'VISA',
+        period_month: 7,
+        period_year: 2026,
+      },
     ])
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     supabase.from.mockImplementation((table) => {
@@ -393,7 +545,18 @@ describe('UploadSummaries', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               order: vi.fn().mockResolvedValue({
-                data: [{ id: 'a', file_name: 'visa-julio.pdf', status: 'done', error: null, created_at: '2026-07-01', summary_type: 'VISA', period_month: 7, period_year: 2026 }],
+                data: [
+                  {
+                    id: 'a',
+                    file_name: 'visa-julio.pdf',
+                    status: 'done',
+                    error: null,
+                    created_at: '2026-07-01',
+                    summary_type: 'VISA',
+                    period_month: 7,
+                    period_year: 2026,
+                  },
+                ],
                 error: null,
               }),
             }),
@@ -408,7 +571,10 @@ describe('UploadSummaries', () => {
     await screen.findByText('VISA · jul 2026')
 
     await userEvent.click(screen.getByRole('button', { name: /Clasificar visa-julio/ }))
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Tipo de resumen/i }), 'Broker')
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: /Tipo de resumen/i }),
+      'Broker',
+    )
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar clasificación' }))
 
     expect(update).not.toHaveBeenCalled()

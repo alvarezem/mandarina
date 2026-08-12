@@ -78,7 +78,7 @@ describe('OnboardingTour', () => {
           Costos nav
         </button>
         <OnboardingTour open onClose={onClose} />
-      </>
+      </>,
     )
     const dialog = screen.getByRole('dialog', { name: /Guía de Mandarina/i })
     await userEvent.click(within(dialog).getByRole('button', { name: /Siguiente/i }))

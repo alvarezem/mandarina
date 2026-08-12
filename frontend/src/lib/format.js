@@ -24,5 +24,5 @@ export function fmtPct(n) {
 export function fileOf(t) {
   const cs = t.card_summaries
   if (!cs) return null
-  return Array.isArray(cs) ? cs[0]?.file_name ?? null : cs.file_name ?? null
+  return Array.isArray(cs) ? (cs[0]?.file_name ?? null) : (cs.file_name ?? null)
 }

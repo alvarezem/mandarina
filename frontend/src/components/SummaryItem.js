@@ -2,16 +2,29 @@ import { MONTHS } from '../lib/constants'
 import MetaForm from './MetaForm'
 
 const STATUS = {
-  pending: { label: 'Pendiente', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
-  parsing: { label: 'Procesando…', className: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300' },
-  done: { label: 'Procesado', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' },
-  error: { label: 'Error', className: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300' },
+  pending: {
+    label: 'Pendiente',
+    className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+  },
+  parsing: {
+    label: 'Procesando…',
+    className: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
+  },
+  done: {
+    label: 'Procesado',
+    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
+  },
+  error: {
+    label: 'Error',
+    className: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300',
+  },
 }
 
 function metaLabel(file) {
   const parts = []
   if (file.summary_type) parts.push(file.summary_type)
-  if (file.period_month) parts.push(`${MONTHS[file.period_month - 1] ?? file.period_month} ${file.period_year}`)
+  if (file.period_month)
+    parts.push(`${MONTHS[file.period_month - 1] ?? file.period_month} ${file.period_year}`)
   return parts.join(' · ')
 }
 
@@ -64,7 +77,13 @@ export default function SummaryItem({
             aria-label="Guardar nombre"
             className="shrink-0 rounded-md p-1.5 text-emerald-600 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
           </button>
@@ -75,7 +94,13 @@ export default function SummaryItem({
             aria-label="Cancelar"
             className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -83,14 +108,20 @@ export default function SummaryItem({
       ) : (
         <>
           <div className="flex items-center justify-between gap-2">
-            <button type="button" onClick={() => onSelect(file.id)} className="min-w-0 flex-1 text-left">
+            <button
+              type="button"
+              onClick={() => onSelect(file.id)}
+              className="min-w-0 flex-1 text-left"
+            >
               <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
                 {file.file_name}
               </span>
             </button>
             {confirmingId === file.id ? (
               <span className="flex shrink-0 items-center gap-1.5">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">¿Borrar?</span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  ¿Borrar?
+                </span>
                 <button
                   type="button"
                   onClick={() => removeSummary(file)}
@@ -116,7 +147,13 @@ export default function SummaryItem({
                   title="Eliminar"
                   className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.8}
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -132,7 +169,13 @@ export default function SummaryItem({
                   title="Renombrar"
                   className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.8}
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -155,7 +198,12 @@ export default function SummaryItem({
             <p className="mt-1 truncate text-xs text-red-600 dark:text-red-400">{file.error}</p>
           )}
           {metaEditingId === file.id ? (
-            <MetaForm draft={metaDraft} onChange={onMetaChange} onSubmit={submitMeta} onCancel={cancelMetaEdit} />
+            <MetaForm
+              draft={metaDraft}
+              onChange={onMetaChange}
+              onSubmit={submitMeta}
+              onCancel={cancelMetaEdit}
+            />
           ) : (
             <div className="mt-1.5 flex items-center gap-1.5">
               <button
@@ -166,7 +214,13 @@ export default function SummaryItem({
                 title="Clasificar"
                 className="shrink-0 rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-brand-400"
               >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

@@ -27,11 +27,37 @@ export default function PlanTable({
         <thead>
           <tr className="border-b border-slate-200 dark:border-slate-800">
             <SortableTh label="Activo" sortKey="symbol" sort={sort} onSort={onSort} />
-            <SortableTh label="Precio" sortKey="price" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
-            <SortableTh label="Meta" sortKey="target_weight" sort={sort} onSort={onSort} align="right" />
-            <SortableTh label="Actual" sortKey="actualPct" sort={sort} onSort={onSort} align="right" />
+            <SortableTh
+              label="Precio"
+              sortKey="price"
+              sort={sort}
+              onSort={onSort}
+              align="right"
+              className="hidden sm:table-cell"
+            />
+            <SortableTh
+              label="Meta"
+              sortKey="target_weight"
+              sort={sort}
+              onSort={onSort}
+              align="right"
+            />
+            <SortableTh
+              label="Actual"
+              sortKey="actualPct"
+              sort={sort}
+              onSort={onSort}
+              align="right"
+            />
             <SortableTh label="Gap" sortKey="gap" sort={sort} onSort={onSort} align="right" />
-            <SortableTh label="Cantidad" sortKey="quantity" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
+            <SortableTh
+              label="Cantidad"
+              sortKey="quantity"
+              sort={sort}
+              onSort={onSort}
+              align="right"
+              className="hidden sm:table-cell"
+            />
             <SortableTh label="Valor" sortKey="value" sort={sort} onSort={onSort} align="right" />
             <SortableTh label="A comprar" sortKey="buy" sort={sort} onSort={onSort} align="right" />
             <th className="px-3 py-3" />
@@ -51,16 +77,23 @@ export default function PlanTable({
                 </td>
               </tr>
             ) : (
-              <tr key={item.id} className="transition hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+              <tr
+                key={item.id}
+                className="transition hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
+              >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-800 dark:text-slate-100">{item.symbol}</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-100">
+                      {item.symbol}
+                    </span>
                     <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                       {ASSET_TYPES[item.asset_type] ?? item.asset_type}
                     </span>
                   </div>
                   {item.name && item.name !== item.symbol && (
-                    <p className="truncate text-xs text-slate-400 dark:text-slate-500">{item.name}</p>
+                    <p className="truncate text-xs text-slate-400 dark:text-slate-500">
+                      {item.name}
+                    </p>
                   )}
                   <div className="mt-1.5 h-1 w-full rounded bg-slate-200 dark:bg-slate-700">
                     <div
@@ -95,7 +128,9 @@ export default function PlanTable({
                 <td className="px-3 py-3 text-right font-medium text-slate-700 dark:text-slate-200">
                   {fmtPct(item.target_weight)}
                 </td>
-                <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">{fmtPct(item.actualPct)}</td>
+                <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">
+                  {fmtPct(item.actualPct)}
+                </td>
                 <td
                   className={`px-3 py-3 text-right ${
                     item.over
@@ -110,10 +145,14 @@ export default function PlanTable({
                 <td className="hidden px-3 py-3 text-slate-600 dark:text-slate-300 sm:table-cell">
                   {item.quantity}
                 </td>
-                <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-200">{fmt(item.value, display)}</td>
+                <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-200">
+                  {fmt(item.value, display)}
+                </td>
                 <td className="px-3 py-3 text-right">
                   {item.buy > 0 ? (
-                    <span className="font-medium text-brand-700 dark:text-brand-300">≈{item.buyQty} u</span>
+                    <span className="font-medium text-brand-700 dark:text-brand-300">
+                      ≈{item.buyQty} u
+                    </span>
                   ) : (
                     <span className="text-slate-400 dark:text-slate-500">—</span>
                   )}
@@ -127,7 +166,13 @@ export default function PlanTable({
                       title="Editar"
                       className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.8}
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -142,7 +187,13 @@ export default function PlanTable({
                       title="Eliminar"
                       className="rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.8}
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"

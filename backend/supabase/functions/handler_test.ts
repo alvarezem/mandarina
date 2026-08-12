@@ -1,4 +1,4 @@
-import { assertEquals } from 'jsr:@std/assert'
+import { assertEquals } from '@std/assert'
 import { handleParse, type QueryResult, type SelectBuilder } from './parse-summary/index.ts'
 
 const USER_ID = '00000000-0000-4000-8000-000000000001'
@@ -13,7 +13,7 @@ function makeClient(overrides: Record<string, unknown> = {}) {
   // Resultado del query `select().eq()`: promesa thenable con `.single()`.
   const selectBuilder = (result: QueryResult): SelectBuilder => {
     const p = Promise.resolve(result)
-    return Object.assign(p, { single: async () => result })
+    return Object.assign(p, { single: () => Promise.resolve(result) })
   }
 
   const client = {
@@ -30,7 +30,7 @@ function makeClient(overrides: Record<string, unknown> = {}) {
       return {
         select() {
           const builder = {
-            eq(key: string, value: unknown) {
+            eq(_key: string, _value: unknown) {
               if (table === 'card_summaries') {
                 if (overrides.summaryError) {
                   return selectBuilder({ data: null, error: { message: 'x' } })
@@ -44,7 +44,7 @@ function makeClient(overrides: Record<string, unknown> = {}) {
         },
         update(payload: Record<string, unknown>) {
           return {
-            eq(key: string, value: unknown) {
+            eq(_key: string, _value: unknown) {
               calls.updates.push({ table, payload })
               return Promise.resolve({ data: null, error: null })
             },
@@ -55,9 +55,9 @@ function makeClient(overrides: Record<string, unknown> = {}) {
     storage: {
       from() {
         return {
-          async download() {
-            if (overrides.downloadError) return { data: null, error: { message: 'x' } }
-            return { data: new Blob([overrides.fileText ?? CSV] as BlobPart[]), error: null }
+          download() {
+            if (overrides.downloadError) return Promise.resolve({ data: null, error: { message: 'x' } })
+            return Promise.resolve({ data: new Blob([overrides.fileText ?? CSV] as BlobPart[]), error: null })
           },
         }
       },

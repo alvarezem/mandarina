@@ -1,5 +1,5 @@
 import { categorize } from './categorize.ts'
-import { assertEquals } from 'jsr:@std/assert'
+import { assertEquals } from '@std/assert'
 
 Deno.test('categorize: telecom va a Servicios (alineado con migración 0009)', () => {
   assertEquals(categorize('Telecom Argentina'), 'Servicios')

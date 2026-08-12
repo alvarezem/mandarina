@@ -21,11 +21,17 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@tailwindcss/cli": "^4.3.3",
     "@testing-library/user-event": "^14.6.3",
     "@vitejs/plugin-react": "^6.0.5",
     "concurrently": "^10.0.4",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.10.0",
     "jsdom": "^30.0.1",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.1",
     "vitest": "^4.1.10"

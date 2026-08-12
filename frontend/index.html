@@ -1,21 +1,21 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="/favicon.ico" />
     <script>
-      (function () {
+      ;(function () {
         try {
           var stored =
             localStorage.getItem('mandarina-theme') ||
             localStorage.getItem('mandarine-theme') ||
-            localStorage.getItem('fimplify-theme');
+            localStorage.getItem('fimplify-theme')
           var dark = stored
             ? stored === 'dark'
-            : window.matchMedia('(prefers-color-scheme: dark)').matches;
-          if (dark) document.documentElement.classList.add('dark');
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+          if (dark) document.documentElement.classList.add('dark')
         } catch (e) {}
-      })();
+      })()
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f97316" />

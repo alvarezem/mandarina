@@ -66,13 +66,14 @@ export default function Dropdown({
 
   const q = query.trim().toLowerCase()
   const isRenderProp = typeof children === 'function'
-  const filteredChildren = !isRenderProp && q
-    ? Children.toArray(children).filter((child) => {
-        if (!isValidElement(child)) return true
-        if (child.props['data-pinned']) return true
-        return textOf(child).toLowerCase().includes(q)
-      })
-    : children
+  const filteredChildren =
+    !isRenderProp && q
+      ? Children.toArray(children).filter((child) => {
+          if (!isValidElement(child)) return true
+          if (child.props['data-pinned']) return true
+          return textOf(child).toLowerCase().includes(q)
+        })
+      : children
 
   const spaceBelow = rect ? window.innerHeight - rect.bottom - 8 : 0
   const spaceAbove = rect ? rect.top - 8 : 0
@@ -133,7 +134,11 @@ export default function Dropdown({
                   strokeWidth={2}
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                  />
                 </svg>
                 <input
                   ref={searchRef}
@@ -145,9 +150,7 @@ export default function Dropdown({
                 />
               </div>
             )}
-            {isRenderProp
-              ? children({ close: () => setOpen(false), query: q })
-              : filteredChildren}
+            {isRenderProp ? children({ close: () => setOpen(false), query: q }) : filteredChildren}
           </div>,
           document.body,
         )}

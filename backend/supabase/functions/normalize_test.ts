@@ -1,4 +1,4 @@
-import { assertEquals } from 'jsr:@std/assert'
+import { assertEquals } from '@std/assert'
 import { normalizeHeader, HEADER_ALIASES, matchExact, matchFuzzy } from './_shared/normalize.ts'
 
 Deno.test('normalizeHeader: minúsculas y sin acentos', () => {

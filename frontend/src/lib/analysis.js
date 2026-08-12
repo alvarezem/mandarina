@@ -35,10 +35,7 @@ function buildAnalysis(txs) {
   const dates = ars.map((t) => t.date).sort()
   const from = dates[0]
   const to = dates[dates.length - 1]
-  const days = Math.max(
-    1,
-    Math.round((new Date(to) - new Date(from)) / 86400000) + 1,
-  )
+  const days = Math.max(1, Math.round((new Date(to) - new Date(from)) / 86400000) + 1)
 
   const totals = computeTotals(ars)
 
@@ -87,7 +84,10 @@ function buildAnalysis(txs) {
     }
     result.usd = {
       totals: computeTotals(usd),
-      byCategory: aggregate(usd.filter((t) => t.amount < 0), 'category').sort((a, b) => b.total - a.total),
+      byCategory: aggregate(
+        usd.filter((t) => t.amount < 0),
+        'category',
+      ).sort((a, b) => b.total - a.total),
       maxExpense: usdMaxExpense,
     }
   }

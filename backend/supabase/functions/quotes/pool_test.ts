@@ -1,5 +1,5 @@
 import { mapWithConcurrency } from './pool.ts'
-import { assertEquals } from 'jsr:@std/assert'
+import { assertEquals } from '@std/assert'
 
 Deno.test('mapWithConcurrency: nunca supera el límite de concurrencia', async () => {
   let active = 0
@@ -17,13 +17,13 @@ Deno.test('mapWithConcurrency: nunca supera el límite de concurrencia', async (
 })
 
 Deno.test('mapWithConcurrency: resuelve todos los índices en orden', async () => {
-  const res = await mapWithConcurrency(['a', 'b', 'c'], 1, async (x, i) => `${i}:${x}`)
+  const res = await mapWithConcurrency(['a', 'b', 'c'], 1, (x, i) => `${i}:${x}`)
   assertEquals(res, ['0:a', '1:b', '2:c'])
 })
 
 Deno.test('mapWithConcurrency: con límite 1 corre secuencial', async () => {
   const order: number[] = []
-  await mapWithConcurrency([1, 2, 3], 1, async (x) => {
+  await mapWithConcurrency([1, 2, 3], 1, (x) => {
     order.push(x)
   })
   assertEquals(order, [1, 2, 3])

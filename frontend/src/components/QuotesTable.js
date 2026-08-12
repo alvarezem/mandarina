@@ -87,11 +87,44 @@ export default function QuotesTable({
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800">
                 <SortableTh label="Activo" sortKey="symbol" sort={sort} onSort={onSort} />
-                <SortableTh label="Precio" sortKey="price" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
-                <SortableTh label="Var. diaria" sortKey="changePct" sort={sort} onSort={onSort} align="right" className="hidden sm:table-cell" />
-                <SortableTh label="Cantidad" sortKey="quantity" sort={sort} onSort={onSort} align="right" className="hidden md:table-cell" />
-                <SortableTh label="Valor" sortKey="value" sort={sort} onSort={onSort} align="right" />
-                <SortableTh label="% cartera" sortKey="actualPct" sort={sort} onSort={onSort} align="right" />
+                <SortableTh
+                  label="Precio"
+                  sortKey="price"
+                  sort={sort}
+                  onSort={onSort}
+                  align="right"
+                  className="hidden sm:table-cell"
+                />
+                <SortableTh
+                  label="Var. diaria"
+                  sortKey="changePct"
+                  sort={sort}
+                  onSort={onSort}
+                  align="right"
+                  className="hidden sm:table-cell"
+                />
+                <SortableTh
+                  label="Cantidad"
+                  sortKey="quantity"
+                  sort={sort}
+                  onSort={onSort}
+                  align="right"
+                  className="hidden md:table-cell"
+                />
+                <SortableTh
+                  label="Valor"
+                  sortKey="value"
+                  sort={sort}
+                  onSort={onSort}
+                  align="right"
+                />
+                <SortableTh
+                  label="% cartera"
+                  sortKey="actualPct"
+                  sort={sort}
+                  onSort={onSort}
+                  align="right"
+                />
                 <th className="px-3 py-2 text-right">
                   <span className="sr-only">Ver gráfico</span>
                 </th>
@@ -119,15 +152,23 @@ export default function QuotesTable({
                             strokeWidth={2}
                             stroke="currentColor"
                           >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                            />
                           </svg>
-                          <span className="font-semibold text-slate-800 dark:text-slate-100">{item.symbol}</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-100">
+                            {item.symbol}
+                          </span>
                           <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                             {ASSET_TYPES[item.asset_type] ?? item.asset_type}
                           </span>
                         </button>
                         {item.name && item.name !== item.symbol && (
-                          <p className="truncate pl-5 text-xs text-slate-400 dark:text-slate-500">{item.name}</p>
+                          <p className="truncate pl-5 text-xs text-slate-400 dark:text-slate-500">
+                            {item.name}
+                          </p>
                         )}
                         <div className="ml-5 mt-1.5 h-1 w-full max-w-24 rounded bg-slate-200 dark:bg-slate-700">
                           <div
@@ -179,7 +220,13 @@ export default function QuotesTable({
                           aria-label={`Abrir gráfico de ${item.symbol}`}
                           className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                         >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                          >
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -191,7 +238,10 @@ export default function QuotesTable({
                     </tr>
                     {open && (
                       <tr className="border-t-0">
-                        <td colSpan={7} className="border-t border-dashed border-slate-200 bg-slate-50/60 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/40">
+                        <td
+                          colSpan={7}
+                          className="border-t border-dashed border-slate-200 bg-slate-50/60 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/40"
+                        >
                           <PriceChart
                             symbol={item.symbol}
                             range={chart.range}

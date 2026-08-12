@@ -38,11 +38,56 @@ function mockTx(data, { overrides = [], customCategories = [] } = {}) {
 }
 
 const txs = [
-  { id: '1', date: '2026-07-01', merchant: 'MERCADO LIBRE', category: 'Compras', currency: 'ARS', amount: -1500, summary_id: 's1', card_summaries: { file_name: 'resumen-julio.csv' } },
-  { id: '2', date: '2026-07-02', merchant: 'NETFLIX', category: 'Suscripciones', currency: 'ARS', amount: -3500, summary_id: 's1', card_summaries: { file_name: 'resumen-julio.csv' } },
-  { id: '3', date: '2026-07-03', merchant: 'AMAZON', category: 'Compras', currency: 'USD', amount: -17.61, summary_id: 's1', card_summaries: { file_name: 'resumen-julio.csv' } },
-  { id: '4', date: '2026-07-04', merchant: 'PAGO TC', category: 'Pagos', currency: 'ARS', amount: -50000, summary_id: 's1', card_summaries: { file_name: 'resumen-julio.csv' } },
-  { id: '5', date: '2026-06-15', merchant: 'OTRA', category: 'Compras', currency: 'ARS', amount: -200, summary_id: 's2', card_summaries: { file_name: 'resumen-junio.csv' } },
+  {
+    id: '1',
+    date: '2026-07-01',
+    merchant: 'MERCADO LIBRE',
+    category: 'Compras',
+    currency: 'ARS',
+    amount: -1500,
+    summary_id: 's1',
+    card_summaries: { file_name: 'resumen-julio.csv' },
+  },
+  {
+    id: '2',
+    date: '2026-07-02',
+    merchant: 'NETFLIX',
+    category: 'Suscripciones',
+    currency: 'ARS',
+    amount: -3500,
+    summary_id: 's1',
+    card_summaries: { file_name: 'resumen-julio.csv' },
+  },
+  {
+    id: '3',
+    date: '2026-07-03',
+    merchant: 'AMAZON',
+    category: 'Compras',
+    currency: 'USD',
+    amount: -17.61,
+    summary_id: 's1',
+    card_summaries: { file_name: 'resumen-julio.csv' },
+  },
+  {
+    id: '4',
+    date: '2026-07-04',
+    merchant: 'PAGO TC',
+    category: 'Pagos',
+    currency: 'ARS',
+    amount: -50000,
+    summary_id: 's1',
+    card_summaries: { file_name: 'resumen-julio.csv' },
+  },
+  {
+    id: '5',
+    date: '2026-06-15',
+    merchant: 'OTRA',
+    category: 'Compras',
+    currency: 'ARS',
+    amount: -200,
+    summary_id: 's2',
+    card_summaries: { file_name: 'resumen-junio.csv' },
+  },
 ]
 
 function renderDashboard(props = {}) {
@@ -81,7 +126,9 @@ describe('Dashboard', () => {
         }
       }
       return {
-        select: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: [], error: null }) }),
+        select: vi
+          .fn()
+          .mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: [], error: null }) }),
       }
     })
     renderDashboard()
@@ -180,7 +227,9 @@ describe('Dashboard', () => {
     renderDashboard()
     await screen.findByText('Débitos')
     const [_, ...rows] = await rowsOfTable()
-    const mercadoRow = rows.find((r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE')
+    const mercadoRow = rows.find(
+      (r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE',
+    )
 
     await userEvent.click(within(mercadoRow).getByRole('button', { name: /Compras/i }))
     await userEvent.click(await screen.findByRole('button', { name: /Transferencias/i }))
@@ -219,7 +268,9 @@ describe('Dashboard', () => {
     await screen.findByText('Débitos')
 
     const [_, ...rows] = await rowsOfTable()
-    const mercadoRow = rows.find((r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE')
+    const mercadoRow = rows.find(
+      (r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE',
+    )
     await userEvent.click(within(mercadoRow).getByRole('button', { name: /Compras/i }))
 
     const rememberBox = await screen.findByRole('checkbox')
@@ -242,10 +293,15 @@ describe('Dashboard', () => {
     await screen.findByText('Débitos')
 
     const [_, ...rows] = await rowsOfTable()
-    const mercadoRow = rows.find((r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE')
+    const mercadoRow = rows.find(
+      (r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE',
+    )
     await userEvent.click(within(mercadoRow).getByRole('button', { name: /Compras/i }))
     await userEvent.click(await screen.findByRole('button', { name: /\+ Nueva categoría…/i }))
-    await userEvent.type(await screen.findByPlaceholderText('Nombre de la categoría…'), 'Hogar{Enter}')
+    await userEvent.type(
+      await screen.findByPlaceholderText('Nombre de la categoría…'),
+      'Hogar{Enter}',
+    )
 
     expect(ccUpsert).toHaveBeenCalledWith(
       { user_id: 'user-1', name: 'Hogar' },
@@ -260,7 +316,9 @@ describe('Dashboard', () => {
     await screen.findByText('Débitos')
 
     const [_, ...rows] = await rowsOfTable()
-    const mercadoRow = rows.find((r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE')
+    const mercadoRow = rows.find(
+      (r) => within(r).getAllByRole('cell')[1].textContent === 'MERCADO LIBRE',
+    )
     await userEvent.click(within(mercadoRow).getByRole('button', { name: /Compras/i }))
 
     const search = await screen.findByPlaceholderText('Buscar categoría…')
@@ -281,7 +339,12 @@ describe('Dashboard', () => {
         currency: 'ARS',
         amount: -1500,
         summary_id: 's1',
-        card_summaries: { file_name: 'visa-julio.pdf', summary_type: 'VISA', period_month: 7, period_year: 2026 },
+        card_summaries: {
+          file_name: 'visa-julio.pdf',
+          summary_type: 'VISA',
+          period_month: 7,
+          period_year: 2026,
+        },
       },
     ])
     renderDashboard({ session: { user: { id: 'user-1' } } })

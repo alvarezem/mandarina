@@ -1,7 +1,7 @@
 // Cotizaciones en vivo para el Plan de inversión.
 // BYMA Open Data (open.bymadata.com.ar) para activos + DolarAPI para dólar MEP/CCL.
 
-import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { createClient } from '@supabase/supabase-js'
 import { bymaQuote, bymaHistory, bymaLastClose } from './byma.ts'
 import { mapWithConcurrency } from './pool.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'

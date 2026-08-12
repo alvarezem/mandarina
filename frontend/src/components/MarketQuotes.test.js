@@ -16,8 +16,26 @@ vi.mock('../lib/supabaseClient', () => ({
 }))
 
 const ITEMS = [
-  { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 9, quantity: 8, sort_order: 0 },
-  { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, sort_order: 1 },
+  {
+    id: '1',
+    symbol: 'VIST',
+    name: 'VIST',
+    asset_type: 'accion',
+    currency: 'ARS',
+    target_weight: 9,
+    quantity: 8,
+    sort_order: 0,
+  },
+  {
+    id: '2',
+    symbol: 'QQQ',
+    name: 'QQQ',
+    asset_type: 'cedear',
+    currency: 'ARS',
+    target_weight: 14,
+    quantity: 9,
+    sort_order: 1,
+  },
 ]
 
 function mockPlan(items = ITEMS, quotes = {}, rates = {}) {
@@ -70,13 +88,10 @@ describe('MarketQuotes', () => {
   })
 
   it('resume la cartera con total, cambio diario y tabla de cotizaciones', async () => {
-    mockPlan(
-      ITEMS,
-      {
-        VIST: { price: 34920, changePct: 1.2, source: 'byma' },
-        QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
-      },
-    )
+    mockPlan(ITEMS, {
+      VIST: { price: 34920, changePct: 1.2, source: 'byma' },
+      QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+    })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
 
     expect(await screen.findByText('Patrimonio total')).toBeInTheDocument()
@@ -93,13 +108,10 @@ describe('MarketQuotes', () => {
   })
 
   it('muestra el dato compacto de MEP/CCL y no el selector de dólar', async () => {
-    mockPlan(
-      ITEMS,
-      {
-        VIST: { price: 34920, changePct: 1.2, source: 'byma' },
-        QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
-      },
-    )
+    mockPlan(ITEMS, {
+      VIST: { price: 34920, changePct: 1.2, source: 'byma' },
+      QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+    })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
     expect(screen.getByText(/MEP \$\s*1\.200,00 · CCL \$\s*1\.213,13/)).toBeInTheDocument()
@@ -124,16 +136,31 @@ describe('MarketQuotes', () => {
 
   it('ordena por % Meta desc por default y luego por precio desc', async () => {
     const items = [
-      { id: '1', symbol: 'VIST', name: 'VIST', asset_type: 'accion', currency: 'ARS', target_weight: 20, quantity: 8, sort_order: 0 },
-      { id: '2', symbol: 'QQQ', name: 'QQQ', asset_type: 'cedear', currency: 'ARS', target_weight: 14, quantity: 9, sort_order: 1 },
-    ]
-    mockPlan(
-      items,
       {
-        VIST: { price: 34920, changePct: 1.2, source: 'byma' },
-        QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+        id: '1',
+        symbol: 'VIST',
+        name: 'VIST',
+        asset_type: 'accion',
+        currency: 'ARS',
+        target_weight: 20,
+        quantity: 8,
+        sort_order: 0,
       },
-    )
+      {
+        id: '2',
+        symbol: 'QQQ',
+        name: 'QQQ',
+        asset_type: 'cedear',
+        currency: 'ARS',
+        target_weight: 14,
+        quantity: 9,
+        sort_order: 1,
+      },
+    ]
+    mockPlan(items, {
+      VIST: { price: 34920, changePct: 1.2, source: 'byma' },
+      QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+    })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
 
@@ -147,7 +174,16 @@ describe('MarketQuotes', () => {
 
   it('muestra la sesión del día en el gráfico inline (apertura, máx, mín, cierre previo)', async () => {
     mockPlan(ITEMS, {
-      VIST: { price: 34920, changePct: 1.2, open: 34720, high: 35000, low: 33900, prevClose: 33680, tradeHour: '16:59', source: 'byma' },
+      VIST: {
+        price: 34920,
+        changePct: 1.2,
+        open: 34720,
+        high: 35000,
+        low: 33900,
+        prevClose: 33680,
+        tradeHour: '16:59',
+        source: 'byma',
+      },
       QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
     })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
@@ -169,7 +205,10 @@ describe('MarketQuotes', () => {
   })
 
   it('abre el gráfico inline al tocar el símbolo y carga el histórico', async () => {
-    mockPlan(ITEMS, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' } })
+    mockPlan(ITEMS, {
+      VIST: { price: 34920, changePct: 1.2, source: 'byma' },
+      QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+    })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
 
@@ -184,7 +223,10 @@ describe('MarketQuotes', () => {
   })
 
   it('cambia el rango del gráfico inline', async () => {
-    mockPlan(ITEMS, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' } })
+    mockPlan(ITEMS, {
+      VIST: { price: 34920, changePct: 1.2, source: 'byma' },
+      QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+    })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
 
@@ -200,7 +242,10 @@ describe('MarketQuotes', () => {
   })
 
   it('abre el gráfico en otra ventana (modal) y lo cierra con X', async () => {
-    mockPlan(ITEMS, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' } })
+    mockPlan(ITEMS, {
+      VIST: { price: 34920, changePct: 1.2, source: 'byma' },
+      QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+    })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
 
@@ -219,8 +264,24 @@ describe('MarketQuotes', () => {
   })
 
   it('muestra aviso de sin datos cuando el histórico viene vacío', async () => {
-    const items = [...ITEMS, { id: '3', symbol: 'KO', name: 'KO', asset_type: 'accion', currency: 'ARS', target_weight: 12, quantity: 17, sort_order: 2 }]
-    mockPlan(items, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' }, KO: { price: 27320, changePct: 0.8, source: 'byma' } })
+    const items = [
+      ...ITEMS,
+      {
+        id: '3',
+        symbol: 'KO',
+        name: 'KO',
+        asset_type: 'accion',
+        currency: 'ARS',
+        target_weight: 12,
+        quantity: 17,
+        sort_order: 2,
+      },
+    ]
+    mockPlan(items, {
+      VIST: { price: 34920, changePct: 1.2, source: 'byma' },
+      QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+      KO: { price: 27320, changePct: 0.8, source: 'byma' },
+    })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
 
@@ -236,7 +297,10 @@ describe('MarketQuotes', () => {
   })
 
   it('omite la nota de cobertura cuando todos los activos tienen precio', async () => {
-    mockPlan(ITEMS, { VIST: { price: 34920, changePct: 1.2, source: 'byma' }, QQQ: { price: 56400, changePct: -0.5, source: 'byma' } })
+    mockPlan(ITEMS, {
+      VIST: { price: 34920, changePct: 1.2, source: 'byma' },
+      QQQ: { price: 56400, changePct: -0.5, source: 'byma' },
+    })
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     await screen.findByText('Patrimonio total')
     expect(screen.queryByText(/activos con precio/)).not.toBeInTheDocument()

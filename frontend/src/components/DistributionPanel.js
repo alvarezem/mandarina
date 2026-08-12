@@ -9,7 +9,15 @@ const STRATEGY_OPTIONS = [
   { key: 'caro', label: 'Más caro' },
 ]
 
-export default function DistributionPanel({ budget, onBudget, strategy, onStrategy, dist, display, onBuy }) {
+export default function DistributionPanel({
+  budget,
+  onBudget,
+  strategy,
+  onStrategy,
+  dist,
+  display,
+  onBuy,
+}) {
   return (
     <section className="mt-4 rounded-2xl border border-slate-200 bg-white/70 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
       <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -55,11 +63,15 @@ export default function DistributionPanel({ budget, onBudget, strategy, onStrate
                   className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/60"
                 >
                   <div className="min-w-0">
-                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{step.symbol}</span>
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      {step.symbol}
+                    </span>
                     <span className="ml-2 text-xs text-slate-400">≈{step.qty} u</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{fmt(step.amount, display)}</span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {fmt(step.amount, display)}
+                    </span>
                     <button
                       type="button"
                       onClick={() => onBuy(step)}
@@ -84,7 +96,8 @@ export default function DistributionPanel({ budget, onBudget, strategy, onStrate
         )
       ) : (
         <p className="text-sm text-slate-400 dark:text-slate-500">
-          Ingresá cuánto tenés disponible y te ordenamos qué comprar primero según tu prioridad (se recalcula en vivo al comprar).
+          Ingresá cuánto tenés disponible y te ordenamos qué comprar primero según tu prioridad (se
+          recalcula en vivo al comprar).
         </p>
       )}
     </section>

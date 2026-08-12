@@ -36,7 +36,7 @@ function mockData(table, data) {
 function mockApp(txs, summaries = []) {
   const tx = mockData('transactions', txs)
   const summariesData = mockData('card_summaries', summaries)
-  const meta = (table) => {
+  const meta = (_table) => {
     const order = vi.fn().mockResolvedValue({ data: [], error: null })
     const eq = vi.fn().mockReturnValue({ order })
     const select = vi.fn().mockReturnValue({ eq, order })
@@ -98,7 +98,12 @@ describe('App', () => {
     render(<App />)
     await screen.findByText(EMPTY_STATE)
 
-    signIn({ id: 'u1', email: 'a@b.com', created_at: '2026-01-01T00:00:00.000Z', last_sign_in_at: '2026-01-01T00:00:00.000Z' })
+    signIn({
+      id: 'u1',
+      email: 'a@b.com',
+      created_at: '2026-01-01T00:00:00.000Z',
+      last_sign_in_at: '2026-01-01T00:00:00.000Z',
+    })
 
     expect(await screen.findByText('¡Bienvenido/a a Mandarina!')).toBeInTheDocument()
     expect(screen.getByTestId('toast-icon-wave')).toBeInTheDocument()
@@ -108,11 +113,18 @@ describe('App', () => {
     render(<App />)
     await screen.findByText(EMPTY_STATE)
 
-    signIn({ id: 'u1', email: 'a@b.com', created_at: '2026-01-01T00:00:00.000Z', last_sign_in_at: '2026-01-05T00:00:00.000Z' })
+    signIn({
+      id: 'u1',
+      email: 'a@b.com',
+      created_at: '2026-01-01T00:00:00.000Z',
+      last_sign_in_at: '2026-01-05T00:00:00.000Z',
+    })
 
     const toast = await screen.findByText('¡Volviste! 😂')
     expect(toast).toBeInTheDocument()
-    expect(toast.closest('[role="status"]').querySelector('[data-testid="toast-icon-wave"]')).not.toBeInTheDocument()
+    expect(
+      toast.closest('[role="status"]').querySelector('[data-testid="toast-icon-wave"]'),
+    ).not.toBeInTheDocument()
   })
 
   it('muestra las top 3 posiciones con su variación al iniciar sesión', async () => {
@@ -147,7 +159,12 @@ describe('App', () => {
     render(<App />)
     await screen.findByText(EMPTY_STATE)
 
-    signIn({ id: 'u1', email: 'a@b.com', created_at: '2026-01-01T00:00:00.000Z', last_sign_in_at: '2026-01-01T00:00:00.000Z' })
+    signIn({
+      id: 'u1',
+      email: 'a@b.com',
+      created_at: '2026-01-01T00:00:00.000Z',
+      last_sign_in_at: '2026-01-01T00:00:00.000Z',
+    })
 
     expect(
       await screen.findByText('Tus posiciones: VIST ▲1.20% · QQQ ▼0.50% · KO —'),
@@ -172,7 +189,9 @@ describe('App', () => {
       expect(screen.getByRole('button', { name: 'Colapsar barra' })).toBeInTheDocument()
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
-      expect(within(rail).getByRole('button', { name: 'Costos' }).className).toContain('bg-brand-50')
+      expect(within(rail).getByRole('button', { name: 'Costos' }).className).toContain(
+        'bg-brand-50',
+      )
       expect(within(rail).getByRole('button', { name: /Inversiones/ })).toBeInTheDocument()
       expect(within(rail).getByRole('button', { name: /Resúmenes/ })).toBeInTheDocument()
     })
@@ -269,7 +288,16 @@ describe('App', () => {
 
   it('mantiene la tabla y las cards en contenedores con scroll/grilla responsive (sin desborde)', async () => {
     mockApp([
-      { id: '1', date: '2026-07-01', merchant: 'MERCADO LIBRE', category: 'Compras', currency: 'ARS', amount: -1500, summary_id: 's1', card_summaries: { file_name: 'resumen.csv' } },
+      {
+        id: '1',
+        date: '2026-07-01',
+        merchant: 'MERCADO LIBRE',
+        category: 'Compras',
+        currency: 'ARS',
+        amount: -1500,
+        summary_id: 's1',
+        card_summaries: { file_name: 'resumen.csv' },
+      },
     ])
     const { container } = render(<App />)
     await screen.findByRole('table')
@@ -351,14 +379,24 @@ describe('App', () => {
       await screen.findByText(EMPTY_STATE)
 
       const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
-      expect(within(bottom).getByRole('button', { name: 'Costos' }).getAttribute('data-tour')).toBe('costos')
-      expect(within(bottom).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour')).toBe('inversiones')
-      expect(within(bottom).getByRole('button', { name: 'Resúmenes' }).getAttribute('data-tour')).toBe('resumenes')
+      expect(within(bottom).getByRole('button', { name: 'Costos' }).getAttribute('data-tour')).toBe(
+        'costos',
+      )
+      expect(
+        within(bottom).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour'),
+      ).toBe('inversiones')
+      expect(
+        within(bottom).getByRole('button', { name: 'Resúmenes' }).getAttribute('data-tour'),
+      ).toBe('resumenes')
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
-      expect(within(rail).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour')).toBe('inversiones')
+      expect(
+        within(rail).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour'),
+      ).toBe('inversiones')
 
-      expect(screen.getByRole('button', { name: 'Ver guía' }).getAttribute('data-tour')).toBe('help')
+      expect(screen.getByRole('button', { name: 'Ver guía' }).getAttribute('data-tour')).toBe(
+        'help',
+      )
     })
   })
 

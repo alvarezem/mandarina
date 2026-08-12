@@ -54,7 +54,9 @@ describe('Auth', () => {
   })
 
   it('muestra el error cuando el login falla', async () => {
-    supabase.auth.signInWithPassword.mockResolvedValue({ error: { message: 'Credenciales inválidas' } })
+    supabase.auth.signInWithPassword.mockResolvedValue({
+      error: { message: 'Credenciales inválidas' },
+    })
     render(<Auth />)
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com')
     await userEvent.type(screen.getByLabelText('Contraseña'), 'wrong')
@@ -87,7 +89,9 @@ describe('Auth', () => {
     await userEvent.type(screen.getByLabelText('Contraseña'), 'short')
     await userEvent.type(screen.getByLabelText('Confirmar contraseña'), 'other123')
     await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
-    expect(await screen.findByText('La contraseña debe tener al menos 8 caracteres')).toBeInTheDocument()
+    expect(
+      await screen.findByText('La contraseña debe tener al menos 8 caracteres'),
+    ).toBeInTheDocument()
     expect(screen.getByText('Las contraseñas no coinciden')).toBeInTheDocument()
     expect(supabase.auth.signUp).not.toHaveBeenCalled()
   })
@@ -114,7 +118,9 @@ describe('Auth', () => {
     await userEvent.type(screen.getByLabelText('Contraseña'), 'onlyletters')
     await userEvent.type(screen.getByLabelText('Confirmar contraseña'), 'onlyletters')
     await userEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
-    expect(await screen.findByText('La contraseña debe incluir letras y números')).toBeInTheDocument()
+    expect(
+      await screen.findByText('La contraseña debe incluir letras y números'),
+    ).toBeInTheDocument()
     expect(supabase.auth.signUp).not.toHaveBeenCalled()
   })
 

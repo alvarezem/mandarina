@@ -138,14 +138,19 @@ export default function TransactionsTable({
             <SortableTh label="Monto" sortKey="amount" sort={sort} onSort={onSort} align="right" />
           </tr>
         </thead>
-        <tbody key={filterKey} className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
+        <tbody
+          key={filterKey}
+          className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900"
+        >
           {sorted.map((t, i) => (
             <tr
               key={t.id}
               className="animate-fade-in transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
               style={{ animationDelay: `${Math.min(i * 20, 500)}ms` }}
             >
-              <td className="px-4 py-3 text-sm text-slate-600 tabular-nums dark:text-slate-400">{t.date}</td>
+              <td className="px-4 py-3 text-sm text-slate-600 tabular-nums dark:text-slate-400">
+                {t.date}
+              </td>
               <td className="px-4 py-3 text-sm text-slate-800 dark:text-slate-200">{t.merchant}</td>
               {!summaryId && (
                 <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
@@ -156,18 +161,29 @@ export default function TransactionsTable({
                 </td>
               )}
               <td className="px-4 py-3">
-                <CategoryCell tx={t} options={allCategoryOptions} onChange={changeCategory} onAddCustom={addCustomCategory} />
+                <CategoryCell
+                  tx={t}
+                  options={allCategoryOptions}
+                  onChange={changeCategory}
+                  onAddCustom={addCustomCategory}
+                />
               </td>
               <td className="px-4 py-3">
                 {t.currency === 'USD' ? (
-                  <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">USD</span>
+                  <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                    USD
+                  </span>
                 ) : (
-                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">ARS</span>
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    ARS
+                  </span>
                 )}
               </td>
               <td
                 className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${
-                  t.amount < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'
+                  t.amount < 0
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-emerald-600 dark:text-emerald-400'
                 }`}
               >
                 {fmt(t.amount, t.currency)}

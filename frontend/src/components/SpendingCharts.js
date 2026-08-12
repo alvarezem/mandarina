@@ -84,7 +84,10 @@ function lineOptions(dark, onPoint) {
       },
     },
     scales: {
-      x: { grid: { display: false }, ticks: { color: dark ? '#64748b' : '#94a3b8', font: { size: 11 } } },
+      x: {
+        grid: { display: false },
+        ticks: { color: dark ? '#64748b' : '#94a3b8', font: { size: 11 } },
+      },
       y: { suggestedMin: 0, grid: { color: dark ? '#1e293b' : '#f1f5f9' }, ticks: axisTicks(dark) },
     },
   }
@@ -102,7 +105,12 @@ function doughnutOptions(dark, onSlice) {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: { color: dark ? '#cbd5e1' : '#475569', boxWidth: 10, boxHeight: 10, font: { size: 11 } },
+        labels: {
+          color: dark ? '#cbd5e1' : '#475569',
+          boxWidth: 10,
+          boxHeight: 10,
+          font: { size: 11 },
+        },
       },
       tooltip: {
         callbacks: { label: (ctx) => ` ${ctx.label}: ${fmt(ctx.parsed)}` },
@@ -128,7 +136,10 @@ function barOptions(dark, onBar) {
     },
     scales: {
       x: { grid: { color: dark ? '#1e293b' : '#f1f5f9' }, ticks: axisTicks(dark) },
-      y: { grid: { display: false }, ticks: { color: dark ? '#cbd5e1' : '#475569', font: { size: 11 } } },
+      y: {
+        grid: { display: false },
+        ticks: { color: dark ? '#cbd5e1' : '#475569', font: { size: 11 } },
+      },
     },
   }
 }
@@ -140,7 +151,9 @@ export default function SpendingCharts({ analysis, dark, onPoint, onSlice, onBar
         className="animate-fade-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
         style={{ animationDelay: '160ms' }}
       >
-        <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gastos acumulados</h3>
+        <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Gastos acumulados
+        </h3>
         <div className="h-64">
           <Line data={lineData(analysis.expenseTrend)} options={lineOptions(dark, onPoint)} />
         </div>
@@ -152,9 +165,14 @@ export default function SpendingCharts({ analysis, dark, onPoint, onSlice, onBar
         className="animate-fade-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
         style={{ animationDelay: '460ms' }}
       >
-        <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Gasto por categoría</h3>
+        <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Gasto por categoría
+        </h3>
         <div className="h-64">
-          <Doughnut data={doughnutData(analysis.byCategory)} options={doughnutOptions(dark, onSlice)} />
+          <Doughnut
+            data={doughnutData(analysis.byCategory)}
+            options={doughnutOptions(dark, onSlice)}
+          />
         </div>
         <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
           Clic en un segmento filtra el detalle por categoría.

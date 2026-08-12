@@ -1,6 +1,7 @@
 const BY_CODE = {
   invalid_credentials: 'Email o contraseña incorrectos',
-  weak_password: 'La contraseña no cumple los requisitos: al menos 8 caracteres con letras y números',
+  weak_password:
+    'La contraseña no cumple los requisitos: al menos 8 caracteres con letras y números',
   email_not_confirmed: 'Tu email aún no está confirmado. Revisá tu bandeja de entrada.',
   user_already_exists: 'Ya existe una cuenta con este email',
   email_send_rate_limit: 'Esperá unos segundos y probá de nuevo.',

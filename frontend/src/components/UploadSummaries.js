@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { useAsync } from '../hooks/useAsync'
 import { useToast } from './Toast'
@@ -18,7 +18,13 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
   const [metaDraft, setMetaDraft] = useState({ type: '', month: 1, year: NOW_YEAR })
   const pushToast = useToast()
 
-  const { data, setData: setFiles, loading, error: loadError, reload: reloadSummaries } = useAsync(async () => {
+  const {
+    data,
+    setData: setFiles,
+    loading,
+    error: loadError,
+    reload: reloadSummaries,
+  } = useAsync(async () => {
     if (!session?.user?.id) return []
     try {
       const { data, error } = await supabase
@@ -170,7 +176,10 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
     if (!original || name === original.file_name) return
 
     try {
-      const { error } = await supabase.from('card_summaries').update({ file_name: name }).eq('id', id)
+      const { error } = await supabase
+        .from('card_summaries')
+        .update({ file_name: name })
+        .eq('id', id)
       if (error) {
         console.error('UploadSummaries: error al renombrar resumen', error)
         pushToast({ type: 'error', message: 'No se pudo renombrar el resumen' })
@@ -292,13 +301,18 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
           <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Resúmenes
           </h2>
-          <span className="text-xs text-slate-400 dark:text-slate-500">{files.length > 0 ? countLabel : ''}</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">
+            {files.length > 0 ? countLabel : ''}
+          </span>
         </div>
 
         {loading ? (
           <div className="flex flex-col gap-1.5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="animate-pulse rounded-lg bg-slate-100 p-2.5 dark:bg-slate-800">
+              <div
+                key={i}
+                className="animate-pulse rounded-lg bg-slate-100 p-2.5 dark:bg-slate-800"
+              >
                 <div className="h-3 w-2/3 rounded bg-slate-200 dark:bg-slate-700" />
                 <div className="mt-1.5 h-2 w-1/3 rounded bg-slate-200 dark:bg-slate-700" />
               </div>

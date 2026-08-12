@@ -1,14 +1,4 @@
-import {
-  valueOf,
-  actualPct,
-  gapPct,
-  buyAmount,
-  buyQty,
-  isOver,
-  buildPlan,
-  distribute,
-  portfolioChangePct,
-} from './plan'
+import { valueOf, buyAmount, buyQty, buildPlan, distribute, portfolioChangePct } from './plan'
 
 const item = (overrides) => ({
   symbol: 'VIST',

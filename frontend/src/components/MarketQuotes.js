@@ -25,7 +25,9 @@ export default function MarketQuotes({
     onSortProp ??
     ((key) =>
       setLocalSort((s) =>
-        s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' },
+        s.key === key
+          ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' }
+          : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' },
       ))
   const [chart, setChart] = useState(null)
   const [modal, setModal] = useState(null)
@@ -50,14 +52,22 @@ export default function MarketQuotes({
     else setChart(updater)
   }
 
+  // Ajuste en render (patrón de React): resetea chartData al cerrar el gráfico
+  // y marca loading al abrirlo, sin setState síncrono en el effect.
+  const [prevChartKey, setPrevChartKey] = useState(null)
+  if (activeChartKey !== prevChartKey) {
+    setPrevChartKey(activeChartKey)
+    setChartData(
+      activeChartKey
+        ? { loading: true, points: [], error: null }
+        : { loading: false, points: [], error: null },
+    )
+  }
+
   useEffect(() => {
-    if (!activeChartKey) {
-      setChartData({ loading: false, points: [], error: null })
-      return
-    }
+    if (!activeChartKey) return
     const [symbol, range] = activeChartKey.split(':')
     let cancelled = false
-    setChartData({ loading: true, points: [], error: null })
     supabase.functions
       .invoke('quotes', {
         body: { history: { symbol, range } },
@@ -83,7 +93,11 @@ export default function MarketQuotes({
     return () => window.removeEventListener('keydown', onKey)
   }, [modal])
 
-  const { data: planData, loading, error } = useAsync(async () => {
+  const {
+    data: planData,
+    loading,
+    error,
+  } = useAsync(async () => {
     try {
       const { data, error } = await supabase
         .from('portfolio_plan')
@@ -156,7 +170,8 @@ export default function MarketQuotes({
     if (!sort.key) return withChange
     const { key, dir } = SORT_KEYS.has(sort.key) ? sort : DEFAULT_PLAN_SORT
     const arr = [...withChange]
-    const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
+    const cmpStr = (x, y) =>
+      String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
     arr.sort((a, b) => {
       let cmp = 0
       if (key === 'symbol') {
@@ -180,7 +195,9 @@ export default function MarketQuotes({
     <div className="animate-fade-in-up">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Cotizaciones en vivo</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            Cotizaciones en vivo
+          </h1>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             Resumen de tus inversiones · precios BYMA (~20 min de demora)
           </p>
@@ -194,7 +211,13 @@ export default function MarketQuotes({
             aria-label="Actualizar precios"
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.8}
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -289,21 +312,21 @@ export default function MarketQuotes({
           </section>
 
           <QuotesTable
-              items={sortedItems}
-              sort={sort}
-              onSort={onSort}
-              quotes={quotes}
-              display={display}
-              chart={chart}
-              onOpenInline={openInline}
-              onOpenModal={openModal}
-              onRangeChange={setChartRange}
-              chartPoints={chartPoints}
-              chartData={chartData}
-              chartQuote={chartQuote}
-            />
-          </>
-        )}
+            items={sortedItems}
+            sort={sort}
+            onSort={onSort}
+            quotes={quotes}
+            display={display}
+            chart={chart}
+            onOpenInline={openInline}
+            onOpenModal={openModal}
+            onRangeChange={setChartRange}
+            chartPoints={chartPoints}
+            chartData={chartData}
+            chartQuote={chartQuote}
+          />
+        </>
+      )}
 
       {modal && (
         <QuoteModal

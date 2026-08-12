@@ -20,16 +20,28 @@ export default function InvestmentsView({ session }) {
   const onSort = (key) =>
     setSort((s) => {
       const next =
-        s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' }
+        s.key === key
+          ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' }
+          : { key, dir: SORT_DEFAULT_DIR[key] ?? 'desc' }
       savePlanSort(session?.user?.id, next)
       return next
     })
 
-  const shared = { display, setDisplay, rateMode, setRateMode, sort, onSort, onMarketClosed: setMarketClosed }
+  const shared = {
+    display,
+    setDisplay,
+    rateMode,
+    setRateMode,
+    sort,
+    onSort,
+    onMarketClosed: setMarketClosed,
+  }
 
   return (
     <div className="mx-auto max-w-4xl animate-fade-in-up">
-      {marketClosed && !noticeDismissed && <MarketClosedNotice onClose={() => setNoticeDismissed(true)} />}
+      {marketClosed && !noticeDismissed && (
+        <MarketClosedNotice onClose={() => setNoticeDismissed(true)} />
+      )}
 
       <div
         role="tablist"

@@ -36,7 +36,7 @@ export async function bymaQuote(symbol: string) {
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   })
   if (!res.ok) return null
-  let data: any
+  let data: { data?: Array<Record<string, unknown>> } | null = null
   try {
     data = await res.json()
   } catch {
@@ -74,7 +74,15 @@ export async function bymaHistory(symbol: string, range: string) {
     from: String(from),
     to: String(to),
   })
-  let data: any
+  let data: {
+    s?: unknown
+    t?: number[]
+    o?: Array<number | null>
+    h?: Array<number | null>
+    l?: Array<number | null>
+    c?: Array<number | null>
+    v?: Array<number | null>
+  } | null = null
   try {
     const res = await fetch(`${BYMA_HISTORY_URL}?${params.toString()}`, {
       headers: { 'User-Agent': UA, Accept: 'application/json', Origin: 'https://open.bymadata.com.ar' },

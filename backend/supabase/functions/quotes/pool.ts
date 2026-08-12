@@ -4,7 +4,7 @@
 export async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
-  fn: (item: T, index: number) => Promise<R>,
+  fn: (item: T, index: number) => R | Promise<R>,
 ): Promise<R[]> {
   const results = new Array<R>(items.length)
   let i = 0

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { buildAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
 import { fileOf } from '../lib/format'
@@ -32,7 +32,14 @@ const CATEGORY_OPTIONS = [
   'Transporte',
 ]
 
-const SORT_DEFAULTS = { date: 'desc', amount: 'asc', merchant: 'asc', category: 'asc', currency: 'asc', summary: 'asc' }
+const SORT_DEFAULTS = {
+  date: 'desc',
+  amount: 'asc',
+  merchant: 'asc',
+  category: 'asc',
+  currency: 'asc',
+  summary: 'asc',
+}
 function parseYmd(s) {
   const [y, m, d] = s.split('-').map(Number)
   return new Date(y, m - 1, d)
@@ -71,7 +78,14 @@ function EmptyState({ title, hint }) {
   )
 }
 
-export default function Dashboard({ session, summaryId, dark, refreshKey, resetKey, onSummarySelect }) {
+export default function Dashboard({
+  session,
+  summaryId,
+  dark,
+  refreshKey,
+  resetKey,
+  onSummarySelect,
+}) {
   const pushToast = useToast()
   const [overrides, setOverrides] = useState([])
   const [customCategories, setCustomCategories] = useState([])
@@ -83,12 +97,16 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: 'date', dir: 'desc' })
   const tableRef = useRef(null)
-  const autoApplied = useRef(false)
   const userId = session?.user?.id
 
   const filterKey = `${period}|${customFrom}|${customTo}|${currency}|${summaryId ?? 'all'}|${categories.join(',')}`
 
-  const { data: txData, setData: setAllTx, loading, error } = useAsync(async () => {
+  const {
+    data: txData,
+    setData: setAllTx,
+    loading,
+    error,
+  } = useAsync(async () => {
     if (!userId) return []
     try {
       const { data, error } = await supabase
@@ -105,7 +123,7 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
       throw new Error('No se pudieron cargar los gastos')
     }
   }, [userId, refreshKey])
-  const allTx = txData ?? []
+  const allTx = useMemo(() => txData ?? [], [txData])
 
   const { data: refs } = useAsync(async () => {
     if (!userId) return { overrides: [], customCategories: [] }
@@ -119,32 +137,44 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
     }
   }, [userId, refreshKey])
 
-  useEffect(() => {
-    if (!refs) return
-    setOverrides(refs.overrides)
-    setCustomCategories(refs.customCategories)
-  }, [refs])
-
-  useEffect(() => {
-    if (autoApplied.current || !Array.isArray(txData)) return
-    autoApplied.current = true
-    const dates = (txData ?? []).map((t) => t.date).filter(Boolean).sort()
-    if (dates.length) {
-      const first = parseYmd(dates[0])
-      const cutoff = new Date()
-      cutoff.setFullYear(cutoff.getFullYear() - 1)
-      if (first < cutoff) setPeriod('last12m')
+  // Ajuste de estado durante el render (patrón de React para "adjusting state
+  // when a prop changes"): evita setState síncrono en effects (cascading renders).
+  const [prevRefs, setPrevRefs] = useState(null)
+  if (refs !== prevRefs) {
+    setPrevRefs(refs)
+    if (refs) {
+      setOverrides(refs.overrides)
+      setCustomCategories(refs.customCategories)
     }
-  }, [txData])
+  }
 
-  useEffect(() => {
+  const [prevResetKey, setPrevResetKey] = useState(resetKey)
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey)
     setPeriod('todo')
     setCustomFrom('')
     setCustomTo('')
     setCategories([])
     setCurrency('all')
     setQuery('')
-  }, [resetKey])
+  }
+
+  // Default de período "últimos 12 meses" la primera vez que llega data con
+  // registros viejos. Aplicado en render (transición sin-data -> con-data).
+  const [hasData, setHasData] = useState(false)
+  if (!hasData && Array.isArray(txData) && txData.length > 0) {
+    setHasData(true)
+    const dates = txData
+      .map((t) => t.date)
+      .filter(Boolean)
+      .sort()
+    if (dates.length) {
+      const first = parseYmd(dates[0])
+      const cutoff = new Date()
+      cutoff.setFullYear(cutoff.getFullYear() - 1)
+      if (first < cutoff) setPeriod('last12m')
+    }
+  }
 
   const base = useMemo(() => {
     let txs = allTx
@@ -171,11 +201,9 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
 
   const allCategoryOptions = useMemo(
     () =>
-      [...new Set([
-        ...CATEGORY_OPTIONS,
-        ...customCategories,
-        ...overrides.map((o) => o.category),
-      ])].sort(),
+      [
+        ...new Set([...CATEGORY_OPTIONS, ...customCategories, ...overrides.map((o) => o.category)]),
+      ].sort(),
     [customCategories, overrides],
   )
 
@@ -223,14 +251,19 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
   const analysis = useMemo(() => buildAnalysis(filtered), [filtered])
 
   const onSort = (key) =>
-    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: SORT_DEFAULTS[key] }))
+    setSort((s) =>
+      s.key === key
+        ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' }
+        : { key, dir: SORT_DEFAULTS[key] },
+    )
 
   const sorted = useMemo(() => {
     const arr = [...filtered]
     const { key, dir } = sort
     arr.sort((a, b) => {
       let cmp = 0
-      const cmpStr = (x, y) => String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
+      const cmpStr = (x, y) =>
+        String(x ?? '').localeCompare(String(y ?? ''), undefined, { sensitivity: 'base' })
       if (key === 'amount') cmp = a.amount - b.amount
       else if (key === 'date') cmp = cmpStr(a.date, b.date)
       else if (key === 'category') cmp = cmpStr(a.category, b.category)
@@ -248,14 +281,12 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
   const focusCategory = (cat) =>
     setCategories((prev) => (prev.length === 1 && prev[0] === cat ? [] : [cat]))
 
-  const scrollToTable = () => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const scrollToTable = () =>
+    tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   const changeCategory = async (tx, category, remember = false) => {
     try {
-      const { error } = await supabase
-        .from('transactions')
-        .update({ category })
-        .eq('id', tx.id)
+      const { error } = await supabase.from('transactions').update({ category }).eq('id', tx.id)
       if (error) {
         console.error('Dashboard: error al actualizar categoría', error)
         pushToast({ type: 'error', message: 'No se pudo actualizar la categoría' })
@@ -279,7 +310,10 @@ export default function Dashboard({ session, summaryId, dark, refreshKey, resetK
             .from('transactions')
             .update({ category })
             .eq('merchant', tx.merchant)
-          if (all) setAllTx((prev) => (prev ?? []).map((t) => (t.merchant === tx.merchant ? { ...t, category } : t)))
+          if (all)
+            setAllTx((prev) =>
+              (prev ?? []).map((t) => (t.merchant === tx.merchant ? { ...t, category } : t)),
+            )
           pushToast({ type: 'success', message: `Guardado: ${tx.merchant} → ${category}` })
           return
         }

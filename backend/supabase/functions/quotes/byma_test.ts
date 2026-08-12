@@ -1,5 +1,5 @@
 import { bymaQuote, bymaLastClose } from './byma.ts'
-import { assertEquals, assert } from 'jsr:@std/assert'
+import { assertEquals, assert } from '@std/assert'
 
 const ZEROS_QUOTE = {
   data: [

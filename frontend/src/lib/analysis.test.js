@@ -13,11 +13,7 @@ const tx = (overrides) => ({
 
 describe('computeTotals', () => {
   it('separa créditos, débitos y neto', () => {
-    const t = computeTotals([
-      tx({ amount: -100 }),
-      tx({ amount: -25.5 }),
-      tx({ amount: 40 }),
-    ])
+    const t = computeTotals([tx({ amount: -100 }), tx({ amount: -25.5 }), tx({ amount: 40 })])
     expect(t).toEqual({ credits: 40, debits: -125.5, net: -85.5, txCount: 3 })
   })
 })
@@ -25,7 +21,11 @@ describe('computeTotals', () => {
 describe('aggregate', () => {
   it('agrupa por merchant', () => {
     const r = aggregate(
-      [tx({ merchant: 'A', amount: -10 }), tx({ merchant: 'A', amount: -5 }), tx({ merchant: 'B', amount: -3 })],
+      [
+        tx({ merchant: 'A', amount: -10 }),
+        tx({ merchant: 'A', amount: -5 }),
+        tx({ merchant: 'B', amount: -3 }),
+      ],
       'merchant',
     )
     expect(r).toHaveLength(2)

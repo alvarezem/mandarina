@@ -31,7 +31,12 @@ function CardSkeleton() {
 
 function cardsFromAnalysis(analysis) {
   return [
-    { label: 'Débitos', value: analysis.totals.debits, format: fmt, valueClass: 'text-red-600 dark:text-red-400' },
+    {
+      label: 'Débitos',
+      value: analysis.totals.debits,
+      format: fmt,
+      valueClass: 'text-red-600 dark:text-red-400',
+    },
     {
       label: 'Movimientos',
       value: analysis.totals.txCount,

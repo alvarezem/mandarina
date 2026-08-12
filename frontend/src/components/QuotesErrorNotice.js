@@ -5,7 +5,13 @@ export default function QuotesErrorNotice() {
       title="No se pudieron actualizar los precios. Reintentá con el botón de actualizar."
       className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400"
     >
-      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <svg
+        className="h-3.5 w-3.5"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={2}
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"

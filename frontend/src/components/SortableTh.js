@@ -1,4 +1,11 @@
-export default function SortableTh({ label, sortKey, sort, onSort, align = 'left', className = '' }) {
+export default function SortableTh({
+  label,
+  sortKey,
+  sort,
+  onSort,
+  align = 'left',
+  className = '',
+}) {
   const active = sort.key === sortKey
   return (
     <th

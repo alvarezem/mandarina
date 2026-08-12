@@ -8,9 +8,9 @@ export function useAsync(fn, deps = []) {
 
   useEffect(() => {
     let active = true
-    setLoading(true)
-    setError(null)
     ;(async () => {
+      setLoading(true)
+      setError(null)
       try {
         const result = await fn()
         if (active) setData(result)

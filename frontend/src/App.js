@@ -40,11 +40,16 @@ async function pushTopPositions(pushToast) {
         if (!q?.price) return null
         const pct = q.changePct
         const arrow =
-          pct == null ? '—' : pct >= 0 ? `▲${Math.abs(pct).toFixed(2)}%` : `▼${Math.abs(pct).toFixed(2)}%`
+          pct == null
+            ? '—'
+            : pct >= 0
+              ? `▲${Math.abs(pct).toFixed(2)}%`
+              : `▼${Math.abs(pct).toFixed(2)}%`
         return `${i.symbol} ${arrow}`
       })
       .filter(Boolean)
-    if (parts.length > 0) pushToast({ type: 'success', icon: 'trend', message: `Tus posiciones: ${parts.join(' · ')}` })
+    if (parts.length > 0)
+      pushToast({ type: 'success', icon: 'trend', message: `Tus posiciones: ${parts.join(' · ')}` })
   } catch {
     // silencioso: no hay plan, sin precios o error de red
   }
@@ -76,7 +81,9 @@ function App() {
         setLoading(false)
       })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
       if (event === 'SIGNED_IN' && session) {
         setGreeting(isFirstLogin(session.user) ? 'first' : 'return')
@@ -90,7 +97,13 @@ function App() {
 
   return (
     <ToastProvider>
-      <AppContent session={session} dark={dark} setDark={setDark} greeting={greeting} setGreeting={setGreeting} />
+      <AppContent
+        session={session}
+        dark={dark}
+        setDark={setDark}
+        greeting={greeting}
+        setGreeting={setGreeting}
+      />
     </ToastProvider>
   )
 }
@@ -112,15 +125,16 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
 
   const [tourOpen, setTourOpen] = useState(false)
 
-  useEffect(() => {
-    if (!session?.user?.id) {
-      setTourOpen(false)
-      return
+  // Ajuste en render (patrón de React): abre el tour cuando llega el id de
+  // sesión y el usuario aún no lo vio, sin setState síncrono en el effect.
+  const tourUserId = session?.user?.id ?? null
+  const [prevSessionId, setPrevSessionId] = useState(null)
+  if (tourUserId !== prevSessionId) {
+    setPrevSessionId(tourUserId)
+    if (tourUserId && localStorage.getItem(tourSeenKey(tourUserId)) !== String(TOUR_VERSION)) {
+      setTourOpen(true)
     }
-    if (localStorage.getItem(tourSeenKey(session.user.id)) === String(TOUR_VERSION)) return
-    setTourOpen(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id])
+  }
 
   const closeTour = () => {
     if (session?.user?.id) localStorage.setItem(tourSeenKey(session.user.id), String(TOUR_VERSION))
@@ -177,8 +191,12 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
   const summariesView = (
     <div className="mx-auto max-w-2xl animate-fade-in-up">
       <div className="mb-4 text-center sm:text-left">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Resúmenes</h1>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Tus números, sin cáscara</p>
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+          Resúmenes
+        </h1>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+          Tus números, sin cáscara
+        </p>
       </div>
       <UploadSummaries
         session={session}
@@ -201,8 +219,18 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
               title={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
               </svg>
             </button>
           </div>
@@ -232,7 +260,13 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
             data-tour="help"
             className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-brand-800 dark:hover:bg-brand-950/40 dark:hover:text-brand-400"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.8}
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -295,7 +329,9 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
                 aria-current={active ? 'page' : undefined}
                 data-tour={item.key}
                 className={`flex flex-col items-center justify-center gap-0.5 pb-2 active:scale-[0.98] ${
-                  active ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
+                  active
+                    ? 'text-brand-600 dark:text-brand-400'
+                    : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 {item.icon}

@@ -50,8 +50,15 @@ export default function PriceChart({
       },
     },
     scales: {
-      x: { ticks: { maxTicksLimit: compact ? 6 : 10, font: { size: 10 } }, grid: { display: false } },
-      y: { position: 'right', ticks: { maxTicksLimit: 5, font: { size: 10 } }, grid: { color: 'rgba(148,163,184,0.15)' } },
+      x: {
+        ticks: { maxTicksLimit: compact ? 6 : 10, font: { size: 10 } },
+        grid: { display: false },
+      },
+      y: {
+        position: 'right',
+        ticks: { maxTicksLimit: 5, font: { size: 10 } },
+        grid: { color: 'rgba(148,163,184,0.15)' },
+      },
     },
   }
 
@@ -77,22 +84,35 @@ export default function PriceChart({
               </span>
             )}
             {quote.tradeHour && (
-              <span className="text-[11px] text-slate-400 dark:text-slate-500">hoy {quote.tradeHour}</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                hoy {quote.tradeHour}
+              </span>
             )}
           </div>
           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
             <span>
-              Apr <b className="font-semibold text-slate-700 dark:text-slate-300">{fmt(quote.open, display)}</b>
+              Apr{' '}
+              <b className="font-semibold text-slate-700 dark:text-slate-300">
+                {fmt(quote.open, display)}
+              </b>
             </span>
             <span>
               Cierre prev{' '}
-              <b className="font-semibold text-slate-700 dark:text-slate-300">{fmt(quote.prevClose, display)}</b>
+              <b className="font-semibold text-slate-700 dark:text-slate-300">
+                {fmt(quote.prevClose, display)}
+              </b>
             </span>
             <span>
-              Máx <b className="font-semibold text-slate-700 dark:text-slate-300">{fmt(quote.high, display)}</b>
+              Máx{' '}
+              <b className="font-semibold text-slate-700 dark:text-slate-300">
+                {fmt(quote.high, display)}
+              </b>
             </span>
             <span>
-              Mín <b className="font-semibold text-slate-700 dark:text-slate-300">{fmt(quote.low, display)}</b>
+              Mín{' '}
+              <b className="font-semibold text-slate-700 dark:text-slate-300">
+                {fmt(quote.low, display)}
+              </b>
             </span>
           </div>
         </div>
@@ -126,15 +146,21 @@ export default function PriceChart({
       </div>
 
       {loading ? (
-        <div className={`flex items-center justify-center text-sm text-slate-400 ${compact ? 'h-32' : 'h-72'}`}>
+        <div
+          className={`flex items-center justify-center text-sm text-slate-400 ${compact ? 'h-32' : 'h-72'}`}
+        >
           Cargando histórico…
         </div>
       ) : error ? (
-        <div className={`flex items-center justify-center text-sm text-red-500 ${compact ? 'h-32' : 'h-72'}`}>
+        <div
+          className={`flex items-center justify-center text-sm text-red-500 ${compact ? 'h-32' : 'h-72'}`}
+        >
           No se pudo cargar el histórico.
         </div>
       ) : points.length === 0 ? (
-        <div className={`flex items-center justify-center text-sm text-slate-400 ${compact ? 'h-32' : 'h-72'}`}>
+        <div
+          className={`flex items-center justify-center text-sm text-slate-400 ${compact ? 'h-32' : 'h-72'}`}
+        >
           Sin datos históricos para {symbol}.
         </div>
       ) : (

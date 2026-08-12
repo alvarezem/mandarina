@@ -3,25 +3,25 @@ import userEvent from '@testing-library/user-event'
 import InvestmentsView from './InvestmentsView'
 
 vi.mock('./InvestmentPlan', () => ({
-  default: ({ session, display, setDisplay, rateMode, sort, onSort }) => (
-  <div data-testid="mock-plan">
-    <span>
-      Plan {display} {rateMode} {sort.key}:{sort.dir}
-    </span>
-    <button type="button" onClick={() => setDisplay('USD')}>
-      cambiar a USD
-    </button>
-    <button type="button" onClick={() => onSort('price')}>
-      ordenar por precio
-    </button>
+  default: ({ display, setDisplay, rateMode, sort, onSort }) => (
+    <div data-testid="mock-plan">
+      <span>
+        Plan {display} {rateMode} {sort.key}:{sort.dir}
+      </span>
+      <button type="button" onClick={() => setDisplay('USD')}>
+        cambiar a USD
+      </button>
+      <button type="button" onClick={() => onSort('price')}>
+        ordenar por precio
+      </button>
     </div>
   ),
 }))
 vi.mock('./MarketQuotes', () => ({
-  default: ({ session, display, rateMode, sort }) => (
-  <div data-testid="mock-quotes">
-    Cotizaciones {display} {rateMode} {sort.key}:{sort.dir}
-  </div>
+  default: ({ display, rateMode, sort }) => (
+    <div data-testid="mock-quotes">
+      Cotizaciones {display} {rateMode} {sort.key}:{sort.dir}
+    </div>
   ),
 }))
 

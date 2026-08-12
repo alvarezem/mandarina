@@ -10,7 +10,12 @@ export function usePortfolioQuotes({ items, display, rateMode, onMarketClosed = 
   const pushToast = useToast()
 
   const symbolsKey = useMemo(
-    () => items.map((i) => i.symbol).filter(Boolean).sort().join('|'),
+    () =>
+      items
+        .map((i) => i.symbol)
+        .filter(Boolean)
+        .sort()
+        .join('|'),
     [items],
   )
 
@@ -77,4 +82,5 @@ export function usePortfolioQuotes({ items, display, rateMode, onMarketClosed = 
       })
   }
 
-  return { quotes, rates, rate, resolvePrice, builtItems, refreshQuotes, quotesError }}
+  return { quotes, rates, rate, resolvePrice, builtItems, refreshQuotes, quotesError }
+}

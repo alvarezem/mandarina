@@ -5,7 +5,11 @@
 import '@testing-library/jest-dom/vitest'
 import { createElement } from 'react'
 
-const chart = (testId) => () => createElement('div', { 'data-testid': testId })
+const chart = (testId) => {
+  const Chart = () => createElement('div', { 'data-testid': testId })
+  Chart.displayName = `Chart-${testId}`
+  return Chart
+}
 
 vi.mock('react-chartjs-2', () => ({
   Line: chart('chart-line'),
@@ -38,5 +42,5 @@ if (!window.matchMedia) {
     addEventListener: () => {},
     removeEventListener: () => {},
     dispatchEvent: () => false,
-  });
+  })
 }

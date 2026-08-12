@@ -1,5 +1,5 @@
 import { detectPeriod, detectSummaryType } from './detection.ts'
-import { assertEquals } from 'jsr:@std/assert'
+import { assertEquals } from '@std/assert'
 
 Deno.test('detectSummaryType: alias de tarjetas de crédito', () => {
   assertEquals(detectSummaryType('visa-julio.pdf', true), 'VISA')

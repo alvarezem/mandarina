@@ -3,7 +3,13 @@ export const NAV_ITEMS = [
     key: 'costos',
     label: 'Costos',
     icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.8}
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -16,7 +22,13 @@ export const NAV_ITEMS = [
     key: 'inversiones',
     label: 'Inversiones',
     icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.8}
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -29,7 +41,13 @@ export const NAV_ITEMS = [
     key: 'resumenes',
     label: 'Resúmenes',
     icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.8}
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -80,9 +98,7 @@ export default function Sidebar({ view, onNavigate, expanded }) {
             }`}
           >
             {item.icon}
-            {expanded && (
-              <span className="truncate text-sm font-medium">{item.label}</span>
-            )}
+            {expanded && <span className="truncate text-sm font-medium">{item.label}</span>}
           </button>
         )
       })}

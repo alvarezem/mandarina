@@ -190,14 +190,23 @@ export default function Auth({ dark, onToggleTheme }) {
           {signupSuccess ? (
             <div className="text-center animate-fade-in-up" role="status">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50">
-                <svg className="h-7 w-7 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <svg
+                  className="h-7 w-7 text-emerald-600 dark:text-emerald-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Casi listo</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                Casi listo
+              </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Te enviamos un email a <span className="font-medium text-slate-700 dark:text-slate-200">{email}</span>{' '}
-                para confirmar tu cuenta. Revisá tu bandeja de entrada.
+                Te enviamos un email a{' '}
+                <span className="font-medium text-slate-700 dark:text-slate-200">{email}</span> para
+                confirmar tu cuenta. Revisá tu bandeja de entrada.
               </p>
               <button
                 type="button"
@@ -215,15 +224,27 @@ export default function Auth({ dark, onToggleTheme }) {
           ) : emailTaken ? (
             <div className="text-center animate-fade-in-up" role="status">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/50">
-                <svg className="h-7 w-7 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                <svg
+                  className="h-7 w-7 text-amber-600 dark:text-amber-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                  />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Ya existe una cuenta</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                Ya existe una cuenta
+              </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Ya existe una cuenta con el email{' '}
-                <span className="font-medium text-slate-700 dark:text-slate-200">{email}</span>. Si es tuya, podés
-                iniciar sesión o recuperar tu contraseña.
+                <span className="font-medium text-slate-700 dark:text-slate-200">{email}</span>. Si
+                es tuya, podés iniciar sesión o recuperar tu contraseña.
               </p>
               <button
                 type="button"
@@ -247,17 +268,23 @@ export default function Auth({ dark, onToggleTheme }) {
               </button>
               {resetSent && (
                 <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 animate-fade-in dark:bg-emerald-950/50 dark:text-emerald-400">
-                  Te enviamos un link de recuperación a <span className="font-medium">{email}</span>. Revisá tu bandeja de entrada.
+                  Te enviamos un link de recuperación a <span className="font-medium">{email}</span>
+                  . Revisá tu bandeja de entrada.
                 </p>
               )}
             </div>
           ) : forgotMode ? (
             <form onSubmit={handleResetPassword} className="animate-fade-in-up" noValidate>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Recuperar contraseña</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                Recuperar contraseña
+              </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Ingresá tu email y te enviamos un link para crear una nueva contraseña.
               </p>
-              <label className="mb-1 mt-5 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="reset-email">
+              <label
+                className="mb-1 mt-5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                htmlFor="reset-email"
+              >
                 Email
               </label>
               <input
@@ -292,7 +319,8 @@ export default function Auth({ dark, onToggleTheme }) {
               </button>
               {resetSent && (
                 <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 animate-fade-in dark:bg-emerald-950/50 dark:text-emerald-400">
-                  Te enviamos un link a <span className="font-medium">{email}</span>. Revisá tu bandeja de entrada.
+                  Te enviamos un link a <span className="font-medium">{email}</span>. Revisá tu
+                  bandeja de entrada.
                 </p>
               )}
             </form>
@@ -320,7 +348,10 @@ export default function Auth({ dark, onToggleTheme }) {
 
               <form onSubmit={handleSubmit} noValidate>
                 <div key={isSignUp ? 'signup' : 'login'} className="animate-fade-in-up">
-                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
+                  <label
+                    className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                    htmlFor="email"
+                  >
                     Email
                   </label>
                   <input
@@ -339,7 +370,10 @@ export default function Auth({ dark, onToggleTheme }) {
                   />
                   <FieldError id="email-error" message={fieldErrors.email} />
 
-                  <label className="mb-1 mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
+                  <label
+                    className="mb-1 mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                    htmlFor="password"
+                  >
                     Contraseña
                   </label>
                   <div className="relative">
@@ -349,7 +383,8 @@ export default function Auth({ dark, onToggleTheme }) {
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value)
-                        if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: undefined }))
+                        if (fieldErrors.password)
+                          setFieldErrors((f) => ({ ...f, password: undefined }))
                       }}
                       placeholder="••••••••"
                       autoComplete={isSignUp ? 'new-password' : 'current-password'}
@@ -365,7 +400,13 @@ export default function Auth({ dark, onToggleTheme }) {
                       className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
                     >
                       {showPassword ? (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.8}
+                          stroke="currentColor"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -373,9 +414,23 @@ export default function Auth({ dark, onToggleTheme }) {
                           />
                         </svg>
                       ) : (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.8}
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
                         </svg>
                       )}
                     </button>
@@ -405,7 +460,9 @@ export default function Auth({ dark, onToggleTheme }) {
                             <span
                               key={i}
                               className={`h-1 flex-1 rounded-full transition-colors ${
-                                i <= strength ? STRENGTH_BAR[strength] : 'bg-slate-200 dark:bg-slate-700'
+                                i <= strength
+                                  ? STRENGTH_BAR[strength]
+                                  : 'bg-slate-200 dark:bg-slate-700'
                               }`}
                             />
                           ))}
@@ -417,7 +474,10 @@ export default function Auth({ dark, onToggleTheme }) {
                         )}
                       </div>
 
-                      <label className="mb-1 mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="confirm">
+                      <label
+                        className="mb-1 mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                        htmlFor="confirm"
+                      >
                         Confirmar contraseña
                       </label>
                       <input
@@ -426,7 +486,8 @@ export default function Auth({ dark, onToggleTheme }) {
                         value={confirm}
                         onChange={(e) => {
                           setConfirm(e.target.value)
-                          if (fieldErrors.confirm) setFieldErrors((f) => ({ ...f, confirm: undefined }))
+                          if (fieldErrors.confirm)
+                            setFieldErrors((f) => ({ ...f, confirm: undefined }))
                         }}
                         placeholder="••••••••"
                         autoComplete="new-password"

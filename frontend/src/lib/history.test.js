@@ -20,7 +20,12 @@ describe('normalizeHistory', () => {
   })
 
   it('descarta puntos sin timestamp', () => {
-    const points = normalizeHistory({ points: [{ t: 0, c: 5 }, { t: 1000, c: 7 }] })
+    const points = normalizeHistory({
+      points: [
+        { t: 0, c: 5 },
+        { t: 1000, c: 7 },
+      ],
+    })
     expect(points).toHaveLength(1)
     expect(points[0].c).toBe(7)
   })

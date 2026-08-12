@@ -2,8 +2,8 @@
 // Detecta la fila de encabezados (Ticker | % Meta | Tenencia), ignora metadatos
 // previos y REEMPLAZA todo el plan del usuario (de forma atómica vía RPC).
 
-import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
-import { createClient } from 'jsr:@supabase/supabase-js@2'
+import * as XLSX from 'xlsx'
+import { createClient } from '@supabase/supabase-js'
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { extractPlan } from './planner.ts'
 

@@ -1,0 +1,8 @@
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT/frontend" || exit 1
+npx lint-staged
+
+if git -C "$ROOT" diff --cached --name-only --diff-filter=ACM | grep -Eq '^backend/.*\.ts$'; then
+  echo "husky - backend .ts staged, corriendo deno fmt + lint..."
+  (cd "$ROOT/backend/supabase/functions" && deno fmt --check . && deno lint .)
+fi

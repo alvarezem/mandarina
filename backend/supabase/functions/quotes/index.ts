@@ -51,8 +51,16 @@ async function cachedTruthy(key: string, fn: () => Promise<unknown>, ttl = CACHE
   return value
 }
 
+type DolarRate = {
+  price: number
+  compra: unknown
+  venta: number
+  currency: unknown
+  source: string
+}
+
 async function fetchRates() {
-  const out = { MEP: null, CCL: null }
+  const out: Record<'MEP' | 'CCL', DolarRate | null> = { MEP: null, CCL: null }
   for (const mode of ['MEP', 'CCL'] as const) {
     try {
       const res = await fetch(`https://dolarapi.com/v1/dolares/${DOLARAPI_CASAS[mode]}`, {
@@ -161,7 +169,7 @@ Deno.serve(async (req) => {
   const [rates, quotes, historyResult] = await Promise.all([
     cached('dolarapi', fetchRates),
     fetchQuotes(symbols),
-    history ? fetchHistory(history.symbol, history.range ?? '') : Promise.resolve(undefined),
+    history ? fetchHistory(history.symbol!, history.range ?? '') : Promise.resolve(undefined),
   ])
   const out: Record<string, unknown> = { quotes, rates }
   if (historyResult) out.history = historyResult

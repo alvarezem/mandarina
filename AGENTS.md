@@ -29,7 +29,7 @@ frontend/
     *.test.js          # tests Vitest junto al código
 backend/
   supabase/
-    migrations/        # SQL 0001..0012 (esquema + RLS + storage)
+    migrations/        # SQL 0001..0014 (esquema + RLS + storage)
     functions/         # Edge Functions Deno: parse-summary, import-plan, quotes
     templates/         # emails con marca (13 templates HTML)
     config.toml        # config local de Supabase

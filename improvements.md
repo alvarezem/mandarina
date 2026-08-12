@@ -355,13 +355,16 @@ _Objetivo: migraciones sanas, funciones reproducibles y sin bugs de dato._
 3. `_shared/categorize.ts`: agregar `telecom` → Servicios para alinear con
    migración 0009 (si no, nuevos parses van a "Otros").
 
-### 5.2 Migraciones (nueva migración `0013_*`)
+### 5.2 Migraciones (nueva migración `0014_*`)
 1. Índice en `transactions(summary_id)` (FK ON DELETE CASCADE + subqueries RLS).
 2. Índices en `transactions(date)` y `card_summaries(user_id)`.
 3. `updated_at` de `portfolio_plan` con trigger `set_updated_at` (hoy solo default now()).
-4. Unique constraint para idempotencia del parse (ej. en `transactions` por
-   `(summary_id, ...)` o usar `card_summaries.status` como guard).
-5. Limpiar regla duplicada `bull market|broker` (0010:6-8 vs 0006:8).
+4. Idempotencia del parse: RPC atómico `finalize_parse()` (delete+insert en una
+   sola tx con `for update` del resumen). Sin guard de status — el delete+insert
+   es idempotente por sí mismo, lo que habilita el re-proceso (ver HANDOFF).
+5. Regla duplicada `bull market|broker` (0010:6-8 vs 0006:8): **se deja intencional**.
+   Es un UPDATE idempotente ya aplicado en prod; editar migraciones aplicadas
+   rinde menos que el ruido que quita.
 
 ### 5.3 Reproducibilidad de Edge Functions
 1. Agregar `backend/supabase/functions/deno.json` (o `deno.json` raíz) con
@@ -376,9 +379,10 @@ _Objetivo: migraciones sanas, funciones reproducibles y sin bugs de dato._
 3. CI de Fase 7 corre `deno test` en las 3 suites.
 
 **Verificación**:
-- [x] `deno check`/`deno test` corren localmente en las 3 funciones.
-- [x] Migraciones aplican con `supabase db push` sin conflictos.
+- [x] `deno check`/`deno test` corren localmente en las 3 funciones (deployadas: `deno test` 64/64 con type-check, `deno check` verde en parse-summary/import-plan/quotes).
+- [x] Migraciones aplican con `supabase db push` sin conflictos (0014 + orden de deploy anotado en el header).
 - [x] `deno test` en categorize cubre Telecom→Servicios.
+- [x] Tests unitarios nuevos del handler (`handler_test.ts`: 404, 400, 500 en rpc y descarga, overrides) y de lógica pura (`parser_test.ts`, `planner_test.ts`, `normalize_test.ts`).
 
 ---
 

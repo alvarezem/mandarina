@@ -5,65 +5,120 @@ import { getDocumentProxy, extractTextItems } from 'https://esm.sh/unpdf@1.8.0'
 import { categorize } from '../_shared/categorize.ts'
 import { detectPeriod, detectSummaryType } from './detection.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
-
-const HEADER_ALIASES = {
-  date: [
-    'fecha', 'date', 'periodo', 'emision', 'liquidacion',
-    'release date', 'fecha liberacion', 'fecha de liberacion',
-  ],
-  merchant: [
-    'descripcion', 'description', 'merchant', 'detalle', 'comercio',
-    'referencia', 'titular', 'concepto', 'transaction type', 'tipo de transaccion',
-  ],
-  amount: [
-    'importe', 'monto', 'amount', 'valor', 'cargo', 'abono',
-    'monto usd', 'monto gs', 'monto arg', 'monto total', 'total',
-    'transaction net amount', 'monto neto', 'importe neto',
-  ],
-}
+import {
+  buildAnalysis,
+  detectSeparator,
+  mapRows,
+  parseAmount,
+  parseDate,
+  pdfColumn,
+  type Transaction,
+} from './parser.ts'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-Deno.serve(async (req) => {
-  const cors = corsHeaders(req.headers.get('Origin'))
+// Columnas X para el PDF posicional de BBVA.
+const PDF_DATE = /^\d{2}-[A-Za-z]{3}-\d{2}$/
+const PDF_DATE_IN_DESC = /(\^|\D)\d{2}-[A-Za-z]{3}-\d{2}(\D|$)/
 
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: cors })
-  }
+// Deno.serve solo se registra al ejecutarse como entry point (deploy edge);
+// en tests se importa el módulo y handleParse sin levantar el servidor.
+if (import.meta.main) {
+  Deno.serve(async (req) => {
+    const cors = corsHeaders(req.headers.get('Origin'))
 
-  let summaryId
-  try {
-    const body = await req.json()
-    summaryId = body?.summary_id
-  } catch {
-    return json({ error: 'Body JSON inválido' }, 400, cors)
-  }
-  if (!summaryId) {
-    return json({ error: 'summary_id es requerido' }, 400, cors)
-  }
-  if (typeof summaryId !== 'string' || !UUID_RE.test(summaryId)) {
-    return json({ error: 'summary_id inválido' }, 400, cors)
-  }
+    if (req.method === 'OPTIONS') {
+      return new Response('ok', { headers: cors })
+    }
 
-  const authHeader = req.headers.get('Authorization')
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    { global: { headers: { Authorization: authHeader ?? '' } } },
-  )
+    let summaryId
+    try {
+      const body = await req.json()
+      summaryId = body?.summary_id
+    } catch {
+      return json({ error: 'Body JSON inválido' }, 400, cors)
+    }
+    if (!summaryId) {
+      return json({ error: 'summary_id es requerido' }, 400, cors)
+    }
+    if (typeof summaryId !== 'string' || !UUID_RE.test(summaryId)) {
+      return json({ error: 'summary_id inválido' }, 400, cors)
+    }
 
-  const { data: summary, error: sumError } = await supabase
+    const authHeader = req.headers.get('Authorization')
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader ?? '' } } },
+    )
+
+    return handleParse(supabase as unknown as ParseClient, summaryId, cors)
+  })
+}
+
+// Lógica del handler separada para poder testearla con un client fake.
+// Interfaz mínima del client (solo lo que parse-summary usa), así el test
+// puede pasar un fake sin coaccionar al SupabaseClient completo.
+// Se usa PromiseLike (no Promise) porque los builders de supabase-js
+// (`PostgrestFilterBuilder`) son thenables sin ser `Promise` a nivel de tipos.
+export type QueryResult = { data: unknown; error: { message: string } | null }
+
+// Builder `select().eq()`: es thenable (await devuelve QueryResult) y además
+// permite `.single()` (también resuelve a QueryResult).
+export type SelectBuilder = PromiseLike<QueryResult> & {
+  single(): PromiseLike<QueryResult>
+}
+
+export type SummaryRow = {
+  id: string
+  user_id: string
+  file_name: string
+  file_path: string
+  [key: string]: unknown
+}
+
+export type MerchantOverride = { merchant: string; category: string }
+
+export type ParseClient = {
+  from(table: string): {
+    select(cols: string): {
+      eq(key: string, value: unknown): SelectBuilder
+    }
+    update(payload: Record<string, unknown>): {
+      eq(key: string, value: unknown): PromiseLike<QueryResult>
+    }
+  }
+  storage: {
+    from(bucket: string): {
+      download(
+        path: string,
+      ): PromiseLike<{ data: Blob | null; error: { message: string } | null }>
+    }
+  }
+  rpc(
+    name: string,
+    args: Record<string, unknown>,
+  ): PromiseLike<QueryResult>
+}
+
+export async function handleParse(
+  supabase: ParseClient,
+  summaryId: string,
+  cors: Record<string, string>,
+) {
+  const { data: summaryRaw, error: sumError } = await supabase
     .from('card_summaries')
     .select('*')
     .eq('id', summaryId)
     .single()
-  if (sumError || !summary) {
+  if (sumError || !summaryRaw) {
     return json({ error: 'Resumen no encontrado' }, 404, cors)
   }
+  const summary = summaryRaw as SummaryRow
 
-  const setStatus = async (status, error = null) => {
+  const setStatus = async (status: string, errorMessage: string | null = null) => {
     try {
-      await supabase.from('card_summaries').update({ status, error }).eq('id', summaryId)
+      await supabase.from('card_summaries').update({ status, error: errorMessage }).eq('id', summaryId)
     } catch (e) {
       console.error('parse-summary: no se pudo actualizar el status del resumen', e)
     }
@@ -80,8 +135,8 @@ Deno.serve(async (req) => {
     return json({ error: message }, 500, cors)
   }
 
-  let transactions
-  let pdfText = null
+  let transactions: Transaction[] = []
+  let pdfText: string | null = null
   try {
     if (isPdf(summary.file_name)) {
       const res = await extractPdfTransactions(blob)
@@ -112,175 +167,63 @@ Deno.serve(async (req) => {
     .from('merchant_overrides')
     .select('merchant, category')
     .eq('user_id', summary.user_id)
-  const overrideMap = new Map((overrides ?? []).map((o) => [o.merchant.toLowerCase(), o.category]))
+  const overrideList = (overrides ?? []) as MerchantOverride[]
+  const overrideMap = new Map(overrideList.map((o) => [o.merchant.toLowerCase(), o.category]))
   transactions = transactions.map((t) => ({
     ...t,
     category: overrideMap.get(t.merchant.toLowerCase()) ?? t.category,
   }))
 
-  // Idempotencia: un re-parse del mismo resumen no debe duplicar transacciones.
-  const { error: delError } = await supabase
-    .from('transactions')
-    .delete()
-    .eq('summary_id', summaryId)
-  if (delError) {
-    const message = 'Error al preparar el resumen'
-    await setStatus('error', message)
-    return json({ error: message }, 500, cors)
-  }
-
-  const { error: insError } = await supabase.from('transactions').insert(
-    transactions.map((t) => ({ summary_id: summaryId, ...t })),
-  )
-  if (insError) {
-    console.error('parse-summary: error al insertar transacciones', insError)
-    const message = 'Error al guardar transacciones'
-    await setStatus('error', message)
-    return json({ error: message }, 500, cors)
-  }
-
+  // Persistencia atómica e idempotente: delete + insert de transacciones,
+  // upsert del análisis y metadata del resumen en una sola transacción.
   const result = buildAnalysis(transactions)
-  const { error: anError } = await supabase.from('consumption_analyses').upsert(
-    { summary_id: summaryId, user_id: summary.user_id, result },
-    { onConflict: 'summary_id' },
-  )
-  if (anError) {
-    const message = 'Error al guardar el análisis de consumo'
+  const summaryType = detectSummaryType(summary.file_name, isPdf(summary.file_name), pdfText)
+  const { period_year, period_month } = detectPeriod(transactions)
+
+  const { data: count, error: finalizeError } = await supabase.rpc('finalize_parse', {
+    p_user_id: summary.user_id,
+    p_summary_id: summaryId,
+    p_transactions: transactions,
+    p_result: result,
+    p_summary_type: summaryType,
+    p_period_year: period_year ?? null,
+    p_period_month: period_month ?? null,
+  })
+  if (finalizeError) {
+    console.error('parse-summary: error al guardar el resultado del parse', finalizeError)
+    const message = 'Error al guardar las transacciones'
     await setStatus('error', message)
     return json({ error: message }, 500, cors)
   }
 
-  const { error: metaError } = await supabase.from('card_summaries').update({
-    summary_type: detectSummaryType(summary.file_name, isPdf(summary.file_name), pdfText),
-    ...detectPeriod(transactions),
-  }).eq('id', summaryId)
-  if (metaError) {
-    await setStatus('error', 'Error al guardar la metadata del resumen')
-    return json({ error: 'Error al guardar la metadata del resumen' }, 500, cors)
-  }
-
-  await setStatus('done')
-  return json({ ok: true, count: transactions.length }, 200, cors)
-})
-
-function computeTotals(txs) {
-  let credits = 0
-  let debits = 0
-  for (const tx of txs) {
-    if (tx.amount >= 0) credits += tx.amount
-    else debits += tx.amount
-  }
-  return {
-    credits: Math.round(credits * 100) / 100,
-    debits: Math.round(debits * 100) / 100,
-    net: Math.round((credits + debits) * 100) / 100,
-    txCount: txs.length,
-  }
+  return json({ ok: true, count: count ?? transactions.length }, 200, cors)
 }
 
-function aggregate(txs, kind) {
-  const map = new Map()
-  for (const tx of txs) {
-    const key = kind === 'merchant' ? tx.merchant : tx.category
-    const e = map.get(key) || { [kind]: key, count: 0, total: 0 }
-    e.count += 1
-    e.total += tx.amount
-    map.set(key, e)
-  }
-  return [...map.values()]
-}
+type PdfToken = { s: string; x: number; y: number }
+type PdfLine = { y: number; toks: PdfToken[] }
 
-function buildAnalysis(txs) {
-  const ars = txs.filter((t) => t.currency !== 'USD')
-  const usd = txs.filter((t) => t.currency === 'USD')
-
-  const dates = ars.map((t) => t.date).sort()
-  const from = dates[0]
-  const to = dates[dates.length - 1]
-  const days = Math.max(
-    1,
-    Math.round((new Date(to) - new Date(from)) / 86400000) + 1,
-  )
-
-  const totals = computeTotals(ars)
-  totals.avgPerDay = Math.round((totals.net * 100) / days) / 100
-
-  let maxExpense = null
-  let maxCredit = null
-  const byDay = new Map()
-  for (const tx of ars) {
-    const d = byDay.get(tx.date) || { date: tx.date, credits: 0, debits: 0 }
-    if (tx.amount >= 0) d.credits += tx.amount
-    else d.debits += tx.amount
-    byDay.set(tx.date, d)
-
-    if (maxExpense === null || tx.amount < maxExpense.amount) {
-      maxExpense = { amount: tx.amount, merchant: tx.merchant, date: tx.date }
-    }
-    if (maxCredit === null || tx.amount > maxCredit.amount) {
-      maxCredit = { amount: tx.amount, merchant: tx.merchant, date: tx.date }
-    }
-  }
-
-  const byDaySorted = [...byDay.values()].sort((a, b) => a.date.localeCompare(b.date))
-  let running = 0
-  const balanceTrend = byDaySorted.map((d) => {
-    running += d.credits + d.debits
-    return { date: d.date, runningBalance: Math.round(running * 100) / 100 }
-  })
-
-  const result = {
-    period: { from, to, days },
-    totals,
-    maxExpense,
-    maxCredit,
-    byMerchant: aggregate(ars, 'merchant')
-      .sort((a, b) => Math.abs(b.total) - Math.abs(a.total))
-      .slice(0, 10),
-    byCategory: aggregate(ars, 'category').sort((a, b) => b.total - a.total),
-    byDay: byDaySorted,
-    balanceTrend,
-  }
-
-  if (usd.length > 0) {
-    result.usd = {
-      totals: computeTotals(usd),
-      byCategory: aggregate(usd, 'category').sort((a, b) => b.total - a.total),
-    }
-  }
-
-  return result
-}
-
-const PDF_DATE = /^\d{2}-[A-Za-z]{3}-\d{2}$/
-const PDF_DATE_IN_DESC = /(\^|\D)\d{2}-[A-Za-z]{3}-\d{2}(\D|$)/
-
-function pdfColumn(x) {
-  if (x <= 100) return 'date'
-  if (x <= 376) return 'desc'
-  if (x <= 445) return 'cupon'
-  if (x <= 505) return 'pesos'
-  return 'dolares'
-}
-
-async function extractPdfTransactions(blob) {
+async function extractPdfTransactions(
+  blob: Blob,
+): Promise<{ txs: Transaction[]; text: string }> {
   const buf = new Uint8Array(await blob.arrayBuffer())
   const pdf = await getDocumentProxy(buf)
-  const { items } = await extractTextItems(pdf, { merge: false })
+  const { items } = await extractTextItems(pdf) as unknown as {
+    items: { str: string; x: number; y: number; height: number }[][]
+  }
 
   const text = items.length
     ? items[0].map((it) => it.str ?? '').join(' ')
     : ''
 
-  const txs = []
+  const txs: Transaction[] = []
   for (const pageItems of items) {
-    const active = pageItems
+    const active: PdfToken[] = pageItems
       .filter((it) => it.str && it.str.trim() && it.height > 0)
       .map((it) => ({ s: it.str.trim(), x: +it.x.toFixed(1), y: +it.y.toFixed(1) }))
     active.sort((a, b) => b.y - a.y || a.x - b.x)
 
-    const lines = []
-    let cur = null
+    const lines: PdfLine[] = []
+    let cur: PdfLine | null = null
     for (const it of active) {
       if (!cur || Math.abs(it.y - cur.y) > 2.5) {
         cur = { y: it.y, toks: [] }
@@ -298,7 +241,7 @@ async function extractPdfTransactions(blob) {
       })
       if (!hasAmount) continue
 
-      const parts = { desc: '', pesos: '', dolares: '' }
+      const parts: { desc: string; pesos: string; dolares: string } = { desc: '', pesos: '', dolares: '' }
       for (const t of ln.toks) {
         const c = pdfColumn(t.x)
         if (c === 'desc') parts.desc += (parts.desc ? ' ' : '') + t.s
@@ -313,8 +256,10 @@ async function extractPdfTransactions(blob) {
       if (amount === null) continue
 
       const merchant = parts.desc
+      const date = parseDate(first.s)
+      if (!date) continue
       txs.push({
-        date: parseDate(first.s),
+        date,
         merchant,
         currency: parts.dolares ? 'USD' : 'ARS',
         amount,
@@ -325,26 +270,14 @@ async function extractPdfTransactions(blob) {
   return { txs, text }
 }
 
-function isPdf(fileName) {
+function isPdf(fileName: string): boolean {
   return fileName.split('.').pop()?.toLowerCase() === 'pdf'
 }
 
-function detectSeparator(text) {
-  const firstLine = text.split(/\r?\n/).find((l) => l.trim())
-  const candidates = [';', ',', '\t']
-  let best = ','
-  let bestCount = 0
-  for (const sep of candidates) {
-    const count = firstLine ? firstLine.split(sep).length - 1 : 0
-    if (count > bestCount) {
-      bestCount = count
-      best = sep
-    }
-  }
-  return best
-}
-
-async function extractRows(summary, blob) {
+async function extractRows(
+  summary: { file_name: string },
+  blob: Blob,
+): Promise<unknown[][]> {
   const ext = summary.file_name.split('.').pop()?.toLowerCase()
   if (ext === 'csv') {
     const text = await blob.text()
@@ -357,109 +290,4 @@ async function extractRows(summary, blob) {
     return XLSX.utils.sheet_to_json(ws, { header: 1 }) as unknown as unknown[][]
   }
   throw new Error(`Formato .${ext ?? ''} no soportado (solo CSV, XLSX y PDF)`)
-}
-
-function mapRows(rows) {
-  const headerIdx = rows.findIndex((row) =>
-    Array.isArray(row) &&
-    row.some((cell) =>
-      HEADER_ALIASES.date.some((a) => normalizeHeader(String(cell ?? '')) === a),
-    ),
-  )
-  if (headerIdx === -1) return []
-
-  const columns = findColumns(rows[headerIdx])
-  if (columns.amount === -1) return []
-
-  return rows.slice(headerIdx + 1).map((row) => normalizeRow(row, columns)).filter(Boolean)
-}
-
-function normalizeRow(row, columns) {
-  if (!Array.isArray(row)) return null
-
-  const cells = row.map((c) => String(c ?? '').trim())
-  if (cells.every((c) => c === '')) return null
-
-  const date = parseDate(cells[columns.date])
-  const merchant = columns.merchant >= 0 ? cells[columns.merchant] : 'Sin descripción'
-  const amount = parseAmount(cells[columns.amount])
-
-  if (!date || amount === null) return null
-
-  return { date, merchant: merchant || 'Sin descripción', amount }
-}
-
-function findColumns(row) {
-  const date = row.findIndex((cell) =>
-    HEADER_ALIASES.date.some((a) => normalizeHeader(String(cell ?? '')) === a),
-  )
-  const merchant = row.findIndex((cell) =>
-    HEADER_ALIASES.merchant.some((a) => normalizeHeader(String(cell ?? '')) === a),
-  )
-  const amount = row.findIndex((cell) =>
-    HEADER_ALIASES.amount.some((a) => normalizeHeader(String(cell ?? '')) === a),
-  )
-  return { date, merchant, amount }
-}
-
-function normalizeHeader(value) {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-const MONTHS = {
-  ene: '01', feb: '02', mar: '03', abr: '04', may: '05', jun: '06',
-  jul: '07', ago: '08', sep: '09', oct: '10', nov: '11', dic: '12',
-}
-
-function parseDate(value) {
-  if (!value) return null
-  const mon = value.trim().match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2}|\d{4})$/)
-  if (mon) {
-    const mm = MONTHS[mon[2].slice(0, 3).toLowerCase()]
-    if (mm) {
-      const yy = mon[3].length === 2 ? String(2000 + Number(mon[3])) : mon[3]
-      return `${yy}-${mm}-${mon[1].padStart(2, '0')}`
-    }
-  }
-  const ddmm = value.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/)
-  if (ddmm) return `${ddmm[3]}-${ddmm[2].padStart(2, '0')}-${ddmm[1].padStart(2, '0')}`
-  const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`
-  return null
-}
-
-function parseAmount(value) {
-  if (!value) return null
-  if (typeof value === 'number') return value
-  const cleaned = value.replace(/[^\d.,\-]/g, '')
-  if (cleaned === '' || cleaned === '-') return null
-  const sign = cleaned.startsWith('-') ? -1 : 1
-  const digits = cleaned.replace('-', '')
-
-  let normalized
-  if (digits.includes('.') && digits.includes(',')) {
-    const lastComma = digits.lastIndexOf(',')
-    const lastDot = digits.lastIndexOf('.')
-    normalized = lastComma > lastDot
-      ? digits.replace(/\./g, '').replace(',', '.')
-      : digits.replace(/,/g, '')
-  } else if (digits.includes(',')) {
-    normalized = digits.replace(',', '.')
-  } else if (digits.includes('.')) {
-    const parts = digits.split('.')
-    normalized = parts.length === 2 && parts[1].length <= 2
-      ? digits
-      : digits.replace(/\./g, '')
-  } else {
-    normalized = digits
-  }
-
-  const n = Number(normalized) * sign
-  return Number.isFinite(n) ? n : null
 }

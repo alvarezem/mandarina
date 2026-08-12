@@ -1,7 +1,7 @@
 import { parse as parseCsv } from '@std/csv'
 import * as XLSX from 'xlsx'
 import { createClient } from '@supabase/supabase-js'
-import { getDocumentProxy, extractTextItems } from 'unpdf'
+import { extractTextItems, getDocumentProxy } from 'unpdf'
 import { categorize } from '../_shared/categorize.ts'
 import { detectPeriod, detectSummaryType } from './detection.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
@@ -15,7 +15,8 @@ import {
   type Transaction,
 } from './parser.ts'
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // Columnas X para el PDF posicional de BBVA.
 const PDF_DATE = /^\d{2}-[A-Za-z]{3}-\d{2}$/
@@ -116,11 +117,20 @@ export async function handleParse(
   }
   const summary = summaryRaw as SummaryRow
 
-  const setStatus = async (status: string, errorMessage: string | null = null) => {
+  const setStatus = async (
+    status: string,
+    errorMessage: string | null = null,
+  ) => {
     try {
-      await supabase.from('card_summaries').update({ status, error: errorMessage }).eq('id', summaryId)
+      await supabase.from('card_summaries').update({
+        status,
+        error: errorMessage,
+      }).eq('id', summaryId)
     } catch (e) {
-      console.error('parse-summary: no se pudo actualizar el status del resumen', e)
+      console.error(
+        'parse-summary: no se pudo actualizar el status del resumen',
+        e,
+      )
     }
   }
 
@@ -158,7 +168,8 @@ export async function handleParse(
   }
 
   if (transactions.length === 0) {
-    const message = 'No se encontraron transacciones con el formato esperado (Fecha | Descripción | Importe)'
+    const message =
+      'No se encontraron transacciones con el formato esperado (Fecha | Descripción | Importe)'
     await setStatus('error', message)
     return json({ error: message }, 400, cors)
   }
@@ -168,7 +179,9 @@ export async function handleParse(
     .select('merchant, category')
     .eq('user_id', summary.user_id)
   const overrideList = (overrides ?? []) as MerchantOverride[]
-  const overrideMap = new Map(overrideList.map((o) => [o.merchant.toLowerCase(), o.category]))
+  const overrideMap = new Map(
+    overrideList.map((o) => [o.merchant.toLowerCase(), o.category]),
+  )
   transactions = transactions.map((t) => ({
     ...t,
     category: overrideMap.get(t.merchant.toLowerCase()) ?? t.category,
@@ -177,20 +190,30 @@ export async function handleParse(
   // Persistencia atómica e idempotente: delete + insert de transacciones,
   // upsert del análisis y metadata del resumen en una sola transacción.
   const result = buildAnalysis(transactions)
-  const summaryType = detectSummaryType(summary.file_name, isPdf(summary.file_name), pdfText)
+  const summaryType = detectSummaryType(
+    summary.file_name,
+    isPdf(summary.file_name),
+    pdfText,
+  )
   const { period_year, period_month } = detectPeriod(transactions)
 
-  const { data: count, error: finalizeError } = await supabase.rpc('finalize_parse', {
-    p_user_id: summary.user_id,
-    p_summary_id: summaryId,
-    p_transactions: transactions,
-    p_result: result,
-    p_summary_type: summaryType,
-    p_period_year: period_year ?? null,
-    p_period_month: period_month ?? null,
-  })
+  const { data: count, error: finalizeError } = await supabase.rpc(
+    'finalize_parse',
+    {
+      p_user_id: summary.user_id,
+      p_summary_id: summaryId,
+      p_transactions: transactions,
+      p_result: result,
+      p_summary_type: summaryType,
+      p_period_year: period_year ?? null,
+      p_period_month: period_month ?? null,
+    },
+  )
   if (finalizeError) {
-    console.error('parse-summary: error al guardar el resultado del parse', finalizeError)
+    console.error(
+      'parse-summary: error al guardar el resultado del parse',
+      finalizeError,
+    )
     const message = 'Error al guardar las transacciones'
     await setStatus('error', message)
     return json({ error: message }, 500, cors)
@@ -211,15 +234,17 @@ async function extractPdfTransactions(
     items: { str: string; x: number; y: number; height: number }[][]
   }
 
-  const text = items.length
-    ? items[0].map((it) => it.str ?? '').join(' ')
-    : ''
+  const text = items.length ? items[0].map((it) => it.str ?? '').join(' ') : ''
 
   const txs: Transaction[] = []
   for (const pageItems of items) {
     const active: PdfToken[] = pageItems
       .filter((it) => it.str && it.str.trim() && it.height > 0)
-      .map((it) => ({ s: it.str.trim(), x: +it.x.toFixed(1), y: +it.y.toFixed(1) }))
+      .map((it) => ({
+        s: it.str.trim(),
+        x: +it.x.toFixed(1),
+        y: +it.y.toFixed(1),
+      }))
     active.sort((a, b) => b.y - a.y || a.x - b.x)
 
     const lines: PdfLine[] = []
@@ -241,7 +266,11 @@ async function extractPdfTransactions(
       })
       if (!hasAmount) continue
 
-      const parts: { desc: string; pesos: string; dolares: string } = { desc: '', pesos: '', dolares: '' }
+      const parts: { desc: string; pesos: string; dolares: string } = {
+        desc: '',
+        pesos: '',
+        dolares: '',
+      }
       for (const t of ln.toks) {
         const c = pdfColumn(t.x)
         if (c === 'desc') parts.desc += (parts.desc ? ' ' : '') + t.s

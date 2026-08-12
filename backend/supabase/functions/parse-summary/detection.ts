@@ -2,9 +2,18 @@ const SUMMARY_TYPE_RULES: [RegExp, string][] = [
   [/visa/, 'VISA'],
   [/mastercard|\bmaster\b|\bmc\b/, 'MASTERCARD'],
   [/american ?express|\bamex\b/, 'AMEX'],
-  [/mercado ?pago|mercadopago|\bmp\b|uala|brubank|naranja ?x|lemon|binance|belo|crypto/, 'Billetera virtual'],
-  [/broker|bull|\biol\b|balanz|\bppi\b|cocos|adcap|del sur|socma|portfolio/, 'Broker'],
-  [/banco|bbva|santander|galicia|nacion|provincia|frances|ciudad|hipotecario|macro|supervielle|patagonia|hsbc|comafi/, 'Banco'],
+  [
+    /mercado ?pago|mercadopago|\bmp\b|uala|brubank|naranja ?x|lemon|binance|belo|crypto/,
+    'Billetera virtual',
+  ],
+  [
+    /broker|bull|\biol\b|balanz|\bppi\b|cocos|adcap|del sur|socma|portfolio/,
+    'Broker',
+  ],
+  [
+    /banco|bbva|santander|galicia|nacion|provincia|frances|ciudad|hipotecario|macro|supervielle|patagonia|hsbc|comafi/,
+    'Banco',
+  ],
 ]
 
 export function detectSummaryType(
@@ -20,7 +29,10 @@ export function detectSummaryType(
     if (re.test(n)) return type
   }
   if (pdf && text) {
-    const t = String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const t = String(text).toLowerCase().normalize('NFD').replace(
+      /[\u0300-\u036f]/g,
+      '',
+    )
     for (const [re, type] of SUMMARY_TYPE_RULES) {
       if (re.test(t)) return type
     }

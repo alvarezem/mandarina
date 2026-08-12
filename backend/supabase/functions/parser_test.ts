@@ -1,17 +1,20 @@
 import { assertEquals } from '@std/assert'
 import {
+  buildAnalysis,
   detectSeparator,
   findColumns,
   mapRows,
   parseAmount,
   parseDate,
   pdfColumn,
-  buildAnalysis,
   type Transaction,
 } from './parse-summary/parser.ts'
 
 Deno.test('detectSeparator: elige ; cuando el CSV usa ;', () => {
-  assertEquals(detectSeparator('fecha;descripcion;importe\n01-ENE-26;super;123.45'), ';')
+  assertEquals(
+    detectSeparator('fecha;descripcion;importe\n01-ENE-26;super;123.45'),
+    ';',
+  )
 })
 
 Deno.test('detectSeparator: default , cuando no hay separador claro', () => {
@@ -35,7 +38,11 @@ Deno.test('mapRows: parsea filas bajo la fila de encabezados', () => {
   ]
   const txs = mapRows(rows)
   assertEquals(txs.length, 2)
-  assertEquals(txs[0], { date: '2026-01-01', merchant: 'SUPERMERCADO COTO', amount: -1250.5 })
+  assertEquals(txs[0], {
+    date: '2026-01-01',
+    merchant: 'SUPERMERCADO COTO',
+    amount: -1250.5,
+  })
   assertEquals(txs[1].merchant, 'Sin descripción')
   assertEquals(txs[1].amount, 500.25)
 })
@@ -86,9 +93,27 @@ Deno.test('pdfColumn: rangos posicionales de columnas', () => {
 
 Deno.test('buildAnalysis: arma el análisis completo sin USD', () => {
   const txs: Transaction[] = [
-    { date: '2026-01-01', merchant: 'COTO', amount: -100, currency: 'ARS', category: 'Supermercados' },
-    { date: '2026-01-02', merchant: 'GYM', amount: -50, currency: 'ARS', category: 'Gimnasio' },
-    { date: '2026-01-02', merchant: 'DEVOLUCIÓN', amount: 20, currency: 'ARS', category: 'Otros' },
+    {
+      date: '2026-01-01',
+      merchant: 'COTO',
+      amount: -100,
+      currency: 'ARS',
+      category: 'Supermercados',
+    },
+    {
+      date: '2026-01-02',
+      merchant: 'GYM',
+      amount: -50,
+      currency: 'ARS',
+      category: 'Gimnasio',
+    },
+    {
+      date: '2026-01-02',
+      merchant: 'DEVOLUCIÓN',
+      amount: 20,
+      currency: 'ARS',
+      category: 'Otros',
+    },
   ]
   const a = buildAnalysis(txs)
   assertEquals(a.totals.net, -130)
@@ -102,8 +127,20 @@ Deno.test('buildAnalysis: arma el análisis completo sin USD', () => {
 
 Deno.test('buildAnalysis: agrega bloque usd cuando hay transacciones USD', () => {
   const txs: Transaction[] = [
-    { date: '2026-01-01', merchant: 'A', amount: -10, currency: 'ARS', category: 'Otros' },
-    { date: '2026-01-01', merchant: 'B', amount: -5, currency: 'USD', category: 'Otros' },
+    {
+      date: '2026-01-01',
+      merchant: 'A',
+      amount: -10,
+      currency: 'ARS',
+      category: 'Otros',
+    },
+    {
+      date: '2026-01-01',
+      merchant: 'B',
+      amount: -5,
+      currency: 'USD',
+      category: 'Otros',
+    },
   ]
   const a = buildAnalysis(txs)
   assertEquals(a.usd?.totals.net, -5)

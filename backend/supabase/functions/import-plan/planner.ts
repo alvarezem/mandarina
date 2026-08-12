@@ -9,7 +9,7 @@ export type PlanColumns = { symbol: number; target: number; quantity: number }
 export function findHeaderRow(rows: unknown[][]): number {
   return rows.findIndex((row) =>
     Array.isArray(row) &&
-    row.some((cell) => HEADER_ALIASES.symbol.some((a) => matchFuzzy(cell, a))),
+    row.some((cell) => HEADER_ALIASES.symbol.some((a) => matchFuzzy(cell, a)))
   )
 }
 
@@ -58,7 +58,9 @@ export function parseQuantity(value: unknown): number {
     normalized = digits.replace(',', '.')
   } else if (digits.includes('.')) {
     const parts = digits.split('.')
-    normalized = parts.length === 2 && parts[1].length <= 2 ? digits : digits.replace(/\./g, '')
+    normalized = parts.length === 2 && parts[1].length <= 2
+      ? digits
+      : digits.replace(/\./g, '')
   } else {
     normalized = digits
   }
@@ -82,8 +84,12 @@ export function extractPlan(rows: unknown[][]): PlanItem[] | null {
     const symbol = cells[columns.symbol]?.toUpperCase().replace(/\s+/g, '')
     if (!symbol) continue
 
-    const target = columns.target >= 0 ? parsePercent(row[columns.target]) : null
-    const quantity = columns.quantity >= 0 ? parseQuantity(row[columns.quantity]) : 0
+    const target = columns.target >= 0
+      ? parsePercent(row[columns.target])
+      : null
+    const quantity = columns.quantity >= 0
+      ? parseQuantity(row[columns.quantity])
+      : 0
 
     items.push({
       symbol,

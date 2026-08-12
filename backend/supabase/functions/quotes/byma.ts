@@ -21,7 +21,9 @@ const HISTORY_RANGES: Record<string, { res: string; days: number }> = {
   '1A': { res: 'W', days: 370 },
 }
 
-const num = (v: unknown) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null)
+const num = (
+  v: unknown,
+) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null)
 
 export async function bymaQuote(symbol: string) {
   const res = await fetch(BYMA_QUOTE_URL, {
@@ -32,7 +34,11 @@ export async function bymaQuote(symbol: string) {
       Accept: 'application/json',
       Origin: 'https://open.bymadata.com.ar',
     },
-    body: JSON.stringify({ symbol, settlementType: '2', 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      symbol,
+      settlementType: '2',
+      'Content-Type': 'application/json',
+    }),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   })
   if (!res.ok) return null
@@ -51,13 +57,17 @@ export async function bymaQuote(symbol: string) {
   return {
     price,
     currency: quote.denominationCcy === 'USD' ? 'USD' : 'ARS',
-    changePct: prev != null ? Math.round(((price / prev - 1) * 100) * 10_000) / 10_000 : null,
+    changePct: prev != null
+      ? Math.round(((price / prev - 1) * 100) * 10_000) / 10_000
+      : null,
     open: num(quote.openingPrice),
     high: num(quote.tradingHighPrice),
     low: num(quote.tradingLowPrice),
     prevClose: prev,
     closingPrice: num(quote.closingPrice),
-    tradeHour: typeof quote.tradeHour === 'string' ? quote.tradeHour.slice(0, 5) : null,
+    tradeHour: typeof quote.tradeHour === 'string'
+      ? quote.tradeHour.slice(0, 5)
+      : null,
     volume: Number(quote.tradeVolume) || null,
     source: 'byma',
   }
@@ -85,7 +95,11 @@ export async function bymaHistory(symbol: string, range: string) {
   } | null = null
   try {
     const res = await fetch(`${BYMA_HISTORY_URL}?${params.toString()}`, {
-      headers: { 'User-Agent': UA, Accept: 'application/json', Origin: 'https://open.bymadata.com.ar' },
+      headers: {
+        'User-Agent': UA,
+        Accept: 'application/json',
+        Origin: 'https://open.bymadata.com.ar',
+      },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
     if (!res.ok) return null
@@ -93,7 +107,9 @@ export async function bymaHistory(symbol: string, range: string) {
   } catch {
     return null
   }
-  if (data?.s !== 'ok' || !Array.isArray(data?.t)) return { symbol, range, points: [], source: 'byma' }
+  if (data?.s !== 'ok' || !Array.isArray(data?.t)) {
+    return { symbol, range, points: [], source: 'byma' }
+  }
   const points = data.t.map((t: number, i: number) => ({
     t: t * 1000,
     o: Number(data.o?.[i]) || null,
@@ -119,7 +135,9 @@ export async function bymaLastClose(symbol: string) {
   return {
     price,
     currency: null,
-    changePct: prevClose != null ? Math.round(((price / prevClose - 1) * 100) * 10_000) / 10_000 : null,
+    changePct: prevClose != null
+      ? Math.round(((price / prevClose - 1) * 100) * 10_000) / 10_000
+      : null,
     open: num(last.o),
     high: num(last.h),
     low: num(last.l),

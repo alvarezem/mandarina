@@ -33,25 +33,37 @@ export function detectSeparator(text: string): string {
 
 export function findColumns(row: unknown[]): ColumnMap {
   const date = row.findIndex((cell) =>
-    HEADER_ALIASES.date.some((a) => matchExact(cell, a)),
+    HEADER_ALIASES.date.some((a) => matchExact(cell, a))
   )
   const merchant = row.findIndex((cell) =>
-    HEADER_ALIASES.merchant.some((a) => matchExact(cell, a)),
+    HEADER_ALIASES.merchant.some((a) => matchExact(cell, a))
   )
   const amount = row.findIndex((cell) =>
-    HEADER_ALIASES.amount.some((a) => matchExact(cell, a)),
+    HEADER_ALIASES.amount.some((a) => matchExact(cell, a))
   )
   return { date, merchant, amount }
 }
 
 const MONTHS: Record<string, string> = {
-  ene: '01', feb: '02', mar: '03', abr: '04', may: '05', jun: '06',
-  jul: '07', ago: '08', sep: '09', oct: '10', nov: '11', dic: '12',
+  ene: '01',
+  feb: '02',
+  mar: '03',
+  abr: '04',
+  may: '05',
+  jun: '06',
+  jul: '07',
+  ago: '08',
+  sep: '09',
+  oct: '10',
+  nov: '11',
+  dic: '12',
 }
 
 export function parseDate(value: unknown): string | null {
   if (!value) return null
-  const mon = String(value).trim().match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2}|\d{4})$/)
+  const mon = String(value).trim().match(
+    /^(\d{1,2})-([A-Za-z]{3})-(\d{2}|\d{4})$/,
+  )
   if (mon) {
     const mm = MONTHS[mon[2].slice(0, 3).toLowerCase()]
     if (mm) {
@@ -60,7 +72,9 @@ export function parseDate(value: unknown): string | null {
     }
   }
   const ddmm = String(value).match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/)
-  if (ddmm) return `${ddmm[3]}-${ddmm[2].padStart(2, '0')}-${ddmm[1].padStart(2, '0')}`
+  if (ddmm) {
+    return `${ddmm[3]}-${ddmm[2].padStart(2, '0')}-${ddmm[1].padStart(2, '0')}`
+  }
   const iso = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`
   return null
@@ -96,14 +110,19 @@ export function parseAmount(value: unknown): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-export function normalizeRow(row: unknown[], columns: ColumnMap): ParsedRow | null {
+export function normalizeRow(
+  row: unknown[],
+  columns: ColumnMap,
+): ParsedRow | null {
   if (!Array.isArray(row)) return null
 
   const cells = row.map((c) => String(c ?? '').trim())
   if (cells.every((c) => c === '')) return null
 
   const date = parseDate(cells[columns.date])
-  const merchant = columns.merchant >= 0 ? cells[columns.merchant] : 'Sin descripción'
+  const merchant = columns.merchant >= 0
+    ? cells[columns.merchant]
+    : 'Sin descripción'
   const amount = parseAmount(cells[columns.amount])
 
   if (!date || amount === null) return null
@@ -114,9 +133,7 @@ export function normalizeRow(row: unknown[], columns: ColumnMap): ParsedRow | nu
 export function mapRows(rows: unknown[][]): ParsedRow[] {
   const headerIdx = rows.findIndex((row) =>
     Array.isArray(row) &&
-    row.some((cell) =>
-      HEADER_ALIASES.date.some((a) => matchExact(cell, a)),
-    ),
+    row.some((cell) => HEADER_ALIASES.date.some((a) => matchExact(cell, a)))
   )
   if (headerIdx === -1) return []
 
@@ -144,7 +161,10 @@ export function computeTotals(txs: Transaction[]) {
 }
 
 export function aggregate(txs: Transaction[], kind: 'merchant' | 'category') {
-  const map = new Map<string, { count: number; total: number; [key: string]: string | number }>()
+  const map = new Map<
+    string,
+    { count: number; total: number; [key: string]: string | number }
+  >()
   for (const tx of txs) {
     const key = kind === 'merchant' ? tx.merchant : tx.category
     const e = map.get(key) || { [kind]: key, count: 0, total: 0 }
@@ -164,15 +184,26 @@ export function buildAnalysis(txs: Transaction[]) {
   const to = dates[dates.length - 1] ?? null
   const days = (() => {
     if (!to || !from) return 1
-    return Math.max(1, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86400000) + 1)
+    return Math.max(
+      1,
+      Math.round(
+        (new Date(to).getTime() - new Date(from).getTime()) / 86400000,
+      ) + 1,
+    )
   })()
 
-  const totals: ReturnType<typeof computeTotals> & { avgPerDay?: number } = computeTotals(ars)
+  const totals: ReturnType<typeof computeTotals> & { avgPerDay?: number } =
+    computeTotals(ars)
   totals.avgPerDay = Math.round((totals.net * 100) / days) / 100
 
-  let maxExpense: { amount: number; merchant: string; date: string } | null = null
-  let maxCredit: { amount: number; merchant: string; date: string } | null = null
-  const byDay = new Map<string, { date: string; credits: number; debits: number }>()
+  let maxExpense: { amount: number; merchant: string; date: string } | null =
+    null
+  let maxCredit: { amount: number; merchant: string; date: string } | null =
+    null
+  const byDay = new Map<
+    string,
+    { date: string; credits: number; debits: number }
+  >()
   for (const tx of ars) {
     const d = byDay.get(tx.date) || { date: tx.date, credits: 0, debits: 0 }
     if (tx.amount >= 0) d.credits += tx.amount
@@ -187,7 +218,9 @@ export function buildAnalysis(txs: Transaction[]) {
     }
   }
 
-  const byDaySorted = [...byDay.values()].sort((a, b) => a.date.localeCompare(b.date))
+  const byDaySorted = [...byDay.values()].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  )
   let running = 0
   const balanceTrend = byDaySorted.map((d) => {
     running += d.credits + d.debits
@@ -203,7 +236,10 @@ export function buildAnalysis(txs: Transaction[]) {
     byCategory: { [key: string]: string | number }[]
     byDay: { date: string; credits: number; debits: number }[]
     balanceTrend: { date: string; runningBalance: number }[]
-    usd?: { totals: ReturnType<typeof computeTotals>; byCategory: { [key: string]: string | number }[] }
+    usd?: {
+      totals: ReturnType<typeof computeTotals>
+      byCategory: { [key: string]: string | number }[]
+    }
   } = {
     period: { from, to, days },
     totals,

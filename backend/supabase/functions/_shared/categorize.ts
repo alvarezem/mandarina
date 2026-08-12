@@ -10,17 +10,29 @@ export const CATEGORY_RULES: Array<[RegExp, string]> = [
   [/transferencia enviada/i, 'Transferencias'],
   [/seguro/i, 'Seguros'],
   [/axion|ypf|nafta|combustible|shell|petrobras|gasoil/i, 'Combustible'],
-  [/carrefour|coto|jumbo|changomas|supermercado|walmart|makro/i, 'Supermercados'],
+  [
+    /carrefour|coto|jumbo|changomas|supermercado|walmart|makro/i,
+    'Supermercados',
+  ],
   [/cinemark|hoyts|cine|teatro|ticketek|showcase/i, 'Entretenimiento'],
-  [/grido|mostaza|mcdonald|burger king|rotiseria|parrilla|pizzeria|restaurant|heladeria/i, 'Gastronomía'],
+  [
+    /grido|mostaza|mcdonald|burger king|rotiseria|parrilla|pizzeria|restaurant|heladeria/i,
+    'Gastronomía',
+  ],
   [/uber|cabify|didi|taxi|subte|colectivo/i, 'Transporte'],
   [/farmacity|farmacia|drogueria/i, 'Farmacias'],
   [/colegio|universidad|curso|coderhouse|academia/i, 'Educación'],
   [/sport|gimnasio|gym|fitness|crossfit|pilates/i, 'Gimnasio'],
   [/simplicity/i, 'Salud'],
   [/pedidosya/i, 'Delivery'],
-  [/google|apple|youtube|spotify|netflix|suscripcion|streaming/i, 'Suscripciones'],
-  [/natury|naturgy|energia|agua|internet|telefon|telecom|telecentro|fibertel|movistar|claro|servicio/i, 'Servicios'],
+  [
+    /google|apple|youtube|spotify|netflix|suscripcion|streaming/i,
+    'Suscripciones',
+  ],
+  [
+    /natury|naturgy|energia|agua|internet|telefon|telecom|telecentro|fibertel|movistar|claro|servicio/i,
+    'Servicios',
+  ],
   [/pago con qr/i, 'Compras'],
 ]
 

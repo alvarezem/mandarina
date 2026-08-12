@@ -1,5 +1,5 @@
-import { bymaQuote, bymaLastClose } from './byma.ts'
-import { assertEquals, assert } from '@std/assert'
+import { bymaLastClose, bymaQuote } from './byma.ts'
+import { assert, assertEquals } from '@std/assert'
 
 const ZEROS_QUOTE = {
   data: [
@@ -28,8 +28,11 @@ const HISTORY_OK = {
 }
 
 function mockFetch(handler: (url: string, init?: RequestInit) => unknown) {
-  globalThis.fetch = ((input: string | URL, init?: RequestInit) =>
-    Promise.resolve(new Response(JSON.stringify(handler(String(input), init))))) as typeof fetch
+  globalThis.fetch =
+    ((input: string | URL, init?: RequestInit) =>
+      Promise.resolve(
+        new Response(JSON.stringify(handler(String(input), init))),
+      )) as typeof fetch
 }
 
 Deno.test('bymaQuote: devuelve null cuando el endpoint devuelve todo en ceros', async () => {
@@ -45,7 +48,17 @@ Deno.test('bymaQuote: devuelve null cuando el endpoint responde sin data', async
 
 Deno.test('bymaQuote: parsea precio y variación con datos reales', async () => {
   mockFetch(() => ({
-    data: [{ trade: 11000, previousClosingPrice: 10000, denominationCcy: 'ARS', openingPrice: 10800, tradingHighPrice: 11200, tradingLowPrice: 10700, closingPrice: 11000, tradeVolume: 5000, tradeHour: '15:20:00' }],
+    data: [{
+      trade: 11000,
+      previousClosingPrice: 10000,
+      denominationCcy: 'ARS',
+      openingPrice: 10800,
+      tradingHighPrice: 11200,
+      tradingLowPrice: 10700,
+      closingPrice: 11000,
+      tradeVolume: 5000,
+      tradeHour: '15:20:00',
+    }],
   }))
   const q = await bymaQuote('GGAL')
   assert(q != null)
@@ -81,7 +94,15 @@ Deno.test('bymaLastClose: null cuando el histórico viene vacío o falla', async
 })
 
 Deno.test('bymaLastClose: sin variación si hay una sola barra', async () => {
-  mockFetch(() => ({ ...HISTORY_OK, t: [1785726000], o: [9000], h: [9000], l: [9000], c: [9000], v: [100] }))
+  mockFetch(() => ({
+    ...HISTORY_OK,
+    t: [1785726000],
+    o: [9000],
+    h: [9000],
+    l: [9000],
+    c: [9000],
+    v: [100],
+  }))
   const q = await bymaLastClose('GGAL')
   assert(q != null)
   assertEquals(q.price, 9000)

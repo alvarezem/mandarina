@@ -53,18 +53,27 @@ Deno.serve(async (req) => {
   }
 
   const ws = wb.Sheets[wb.SheetNames[0]]
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1 }) as unknown as unknown[][]
+  const rows = XLSX.utils.sheet_to_json(ws, {
+    header: 1,
+  }) as unknown as unknown[][]
 
   const items = extractPlan(rows)
   if (!items) {
     return json(
-      { error: 'No se encontró la fila de encabezados (Ticker | % Meta | Tenencia)' },
+      {
+        error:
+          'No se encontró la fila de encabezados (Ticker | % Meta | Tenencia)',
+      },
       400,
       cors,
     )
   }
   if (items.length === 0) {
-    return json({ error: 'El archivo no tiene activos para importar' }, 400, cors)
+    return json(
+      { error: 'El archivo no tiene activos para importar' },
+      400,
+      cors,
+    )
   }
 
   const rowsToInsert = items.map((item, i) => ({

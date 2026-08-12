@@ -1,9 +1,13 @@
 import { assertEquals } from '@std/assert'
-import { normalizeHeader, HEADER_ALIASES, matchExact, matchFuzzy } from './_shared/normalize.ts'
+import {
+  HEADER_ALIASES,
+  matchExact,
+  matchFuzzy,
+  normalizeHeader,
+} from './_shared/normalize.ts'
 
 Deno.test('normalizeHeader: minúsculas y sin acentos', () => {
-  assertEquals(normalizeHeader('Descripción  Meta'),
-    'descripcion meta')
+  assertEquals(normalizeHeader('Descripción  Meta'), 'descripcion meta')
 })
 
 Deno.test('normalizeHeader: guiones y underscores a espacio, colapsa whitespace', () => {
@@ -25,7 +29,9 @@ Deno.test('matchExact: solo coincide cuando el header ES el alias', () => {
 })
 
 Deno.test('matchExact: matchea los aliases de HEADER_ALIASES', () => {
-  for (const alias of HEADER_ALIASES.date) assertEquals(matchExact(alias, alias), true)
+  for (const alias of HEADER_ALIASES.date) {
+    assertEquals(matchExact(alias, alias), true)
+  }
   assertEquals(matchExact('importe', 'importe'), true)
   assertEquals(matchExact('monto usd', 'monto usd'), true)
 })

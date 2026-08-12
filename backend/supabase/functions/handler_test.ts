@@ -1,14 +1,26 @@
 import { assertEquals } from '@std/assert'
-import { handleParse, type QueryResult, type SelectBuilder } from './parse-summary/index.ts'
+import {
+  handleParse,
+  type QueryResult,
+  type SelectBuilder,
+} from './parse-summary/index.ts'
 
 const USER_ID = '00000000-0000-4000-8000-000000000001'
 const SUMMARY_ID = '00000000-0000-4000-8000-000000000002'
-const CSV = 'Fecha;Descripción;Importe\n01-ENE-26;SUPER COTO;-1250,50\n02-ENE-26;GYM;2000,00'
+const CSV =
+  'Fecha;Descripción;Importe\n01-ENE-26;SUPER COTO;-1250,50\n02-ENE-26;GYM;2000,00'
 
 function makeClient(overrides: Record<string, unknown> = {}) {
-  const calls: { rpc: { name: string; args: Record<string, unknown> }[]; updates: { table: string; payload: Record<string, unknown> }[] } =
-    { rpc: [], updates: [] }
-  const summary = { id: SUMMARY_ID, user_id: USER_ID, file_name: 'resumen.csv', file_path: 'x.csv' }
+  const calls: {
+    rpc: { name: string; args: Record<string, unknown> }[]
+    updates: { table: string; payload: Record<string, unknown> }[]
+  } = { rpc: [], updates: [] }
+  const summary = {
+    id: SUMMARY_ID,
+    user_id: USER_ID,
+    file_name: 'resumen.csv',
+    file_path: 'x.csv',
+  }
 
   // Resultado del query `select().eq()`: promesa thenable con `.single()`.
   const selectBuilder = (result: QueryResult): SelectBuilder => {
@@ -56,15 +68,22 @@ function makeClient(overrides: Record<string, unknown> = {}) {
       from() {
         return {
           download() {
-            if (overrides.downloadError) return Promise.resolve({ data: null, error: { message: 'x' } })
-            return Promise.resolve({ data: new Blob([overrides.fileText ?? CSV] as BlobPart[]), error: null })
+            if (overrides.downloadError) {
+              return Promise.resolve({ data: null, error: { message: 'x' } })
+            }
+            return Promise.resolve({
+              data: new Blob([overrides.fileText ?? CSV] as BlobPart[]),
+              error: null,
+            })
           },
         }
       },
     },
     rpc(name: string, args: Record<string, unknown>) {
       calls.rpc.push({ name, args })
-      if (overrides.rpcError) return Promise.resolve({ data: null, error: { message: 'x' } })
+      if (overrides.rpcError) {
+        return Promise.resolve({ data: null, error: { message: 'x' } })
+      }
       return Promise.resolve({ data: overrides.rpcCount ?? 2, error: null })
     },
   }
@@ -76,7 +95,13 @@ async function bodyOf(res: Response) {
 }
 
 type FinalizeArgs = {
-  p_transactions: { date: string; merchant: string; amount: number; category: string; currency: string }[]
+  p_transactions: {
+    date: string
+    merchant: string
+    amount: number
+    category: string
+    currency: string
+  }[]
   p_result: { period: { days: number } }
   p_period_year: number
   p_period_month: number
@@ -121,7 +146,9 @@ Deno.test('handleParse: resumen inexistente -> 404', async () => {
 })
 
 Deno.test('handleParse: sin transacciones parseadas -> 400', async () => {
-  const client = makeClient({ fileText: 'no hay fila de fecha acá\nsolo texto' })
+  const client = makeClient({
+    fileText: 'no hay fila de fecha acá\nsolo texto',
+  })
   const res = await handleParse(client, SUMMARY_ID, {})
   assertEquals(res.status, 400)
 })
@@ -143,7 +170,9 @@ Deno.test('handleParse: error de descarga -> 500 con status error', async () => 
 })
 
 Deno.test('handleParse: aplica overrides de categoría del usuario', async () => {
-  const client = makeClient({ merchantOverrides: [{ merchant: 'SUPER COTO', category: 'Compras' }] })
+  const client = makeClient({
+    merchantOverrides: [{ merchant: 'SUPER COTO', category: 'Compras' }],
+  })
   const res = await handleParse(client, SUMMARY_ID, {})
   assertEquals(res.status, 200)
   const args = finalizeArgsOf(client)

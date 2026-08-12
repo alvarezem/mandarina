@@ -13,7 +13,9 @@ export function allowedOrigin(origin: string | null): string {
   if (!origin) return ''
   try {
     const url = new URL(origin)
-    if (url.protocol === 'https:' && url.hostname.endsWith(VERCEL_PREVIEW_SUFFIX)) {
+    if (
+      url.protocol === 'https:' && url.hostname.endsWith(VERCEL_PREVIEW_SUFFIX)
+    ) {
       return origin
     }
     return ALLOWED_ORIGINS.includes(origin) ? origin : ''
@@ -25,7 +27,8 @@ export function allowedOrigin(origin: string | null): string {
 export function corsHeaders(origin: string | null): Record<string, string> {
   const allowOrigin = allowedOrigin(origin)
   const headers: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers':
+      'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   }
   if (allowOrigin) {
@@ -35,7 +38,11 @@ export function corsHeaders(origin: string | null): Record<string, string> {
   return headers
 }
 
-export const json = (body: unknown, status: number, extraHeaders: Record<string, string> = {}) =>
+export const json = (
+  body: unknown,
+  status: number,
+  extraHeaders: Record<string, string> = {},
+) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json', ...extraHeaders },

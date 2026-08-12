@@ -17,7 +17,11 @@ Deno.test('mapWithConcurrency: nunca supera el límite de concurrencia', async (
 })
 
 Deno.test('mapWithConcurrency: resuelve todos los índices en orden', async () => {
-  const res = await mapWithConcurrency(['a', 'b', 'c'], 1, (x, i) => `${i}:${x}`)
+  const res = await mapWithConcurrency(
+    ['a', 'b', 'c'],
+    1,
+    (x, i) => `${i}:${x}`,
+  )
   assertEquals(res, ['0:a', '1:b', '2:c'])
 })
 

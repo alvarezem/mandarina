@@ -62,6 +62,6 @@ _Objetivo: automatizar lint/format/tests y detectar vulnerabilidades en el CI. P
 - [x] `deno lint` limpio en las funciones (20 errores → 0).
 - [x] `deno fmt --check` limpio (baseline aplicado en `b0416d0`).
 - [x] `npm test` 183/183 y `deno test` 64/64.
-- [ ] Los 2 workflows pasan en un push.
+- [x] Los 2 workflows pasan en un push (verificado 2026-08-12; el backend necesitó un re-run por un "socket hang up" transitorio de `setup-deno` al bajar Deno de GitHub releases).
 - [x] Pre-commit bloquea código con lint errors (husky + lint-staged).
-- [ ] Dependabot activo sin alertas de las deps de compromised.md.
+- [x] Dependabot activo sin alertas de las deps de compromised.md (abrió PRs de bump el mismo día; `npm audit` en 0).

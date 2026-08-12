@@ -13,7 +13,7 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
   3. **CI + Dependabot** (`d3e0717`): `.github/workflows/frontend.yml` (push+PR a master: npm ci → lint → build → test → `npm audit --audit-level=high`, Node 22 LTS) y `backend.yml` (deno fmt --check → lint → test, deno 2.x en `backend/supabase/functions`). `.github/dependabot.yml` (npm `/frontend` + github-actions `/`, semanal). Sin secrets ni deploy (Vercel autodeploya desde master).
   4. **Pre-commit probado en ambos caminos**: bloquea un archivo con `no-unused-vars` (lo revierte) y pasa un archivo limpio (prettier reformatea). `npm audit` en 0 vulnerabilidades.
   5. **Docs**: AGENTS.md comando `npm run lint` real + bloque de pre-commit/CI + sección **Convención de commits**; `fase7.md` con checks actualizados. `improvements.md` Fase 7.1 corregido (`flat config`, no `.eslintrc`).
-- Pendiente de cierre de Fase 7: **push a origin** y confirmar en GitHub que los 2 workflows pasan y Dependabot se activa (checks `[ ]` de `fase7.md`); la rama estaba 4 commits adelante (3 de Fase 7 + `a18bb86` sin pushear).
+- **Cierre verificado**: `git push` a `master` (4 commits: `a18bb86` + los 3 de Fase 7) → **ambos workflows pasan** (frontend.yml y backend.yml green; el backend necesitó un re-run por un "socket hang up" transitorio de `setup-deno` al descargar Deno 2.9.5 de GitHub releases) y **Dependabot se activó el mismo día** (abrió PRs de bump: `actions/checkout`→v7, `actions/setup-node`→v7 y el npm bump; sin alertas de deps de compromised.md, `npm audit` en 0). Checks `[ ]` de `fase7.md` marcados.
 - **Fase 5** y **Fase 4** (anteriores, cerradas): ver DONE.md y sección Decisiones abajo.
 
 ## En progreso

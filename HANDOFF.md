@@ -6,25 +6,28 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 ## Última sesión
 
-- **Fecha**: 2026-08-11
-- **Qué se hizo** — **FASE 7 EN CURSO, lint de backend y frontend VERDE** (ver `fase7.md`):
-  1. **Backend `deno lint` limpio** (antes: 20 errores). Specifiers inline (`jsr:`, `https://`) → **bare** (`@std/*`, `xlsx`, `unpdf`) en 11 archivos; `deno.json` re-mapeado a claves bare (patrón Deno moderno). `quotes/byma.ts`: eliminados 2 `let data: any` (tipado estricto BYMA). `quotes/pool.ts`: `mapWithConcurrency` acepta `R | Promise<R>`. `handler_test.ts`/`pool_test.ts`: callbacks sin `async` y params `_key/_value`.
-  2. **Frontend ESLint estricto**: `eslint.config.js` flat config (JSX en `.js`, react `recommended`, react-hooks, globals) — **325 issues → 0** (se pagó toda la deuda histórica). `.prettierrc.json` + `.prettierignore` agregados. Refactor de `useAsync.js` (estado reseteado en la IIFE async) y limpieza de imports/props sin uso.
-  3. **Verificado**: `deno test` **64/64** + `deno check` OK en las 3 funciones; `npm test` **183/183**; `npm run lint` y `deno lint` sin errores.
-  4. **`fase7.md`**: plan de ejecución de Fase 7 con decisiones (lint para backend con deno nativo — sin typescript-eslint; ESLint estricto; baseline de format en commit aparte).
-- **Fase 5** (anterior, cerrada): refactor/fiabilidad backend — ver DONE.md y sección Decisiones abajo.
+- **Fecha**: 2026-08-12
+- **Qué se hizo** — **FASE 7 CERRADA** (ver `fase7.md`):
+  1. **Baseline `deno fmt`** (`b0416d0`): `functions/deno.json` con `"fmt": { "singleQuote": true, "semiColons": false }` (formato flat; el `options` anidado quedó deprecado en Deno 2.9) para **igualar el estilo del frontend** (prettier singleQuote + sin semicolons). Baseline = solo wrapping/indent/EOF, sin churn de comillas. Frontend no necesitó baseline (`prettier --check` ya pasaba). Verificado: `deno fmt --check` limpio, `deno lint` limpio, `deno test` 64/64, `deno check` OK en las 3.
+  2. **husky + lint-staged** (`d3e0717`): `prepare: "cd .. && husky frontend/.husky"` (husky 9 exige `.git` en el cwd literal — por eso se inicializa desde la raíz apuntando a `frontend/.husky`); `lint-staged` en `frontend/package.json` (`*.{js,jsx}` → eslint --fix + prettier --write); `frontend/.husky/pre-commit` resuelve el root con `git rev-parse --show-toplevel` y **corre `deno fmt --check` + `deno lint` sobre todo el backend si hay `.ts` staged**. `"type": "module"` agregado al package.json del frontend (elimina el warning `MODULE_TYPELESS_PACKAGE_JSON` de eslint en el hook; el stack ya era ESM puro, verificado sin `require`/`module.exports` en fuentes).
+  3. **CI + Dependabot** (`d3e0717`): `.github/workflows/frontend.yml` (push+PR a master: npm ci → lint → build → test → `npm audit --audit-level=high`, Node 22 LTS) y `backend.yml` (deno fmt --check → lint → test, deno 2.x en `backend/supabase/functions`). `.github/dependabot.yml` (npm `/frontend` + github-actions `/`, semanal). Sin secrets ni deploy (Vercel autodeploya desde master).
+  4. **Pre-commit probado en ambos caminos**: bloquea un archivo con `no-unused-vars` (lo revierte) y pasa un archivo limpio (prettier reformatea). `npm audit` en 0 vulnerabilidades.
+  5. **Docs**: AGENTS.md comando `npm run lint` real + bloque de pre-commit/CI + sección **Convención de commits**; `fase7.md` con checks actualizados. `improvements.md` Fase 7.1 corregido (`flat config`, no `.eslintrc`).
+- Pendiente de cierre de Fase 7: **push a origin** y confirmar en GitHub que los 2 workflows pasan y Dependabot se activa (checks `[ ]` de `fase7.md`); la rama estaba 4 commits adelante (3 de Fase 7 + `a18bb86` sin pushear).
+- **Fase 5** y **Fase 4** (anteriores, cerradas): ver DONE.md y sección Decisiones abajo.
 
 ## En progreso
 
-- **FASE 7** (ver `fase7.md`): quedan (1) baseline `deno fmt` y `prettier --write` en commit aparte, (2) husky + lint-staged (pre-commit), (3) GitHub Actions (`frontend.yml` + `backend.yml`), (4) dependabot, (5) docs (comandos en AGENTS.md + Conventional Commits).
+- **FASE 6** (ver `improvements.md`): tests — mocks compartidos (`createSupabaseMock`, factory de datos en `src/test/setup.js`), mover mock de `react-chartjs-2`/polyfills a `setupTests.js`, cubrir `Toast.js`/`Dropdown.js`/`FiltersBar.js`/`PriceChart.js`/`Sidebar.js`/`MarketClosedNotice.js`/`useCountUp.js` + hooks de Fase 3, y coverage con `@vitest/coverage-v8` (meta ≥80% en `src/lib/` y `src/hooks/`, progresivo en componentes).
 - **Deploy**: orden obligatorio **`supabase db push` (0014) ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql`.
 - **Tarea aparte** (anotada, sin empezar): flujo de **cambio de contraseña** (link del email → pantalla de nueva contraseña; hoy el redirect maneja el token de Supabase).
-- Siguiente por roadmap tras Fase 7: **FASE 6** (tests: mocks compartidos y cobertura de huecos), ver `improvements.md`.
 
 ## Decisiones tomadas (a no re-litigar sin motivo)
 
 - **Fase 7 — TypeScript en frontend**: considerado y **descartado por ahora** (misma postura que AGENTS.md). Con 183 tests + JS de lint limpio, el tipo no aporta valor proporcional al costo (renombrar 56 archivos `.js`→`.tsx`, migrar el plugin `transform-jsx-in-js`, tipar toda la UI). El backend ya es TS; la frontend habla con Supabase REST (sin tipos compartibles con las Edge Functions). Revisitar cuando el scope crezca o aparezca un bug de tipos. (Detalle completo en respuesta a la sesión 2026-08-11.)
 - **Fase 7 — imports bare en `deno.json`**: el import map pasó de claves inline (`jsr:@std/csv`, `https://esm.sh/xlsx@0.18.5`) a **claves bare** (`@std/csv`, `xlsx`); los archivos importan con names cortos y el pinning vive solo en `deno.json` + `deno.lock`. Patrón Deno moderno.
+- **Fase 7 — husky en subdirectorio**: husky 9 exige `.git` en el cwd literal, y el repo raíz no tiene package.json (es frontend-only). El script `prepare: "cd .. && husky frontend/.husky"` inicializa el hooksPath `frontend/.husky/_` desde la raíz. Si algún día el repo gana un package.json raíz, mudar husky ahí es la variante estándar de monorepo.
+- **Fase 7 — `"type": "module"` en el frontend**: agregado al package.json para eliminar el warning `MODULE_TYPELESS_PACKAGE_JSON` que eslint emitía en el hook de pre-commit. Stack ya 100% ESM (verificado sin `require`/`module.exports` en fuentes ni configs).
 - **Fase 5 — guard de status de `finalize_parse`**: eliminado. El delete+insert atómico (con lock de fila) ya es idempotente; el guard `v_status <> 'parsing'` solo agregaba un camino de éxito-silencioso `{ok:true,count:0}`. Un re-proceso (futuro botón de la UI) reescribe el resultado correcto.
 - **Fase 5 — regla duplicada `bull market|broker` (0010 vs 0006)**: se deja sin tocar a propósito — es un UPDATE idempotente ya aplicado en prod; editar historial de migraciones aplicadas rinde menos que el ruido que quita.
 - **Migración a Vite**: revertida una vez por decisión del usuario (la sesión se

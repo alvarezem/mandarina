@@ -410,9 +410,11 @@ _Objetivo: suite mantenible y cobertura de los componentes críticos sin mockear
 ## FASE 7 — Calidad y CI (100% free)
 _Objetivo: automatizar lint/format/tests y detectar vulnerabilidades en el CI._
 
-1. **ESLint 9 + Prettier** (gratis): `.eslintrc` con `eslint-plugin-react-hooks`,
-   `eslint-plugin-react`, `typescript-eslint` para el backend TS; `prettier` con
-   config mínima. Scripts `lint`/`format`.
+1. **ESLint 9 + Prettier** (gratis): flat config `eslint.config.js` con `eslint-plugin-react-hooks`,
+   `eslint-plugin-react` (JSX en `.js`); `prettier` con config mínima. Backend: `deno lint` + `deno fmt`
+   nativos (sin typescript-eslint — exigiría node_modules/tsconfig en el repo Deno) y `deno.json` con
+   `"fmt": { "singleQuote": true, "semiColons": false }` (baseline iguala el estilo del frontend).
+   Scripts `lint`/`format`.
 2. **husky + lint-staged**: pre-commit corre eslint+prettier sobre archivos staged.
 3. **GitHub Actions** (`.github/workflows/`):
    - `frontend.yml`: `npm ci` → `npm run build:css` → `npm run build` → `npm test`.

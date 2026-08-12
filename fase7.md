@@ -6,7 +6,7 @@ _Objetivo: automatizar lint/format/tests y detectar vulnerabilidades en el CI. P
 
 1. **Backend**: lint con `deno lint` + `deno fmt` (nativos de Deno, cero toolchain Node, respetan imports `jsr:`/`esm.sh`). **No** se usa `typescript-eslint` (descartado: exigiría node_modules/tsconfig dentro del proyecto Deno).
 2. **ESLint**: **estricto desde el día 1** — se habilitan las reglas recomendadas y se pagan todos los errores/warnings históricos del codebase (se escribió sin lint).
-3. **Prettier / deno fmt**: **baseline completo** sobre todo el repo en un commit separado, para que el pre-commit no genere diffs ruidosos.
+3. **Prettier / deno fmt**: **baseline completo** sobre todo el repo en un commit separado, para que el pre-commit no genere diffs ruidosos. **deno fmt iguala el estilo del frontend**: en `functions/deno.json` se configuró `"fmt": { "singleQuote": true, "semiColons": false }` (formato "flat", el `options` anidado quedó deprecado en Deno 2.9) — el baseline cambia solo wrapping/indent/EOF, sin churn de comillas. El frontend ya pasaba `prettier --check` (baseline no hizo falta).
 4. **Convención de commits**: solo se documenta en `AGENTS.md` (el historial ya usa Conventional Commits). Sin commitlint.
 
 > Nota vs improvements.md: ESLint 9 usa **flat config** (`eslint.config.js`), no `.eslintrc` (el plan original estaba escrito para ESLint 8).
@@ -60,8 +60,8 @@ _Objetivo: automatizar lint/format/tests y detectar vulnerabilidades en el CI. P
 **Verificación final**:
 - [x] `npm run lint` sin errores (325 issues históricos → 0).
 - [x] `deno lint` limpio en las funciones (20 errores → 0).
-- [ ] `deno fmt --check` limpio (baseline pendiente).
+- [x] `deno fmt --check` limpio (baseline aplicado en `b0416d0`).
 - [x] `npm test` 183/183 y `deno test` 64/64.
 - [ ] Los 2 workflows pasan en un push.
-- [ ] Pre-commit bloquea código con lint errors.
+- [x] Pre-commit bloquea código con lint errors (husky + lint-staged).
 - [ ] Dependabot activo sin alertas de las deps de compromised.md.

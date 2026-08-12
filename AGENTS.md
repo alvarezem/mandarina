@@ -45,18 +45,35 @@ npm start            # dev server :3000 (tailwind watch + vite)
 npm test             # suite de tests (Vitest, un solo run)
 npm run test:watch   # Vitest en modo watch
 npm run build        # build:css + build de producción (salida en dist/)
-npm run lint         # (Fase 7 de improvements.md, cuando exista)
+npm run lint         # ESLint estricto (flat config, 0 issues) — también corre en pre-commit
+npm run format       # prettier --write sobre todo el repo del frontend
 
 # Backend / Edge Functions
 cd backend/supabase/functions
 deno test            # suites: parse-summary/detection_test, quotes/byma_test, quotes/pool_test
 deno check <funcion>/index.ts
+deno lint            # nativo de Deno (verifica también en pre-commit)
+deno fmt --check .   # nativo de Deno; config flat en deno.json (singleQuote + sin semicolons)
+
+# Calidad / CI
+# pre-commit (husky + lint-staged): eslint+prettier por archivo staged del frontend,
+#   y deno fmt --check + deno lint si hay .ts del backend staged. Bloquea el commit.
+# CI (GitHub Actions): frontend.yml (lint+build+test+audit) y backend.yml
+#   (fmt+lint+test) sobre push/PR a master. Dependabot semanal (npm + GitHub Actions).
 
 # Supabase (desde backend/)
 supabase link --project-ref qfjehqaeagskxjulzhgx
 supabase db push
 supabase functions deploy parse-summary|import-plan|quotes
 ```
+
+## Convención de commits
+
+Conventional Commits (tipos `feat:`, `fix:`, `refactor:`, `style:`, `docs:`,
+`chore:`, `test:`, `perf:`, `build:`, `ci:`) — el historial ya lo usa. Sin
+chequeo automático (no hay commitlint); el pre-commit valida solo lint/format/tests.
+Scope opcional (ej. `feat(frontend):`, `chore(backend):`). Un commit = un cambio
+lógico; el baseline de formato y los refactors de lint van en commits separados.
 
 ## Índice de memoria
 

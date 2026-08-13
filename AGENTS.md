@@ -25,7 +25,10 @@ frontend/
                        #   MarketQuotes, Sidebar, Toast, Dropdown, Charts, Tour...
     lib/               # supabaseClient, plan, analysis, history, planSort,
                        #   sanitizeFileName (lógica pura con tests)
-    hooks/             # useCountUp
+    hooks/             # useAsync, useCountUp, usePortfolioQuotes, useTheme
+    test/              # setup.js: mock compartido de supabase (createSupabaseMock)
+                       #   + factories de datos (wrap, tx, summary, planItem)
+    setupTests.js      # mock global de supabase + mock de react-chartjs-2 + polyfills
     *.test.js          # tests Vitest junto al código
 backend/
   supabase/
@@ -44,6 +47,7 @@ cd frontend && npm install
 npm start            # dev server :3000 (tailwind watch + vite)
 npm test             # suite de tests (Vitest, un solo run)
 npm run test:watch   # Vitest en modo watch
+npm run coverage     # suite + report de coverage (v8; meta ≥80% en src/lib y src/hooks)
 npm run build        # build:css + build de producción (salida en dist/)
 npm run lint         # ESLint estricto (flat config, 0 issues) — también corre en pre-commit
 npm run format       # prettier --write sobre todo el repo del frontend

@@ -7,14 +7,28 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-12
-- **Qué se hizo** — **FASE 7 CERRADA** (ver `fase7.md`):
-  1. **Baseline `deno fmt`** (`b0416d0`): `functions/deno.json` con `"fmt": { "singleQuote": true, "semiColons": false }` (formato flat; el `options` anidado quedó deprecado en Deno 2.9) para **igualar el estilo del frontend** (prettier singleQuote + sin semicolons). Baseline = solo wrapping/indent/EOF, sin churn de comillas. Frontend no necesitó baseline (`prettier --check` ya pasaba). Verificado: `deno fmt --check` limpio, `deno lint` limpio, `deno test` 64/64, `deno check` OK en las 3.
-  2. **husky + lint-staged** (`d3e0717`): `prepare: "cd .. && husky frontend/.husky"` (husky 9 exige `.git` en el cwd literal — por eso se inicializa desde la raíz apuntando a `frontend/.husky`); `lint-staged` en `frontend/package.json` (`*.{js,jsx}` → eslint --fix + prettier --write); `frontend/.husky/pre-commit` resuelve el root con `git rev-parse --show-toplevel` y **corre `deno fmt --check` + `deno lint` sobre todo el backend si hay `.ts` staged**. `"type": "module"` agregado al package.json del frontend (elimina el warning `MODULE_TYPELESS_PACKAGE_JSON` de eslint en el hook; el stack ya era ESM puro, verificado sin `require`/`module.exports` en fuentes).
-  3. **CI + Dependabot** (`d3e0717`): `.github/workflows/frontend.yml` (push+PR a master: npm ci → lint → build → test → `npm audit --audit-level=high`, Node 22 LTS) y `backend.yml` (deno fmt --check → lint → test, deno 2.x en `backend/supabase/functions`). `.github/dependabot.yml` (npm `/frontend` + github-actions `/`, semanal). Sin secrets ni deploy (Vercel autodeploya desde master).
-  4. **Pre-commit probado en ambos caminos**: bloquea un archivo con `no-unused-vars` (lo revierte) y pasa un archivo limpio (prettier reformatea). `npm audit` en 0 vulnerabilidades.
-  5. **Docs**: AGENTS.md comando `npm run lint` real + bloque de pre-commit/CI + sección **Convención de commits**; `fase7.md` con checks actualizados. `improvements.md` Fase 7.1 corregido (`flat config`, no `.eslintrc`).
-- **Cierre verificado**: `git push` a `master` (4 commits: `a18bb86` + los 3 de Fase 7) → **ambos workflows pasan** (frontend.yml y backend.yml green; el backend necesitó un re-run por un "socket hang up" transitorio de `setup-deno` al descargar Deno 2.9.5 de GitHub releases) y **Dependabot se activó el mismo día** (abrió PRs de bump: `actions/checkout`→v7, `actions/setup-node`→v7 y el npm bump; sin alertas de deps de compromised.md, `npm audit` en 0). Checks `[ ]` de `fase7.md` marcados.
-- **Fase 5** y **Fase 4** (anteriores, cerradas): ver DONE.md y sección Decisiones abajo.
+- **Qué se hizo** — **FASE 6 CERRADA** (ver `improvements.md`):
+  1. **Mock de supabase único** (`src/test/setup.js`): `createSupabaseMock()` con
+     `mockTable(table, rowsOrConfig?, error?)` (cadenas cacheadas por tabla + modos
+     insert/update/delete/upsert), `tableChain(table)` para asertar, y factories
+     `wrap/tx/summary/planItem`. Registrado **una sola vez** como mock global en
+     `src/setupTests.js` (setupFiles). Los 7 test files que mockeaban a mano
+     (`App`, `Auth`, `Dashboard`, `InvestmentPlan`, `MarketQuotes`, `UploadSummaries`,
+     `usePortfolioQuotes`) ahora usan `mockTable`/`tableChain`; `vi.clearAllMocks()`
+     en `beforeEach`. `UploadSummaries.test.js` fue el último convertido (antes
+     mockeaba `.insert().select().single()`, update/delete `.eq()` a mano).
+  2. **Tests de huecos**: cubiertos `Toast`, `Dropdown` (portal + eventos globales),
+     `FiltersBar`, `PriceChart`, `Sidebar`, `MarketClosedNotice`, `useCountUp`,
+     `useTheme`. `usePortfolioQuotes` ampliado a 8 tests (MEP/CCL, scaling ARS↔USD,
+     mercado cerrado, catch de refresh).
+  3. **Coverage**: `@vitest/coverage-v8` instalado; `vite.config.js` con
+     `include: ['src/lib/**', 'src/hooks/**']`, `exclude: ['src/lib/supabaseClient.js']`
+     (siempre mocked, sin lógica) y thresholds globales ≥80. Script `npm run coverage`.
+  4. **Cierre verificado**: **230 tests / 26 files** green (era 183/18 al iniciar);
+     coverage real **statements 97.8, branches 89.3, functions 97.7, lines 98.9**
+     (meta ≥80). `npm run lint` limpio, prettier limpio, `npm run build` OK,
+     `npm audit` 0. `coverage/` agregado a los ignores de ESLint.
+- **Fase 7** (cerrada, anterior): ver `fase7.md` y sección Decisiones abajo.
 
 ## En progreso
 

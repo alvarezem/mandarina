@@ -389,21 +389,41 @@ _Objetivo: migraciones sanas, funciones reproducibles y sin bugs de dato._
 ## FASE 6 — Tests: mocks compartidos y cobertura de huecos
 _Objetivo: suite mantenible y cobertura de los componentes críticos sin mockear._
 
-1. **Mocks compartidos** (hoy repetidos en 6 archivos): `src/test/setup.js` con
-   factory `createSupabaseMock()` (auth/from/storage/functions) y factory de datos
-   (`mockTransactions`, `mockPlan`, `mockSummaries`, `wrap()`).
-2. Mover mock de `react-chartjs-2` y polyfills a `setupTests.js`.
+1. **Mocks compartidos** (antes repetidos en 7 archivos): `src/test/setup.js` con
+   factory `createSupabaseMock()` (auth/from/storage/functions) registrado **una sola
+   vez** como mock global en `src/setupTests.js` (setupFiles). Detalles:
+   - `mockTable(table, rowsOrConfig?, error?)` cachea una cadena por tabla:
+     select→eq→order resuelve `{ data: rows, error }`; `insert`/`update`/`delete`/
+     `upsert` setean modo y resuelven `{ data: insert, error: insertError}` o
+     `{ data: null, error: <modo>Error }` según la config del test.
+   - `tableChain(table)` devuelve la cadena para asertar `select`/`insert`/`update`/
+     `eq`/`delete` (los métodos son vi.fn).
+   - Factory de datos `wrap()`, `tx()`, `summary()`, `planItem()`.
+   - Los 7 test files que mockeaban supabase a mano (`App`, `Auth`, `Dashboard`,
+     `InvestmentPlan`, `MarketQuotes`, `UploadSummaries`, `usePortfolioQuotes`) ahora
+     importan el cliente y setean con `mockTable`/`tableChain`. `vi.clearAllMocks()`
+     en `beforeEach` para no arrastrar llamadas entre tests.
+   - El refactor de cadenas requiere respetar la cadena real del componente: `.insert().
+     .select().single()` (UploadSummaries), update/delete `.eq()`, etc.
+2. Mover mock de `react-chartjs-2` y polyfills a `setupTests.js`. **Hecho** — el mock
+   del cliente también vive ahí.
 3. Cobertura faltante (componentes transversales sin tests):
    `Toast.js`, `Dropdown.js`, `FiltersBar.js`, `PriceChart.js`, `Sidebar.js`,
-   `MarketClosedNotice.js`, hook `useCountUp.js`.
+   `MarketClosedNotice.js`, hook `useCountUp.js`, `useTheme.js`. **Todos cubiertos**.
 4. Tests de los nuevos hooks/helpers de Fase 3 (`usePortfolioQuotes`, `format.js`,
-   `useTheme`).
+   `useTheme`). `usePortfolioQuotes` ampliado a 8 tests (rates MEP/CCL, scaling
+   ARS↔USD, mercado cerrado, catch de refresh).
 5. Configurar `vitest` con coverage (`@vitest/coverage-v8`) y meta de al menos
-   80% en `src/lib/` y `src/hooks/`, progresivo en componentes.
+   80% en `src/lib/` y `src/hooks/`, progresivo en componentes. **Hecho**:
+   `include: ['src/lib/**', 'src/hooks/**']`, `exclude: ['src/lib/supabaseClient.js']`
+   (siempre mocked, sin lógica), thresholds globales ≥80 en statements/functions/
+   lines/branches, script `npm run coverage`.
 
 **Verificación**:
 - [x] `npm test` corre con mocks centralizados (1 sola definición de mock supabase).
 - [x] Coverage report disponible y sin caídas por debajo de la meta.
+- [x] Cierre verificado (2026-08-12): **230 tests / 26 files** verdes; coverage real
+  lib+hooks: statements 97.8, branches 89.3, functions 97.7, lines 98.9. npm audit 0.
 
 ---
 

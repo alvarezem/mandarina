@@ -67,6 +67,13 @@ describe('SummaryDetailModal', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('fija el backdrop al viewport (fixed, no scrollable)', () => {
+    renderModal()
+    const backdrop = screen.getByTestId('summary-modal-backdrop')
+    expect(backdrop.className).toContain('fixed')
+    expect(backdrop.className).not.toContain('absolute')
+  })
+
   it('usa la grilla compacta de 2 columnas para las cards', async () => {
     renderModal()
     await screen.findByText('resumen-julio.csv')

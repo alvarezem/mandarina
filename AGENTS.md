@@ -86,8 +86,11 @@ lógico; el baseline de formato y los refactors de lint van en commits separados
 2. **`TODO.md`** — roadmap y pendientes vivos.
 3. **`DONE.md`** — historial de lo completado y decisiones de producto.
 4. **`improvements.md`** — plan de saneamiento/refactor en 8 fases. **LEER ANTES de tocar toolchain, seguridad, o estructura.** Contiene la justificación de cada decisión (Vite, Vitest, rotación de service role, CI, etc.).
-5. **`compromised.md`** — dependencias PROHIBIDAS por vulnerabilidades. Nunca instalar; verificar con `npm ls`/lockfile.
-6. **`README.md`** — descripción general y stack.
+5. **`README.md`** — descripción general y stack.
+
+> `fase8.md` (raíz) es el plan de ejecución de la Fase 8; `faseN.md` anteriores
+> ya se archivaron al cerrar sus fases. `compromised.md` se borró en Fase 8: la
+> protección de dependencias la dan hoy `npm audit` + Dependabot.
 
 ## Reglas de conducta
 
@@ -97,6 +100,11 @@ lógico; el baseline de formato y los refactors de lint van en commits separados
 4. **Ejecución por objetivos.** Transformar tareas en metas verificables. Para tareas multi-paso, declarar un plan breve con check de verificación por paso.
 
 ## Recordatorio de memoria (re-evaluar)
+
+La config de memoria del agente (`.opencode/opencode.json`, que apunta a
+AGENTS.md + HANDOFF.md) **no viaja en el repo** (gitignored desde Fase 8): se
+auto-carga localmente, pero un clon del repo no la incluye — recrearla copiando
+el patrón local si hace falta.
 
 Cuando surjan procedimientos repetidos (ej. deploy, migraciones), sesiones
 profundas, o necesidad de aislar dominios, evaluar implementar:

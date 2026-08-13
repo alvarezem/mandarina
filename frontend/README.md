@@ -16,15 +16,18 @@ npm install
 npm start            # dev server en :3000 (tailwind watch + vite)
 npm test             # suite de tests (Vitest, un solo run)
 npm run test:watch   # Vitest en modo watch
+npm run coverage     # suite + report de coverage (meta ≥80% en src/lib y src/hooks)
 npm run build        # build:css + build de producción (salida en dist/)
+npm run lint         # ESLint estricto (flat config, 0 issues)
+npm run format       # prettier --write
 ```
 
 ## Notas de configuración
 
 - `vite.config.js`: plugin react + server en :3000 (OAuth localhost:3000) +
   entorno de tests jsdom. Incluye un plugin `transform-jsx-in-js` porque el
-  código mantiene componentes en archivos `.js` (estilo CRA) y el transformador
-  oxc de Vite 8 excluye `.js` por defecto. Ver
+  código mantiene componentes en archivos `.js` y el transformador oxc de Vite 8
+  excluye `.js` por defecto. Ver
   https://github.com/vitejs/vite/discussions/21505
 - Variables de entorno: prefijo `VITE_` (ver `.env.example`).
 - Deploy: estático vía Vercel (`vercel.json`, salida en `dist/`).

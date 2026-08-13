@@ -223,6 +223,45 @@ describe('Dashboard', () => {
     expect(merchants).toEqual(['SUELDO'])
   })
 
+  it('en ingresos, click en un origen filtra la tabla y un segundo click restaura', async () => {
+    mockTx([
+      {
+        id: 'i1',
+        date: '2026-07-01',
+        merchant: 'SUELDO',
+        category: 'Ingresos',
+        currency: 'ARS',
+        amount: 500000,
+        summary_id: 's1',
+        card_summaries: { file_name: 'resumen-julio.csv' },
+      },
+      {
+        id: 'i2',
+        date: '2026-07-02',
+        merchant: 'REINTEGRO',
+        category: 'Ingresos',
+        currency: 'ARS',
+        amount: 1500,
+        summary_id: 's1',
+        card_summaries: { file_name: 'resumen-julio.csv' },
+      },
+    ])
+    renderDashboard({ mode: 'ingresos' })
+    await screen.findByText('Mayor ingreso ARS')
+
+    const sueldoButton = () => screen.getByRole('button', { name: /^SUELDO/ })
+    const tableMerchants = async () => {
+      const [_, ...rows] = await rowsOfTable()
+      return rows.map((r) => within(r).getAllByRole('cell')[1].textContent)
+    }
+
+    await userEvent.click(sueldoButton())
+    expect(await tableMerchants()).toEqual(['SUELDO'])
+
+    await userEvent.click(sueldoButton())
+    expect(await tableMerchants()).toEqual(['REINTEGRO', 'SUELDO'])
+  })
+
   it('filtra por categoría desde el dropdown', async () => {
     renderDashboard()
     await screen.findByText('Débitos')

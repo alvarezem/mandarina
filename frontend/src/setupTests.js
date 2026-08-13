@@ -50,3 +50,8 @@ if (!window.matchMedia) {
     dispatchEvent: () => false,
   })
 }
+
+// jsdom no implementa scrollIntoView (Dashboard.scrollToTable). No-op en tests.
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {}
+}

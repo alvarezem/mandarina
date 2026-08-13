@@ -308,6 +308,11 @@ export default function Dashboard({
   const focusCategory = (cat) =>
     setCategories((prev) => (prev.length === 1 && prev[0] === cat ? [] : [cat]))
 
+  const toggleMerchant = (merchant) =>
+    setQuery((prev) =>
+      prev.trim().toLowerCase() === merchant.trim().toLowerCase() ? '' : merchant,
+    )
+
   const scrollToTable = () =>
     tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
@@ -466,7 +471,7 @@ export default function Dashboard({
               scrollToTable()
             }}
             onBar={(merchant) => {
-              setQuery(merchant)
+              toggleMerchant(merchant)
               scrollToTable()
             }}
           />
@@ -475,7 +480,7 @@ export default function Dashboard({
             <IncomeSources
               sources={analysis.sources}
               onSelect={(merchant) => {
-                setQuery(merchant)
+                toggleMerchant(merchant)
                 scrollToTable()
               }}
             />

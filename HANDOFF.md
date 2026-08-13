@@ -7,20 +7,22 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-13
-- **Qué se hizo** — **QW-C Ingresos: subtotales y recurrencia** (detalle en `DONE.md`):
-  1. **`lib/analysis.js`** — nueva `buildIncomeSources(txs, { minMonthsRecurring = 2 })`:
-     agrupa créditos por merchant → `{ merchant, category, count, total, monthCount,
-     recurring }`; `monthCount` = meses distintos del joined
-     `card_summaries.period_year/period_month` con fallback al mes de `tx.date`
-     (helper `monthKey`); `recurring = monthCount >= 2`; ordenado por total desc,
-     todos los orígenes, totales en moneda nativa. `buildIncomeAnalysis` expone
-     `result.sources`; el `byMerchant` top-10 del gráfico no cambió.
-  2. **`components/IncomeSources.js`** (nuevo) — tarjeta "Acreditaciones por
-     origen": fila con merchant truncado, badge **"Recurrente"** (pill verde),
-     subtítulo `categoría · ×N`, total con `fmt`, contador de orígenes y click que
-     filtra la tabla. Wiring en `Dashboard.js` solo con `isIngresos`
-     (`setQuery(merchant)` + `scrollToTable()`).
-  3. Suite **262/262** (+11) + lint limpio + coverage lib 96.0% / hooks 99.1%.
+- **Qué se hizo** — **QW-D: pulido de layout y toggle de filtros** (detalle en `DONE.md`):
+  1. **`SpendingCharts.js`** — `lg:col-span-2` en la tarjeta de la barra ("Top
+     orígenes de ingresos" / "Top comercios con mayor gasto") → full-width en
+     ambos modos; desaparece el hueco de la celda derecha del grid.
+  2. **`Dashboard.js`** — helper `toggleMerchant(merchant)` (si el `query` ya es
+     ese merchant case-insensitive → `''`, si no → merchant) usado en `onBar`
+     (gráfico) y en `onSelect` de `IncomeSources` → primer click filtra, segundo
+     click restaura (igual que el doughnut con `focusCategory`).
+  3. Suite **263/263** (+1) + lint limpio + coverage lib 96.0% / hooks 99.1%.
+     Además: polyfill `Element.prototype.scrollIntoView` en `setupTests.js`
+     (jsdom no lo implementa → errores no capturados al clickear orígenes).
+  - **Sesión anterior (2026-08-13, tarde)**: QW-C Ingresos — `buildIncomeSources`
+    en `lib/analysis.js` (subtotales + recurrencia ≥2 meses vía
+    `card_summaries.period_month` con fallback a `tx.date`) + componente
+    `IncomeSources.js` ("Acreditaciones por origen", badge "Recurrente", click
+    filtra) — ver `DONE.md`.
   - **Sesión anterior (2026-08-13, mañana)**: fix visual del modal de resumen en
     2 rondas (portal a `document.body` + backdrop `fixed` y scroll en wrapper
     propio, aplicado también a `QuoteModal`) — ver `DONE.md`.
@@ -54,19 +56,21 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 ## ⚡ Próxima tarea — Flujo de cambio de contraseña
 
-QW-C Ingresos está hecho (ver DONE.md). Sigue la cola de producto, item
-**flujo de cambio de contraseña** (frontend-only, sin backend). Hoy
-`resetPasswordForEmail` (`Auth.js`) vuelve a `window.location.origin` con el
-token en el hash; Supabase auto-crea sesión `PASSWORD_RECOVERY` pero `App.js`
-no la maneja → el usuario llega al dashboard sin pantalla para setear la
-contraseña nueva. Plan (detalle en `TODO.md`):
+QW-D está hecho (ver DONE.md). Sigue la cola de producto, item **flujo de cambio
+de contraseña** (frontend-only, sin backend). Hoy `resetPasswordForEmail`
+(`Auth.js`) vuelve a `window.location.origin` con el token en el hash; Supabase
+auto-crea sesión `PASSWORD_RECOVERY` pero `App.js` no la maneja → el usuario
+llega al dashboard sin pantalla para setear la contraseña nueva. Plan:
 
-1. **`App.js`** — escuchar el evento `PASSWORD_RECOVERY` en `onAuthStateChange` y
-   mostrar una pantalla "Nueva contraseña" en vez del dashboard.
-2. **Pantalla nueva** — reusa la validación `letters_digits`/fuerza de `Auth.js` y
-   `updateUser({ password })`; logout + mensaje de éxito → login.
-3. **Tests** — `App.test.js`/`Auth.test.js`; verificación `npm test`, `npm run lint`,
-   coverage lib/hooks ≥80%.
+1. **`App.js`** — escuchar el evento `PASSWORD_RECOVERY` en `onAuthStateChange`
+   (`onAuthStateChange`) y mostrar una pantalla "Nueva contraseña" en vez del
+   dashboard.
+2. **Pantalla nueva** — reusa la validación `letters_digits`/fuerza de `Auth.js`
+   y `updateUser({ password })`; logout + mensaje de éxito → login. El
+   `secure_password_change` de `config.toml` no bloquea el recovery (sesión con
+   grant).
+3. **Tests** — `App.test.js`/`Auth.test.js`; verificación `npm test`,
+   `npm run lint`, coverage lib/hooks ≥80%.
 
 Luego: **drawer móvil custom** → backend todo al final (ver `TODO.md`).
 
@@ -74,11 +78,12 @@ Luego: **drawer móvil custom** → backend todo al final (ver `TODO.md`).
 
 - **Flujo de cambio de contraseña** — ver sección "⚡ Próxima tarea" arriba.
   **Orden de cola (decisión del usuario 2026-08-13)**: 1) QW-C Ingresos → **HECHO**
-  2) **flujo de cambio de contraseña** → 3) **drawer móvil custom y lindo** (no el
-  default; branding/logo/animación coherentes con el rail). **Todo lo de backend
-  se anota al final de `TODO.md`**: watchlist (decisión DB vs localStorage),
-  ledger (Plan Fase 2), ONs/cauciones en la edge `quotes`, y migrar a las nuevas
-  API keys de Supabase (`sb_publishable_`/`sb_secret_`) antes de fines 2026.
+  2) QW-D layout/toggle → **HECHO** 3) **flujo de cambio de contraseña** → 4)
+  **drawer móvil custom y lindo** (no el default; branding/logo/animación
+  coherentes con el rail). **Todo lo de backend se anota al final de `TODO.md`**:
+  watchlist (decisión DB vs localStorage), ledger (Plan Fase 2), ONs/cauciones en
+  la edge `quotes`, y migrar a las nuevas API keys de Supabase
+  (`sb_publishable_`/`sb_secret_`) antes de fines 2026.
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 - **Deploy**: orden obligatorio **`supabase db push` (0014) ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz.

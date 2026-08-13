@@ -4,8 +4,8 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 ## 🔄 En progreso
 
-- **Flujo de cambio de contraseña** — pendiente anotado en HANDOFF, sin empezar. Hoy `resetPasswordForEmail` (`Auth.js`) vuelve a `window.location.origin` con el token en el hash; Supabase auto-crea sesión `PASSWORD_RECOVERY` pero `App.js` no la maneja → el usuario llega al dashboard sin pantalla para setear la contraseña nueva. Alcance (frontend-only): escuchar el evento `PASSWORD_RECOVERY` en `App.js` (`onAuthStateChange`), pantalla "Nueva contraseña" que reusa la validación `letters_digits`/fuerza de `Auth.js`, `updateUser({ password })`, logout + mensaje de éxito → login. El `secure_password_change` de `config.toml` no bloquea el recovery (sesión con grant). Tests en `App.test.js`/`Auth.test.js`.
-- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos → HECHO** (ver DONE) 2) **flujo de cambio de contraseña** → 3) **drawer móvil custom**. **Backend todo al final** (últimos items del roadmap).
+- **Flujo de cambio de contraseña** — en ejecución (2026-08-13). Hoy `resetPasswordForEmail` (`Auth.js`) vuelve a `window.location.origin` con el token en el hash; Supabase auto-crea sesión `PASSWORD_RECOVERY` pero `App.js` no la maneja → el usuario llega al dashboard sin pantalla para setear la contraseña nueva. Alcance (frontend-only): escuchar el evento `PASSWORD_RECOVERY` en `App.js` (`onAuthStateChange`), pantalla "Nueva contraseña" que reusa la validación `letters_digits`/fuerza de `Auth.js`, `updateUser({ password })`, logout + mensaje de éxito → login. El `secure_password_change` de `config.toml` no bloquea el recovery (sesión con grant). Tests en `App.test.js`/`Auth.test.js`. Receta en `HANDOFF.md`.
+- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos → HECHO** 2) **QW-D layout/toggle → HECHO** (ver DONE) 3) **flujo de cambio de contraseña** (en curso) → 4) **drawer móvil custom**. **Backend todo al final** (últimos items del roadmap).
 
 ## 📋 Pendiente (roadmap)
 
@@ -13,7 +13,7 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 - **Ingresos: vista de detalle propia (QW-C) — HECHO (2026-08-13, ver DONE.md)** — la pestaña **Ingresos** ya cubría lo esencial (cards, totales ARS/USD, mayor ingreso, desglose por categoría/origen y tendencia de créditos). **Completado**: tabla con subtotales de acreditaciones + análisis de recurrencia (**sueldo vs devoluciones**) vía `buildIncomeSources` en `buildIncomeAnalysis` (mismo merchant en ≥2 meses distintos del joined `card_summaries.period_month`, umbral decidido con el usuario) y sección compacta en modo ingresos con badge "Recurrente". Sin backend.
 
-- **Flujo de cambio de contraseña — EN PROGRESO** (detalle en `En progreso` arriba y en `HANDOFF.md`).
+- **Flujo de cambio de contraseña** — pendiente (detalle en `En progreso` arriba y en `HANDOFF.md`).
 
 - **Móvil (`<lg`)** — diferido hasta estabilizar escritorio. La navegación móvil actual (bottom nav con logo central + header con solo título) convive con el nuevo header desktop ([≡] + logo Mandarina están `hidden lg:flex`). **Decisión del usuario: si se hace una barra lateral/drawer, hacerla LINDA y custom (no el default)**: drawer deslizante con branding (logo, blur de backdrop, animación, items con iconos coherentes con el rail desktop); decidir si reemplaza o convive con la bottom nav.
 

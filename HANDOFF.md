@@ -6,23 +6,29 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 ## Última sesión
 
-- **Fecha**: 2026-08-12
-- **Qué se hizo** — **Quick wins de análisis** (detalle en `DONE.md`):
-  1. **Vista de Ingresos separada de Egresos**: `buildIncomeAnalysis` en
-     `lib/analysis.js` (totales solo de créditos, mayor ingreso ARS/USD, desglose
-     por categoría/origen, tendencia); pestañas **Ingresos/Egresos/Resúmenes** en
-     la nueva `components/ResumenesView.js`; `SummaryCards`/`SpendingCharts` con
-     variante `ingresos`; `Dashboard` con prop `mode` (`egresos`/`ingresos`).
-  2. **Nav a 2 items** (`Resúmenes`, `Inversiones`) en rail y bottom nav
-     (grid-cols-2); view por defecto y home = `resumenes`. Tour actualizado:
-     paso "Egresos" (target `egresos` sobre la pestaña).
-  3. **Fix preexistente**: `SummaryCards.js` usaba `fmtUSD` inexistente
-     (→ `fmt(n, 'USD')`); tenía **13 tests de Dashboard en rojo**. Suite hoy
-     **238/238 verdes** + lint limpio.
-  4. **QW1 copy**: mensaje de pagos excluidos claro ("Se excluye(n) N pagos de
-     tarjeta de los totales (categoría 'Pagos')") y oculto en modo ingresos.
-  5. **QW2 toast**: top 3 posiciones con **segmentos coloreados** por variación
-     (verde/rojo/neutro) y tipo `info` (no `success`); `Toast` soporta `segments`.
+- **Fecha**: 2026-08-13
+- **Qué se hizo** — **Quick wins 2** (detalle en `DONE.md`):
+  1. **Detalle por modo (filtro por signo)**: `filtered` en `Dashboard.js` filtra
+     `amount > 0` en Ingresos / `< 0` en Egresos antes del análisis → cards y
+     tabla homogéneos.
+  2. **Modal de detalle de resumen**: click en un resumen (antes no cambiaba la
+     vista) abre `SummaryDetailModal.js` (overlay, X/Esc/backdrop) con toggle
+     propio Ingresos↔Egresos y un `Dashboard` con `summaryId` fijo;
+     `hideSummaryFilter`/`hideSummary` ocultan el dropdown "Resumen" dentro del
+     modal. Wiring: `ResumenesView` (estado `detail` + `onOpenDetail`) →
+     `UploadSummaries`/`SummaryItem`.
+  3. **Toggle de pagos de tarjeta persistido**: `buildAnalysis`/
+     `buildIncomeAnalysis` aceptan `{ includePayments }` (antes re-excluían
+     `'Pagos'` internamente); `Dashboard` lee `localStorage
+     ['mandarina:include-payments']` y el aviso cambia según estado (Incluir/
+     Excluir pagos, solo egresos). Suite **249/249** (+11) + lint limpio +
+     coverage lib 96.4% / hooks 99.1%.
+  - **Nota**: el modal monta un segundo `Dashboard` (refetch de transacciones);
+    aceptado como quick win, candidato a optimización futura.
+- **Sesión anterior (2026-08-12)** — quick wins de análisis: vista de Ingresos
+  separada (`buildIncomeAnalysis`, `ResumenesView`, `Dashboard` con `mode`), nav a
+  2 items, fix `fmtUSD` (13 tests en rojo), copy de pagos excluidos, toast de top
+  3 con segmentos. Suite quedó en 238/238.
 - **Fase anterior**: **FASE 8 CERRADA** (ver `improvements.md` + `fase8.md`):
   1. **Limpieza de disco**: borrados `backend/supabase/.temp/` (catálogos pgdelta),
      `frontend/coverage/` (salida de coverage) y `backend/supabase/snippets/`

@@ -22,8 +22,6 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 - **Ingresos: vista de detalle propia** — la pestaña **Ingresos** ya cubre lo esencial (cards, totales ARS/USD, mayor ingreso, desglose por categoría/origen y tendencia de créditos). Opcional a futuro: tabla con subtotales de acreditaciones + análisis de recurrencia (sueldo vs devoluciones).
 
-- **Permitir incluir o no los pagos de tarjeta (toggle)** — la categoría `'Pagos'` sigue excluida de los totales por diseño (pagar la tarjeta es transferencia, no gasto). El copy ya aclara qué se excluye ("Se excluyen N pagos de tarjeta de los totales (categoría 'Pagos')"). Opcional a futuro: dar un toggle para incluirlos en el análisis.
-
 - **Pensar ideas de suscripción por servicio** — la app es 100% gratis hoy; explorar un tier pago para monetizar: Mandi (asistente IA), límites de resúmenes/mes, reportes avanzados/exportación, más instrumentos en cotizaciones, versión premium sin fallbacks. Listar ideas con tradeoffs (límites del free tier de Supabase, billing vía Stripe/MercadoPago) antes de decidir. Sin fecha.
 
 - **Mejorar versión mobile + app en App Store** — además del item "Móvil (`<lg`)" (drawer/bottom nav), evaluar empaquetar la app como **PWA instalable** y/o app nativa (Capacitor) para publicar en App Store. Requiere cuenta de desarrollador Apple ($99/año) — choca con la regla "100% gratis"; decidir si el usuario paga o se queda en PWA.

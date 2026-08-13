@@ -31,5 +31,16 @@ export default defineConfig({
         url: 'http://localhost',
       },
     },
+    coverage: {
+      provider: 'v8',
+      include: ['src/lib/**', 'src/hooks/**'],
+      exclude: ['src/lib/supabaseClient.js'],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        statements: 80,
+        branches: 80,
+      },
+    },
   },
 })

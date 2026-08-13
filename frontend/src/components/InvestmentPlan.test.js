@@ -4,26 +4,11 @@ import InvestmentPlan from './InvestmentPlan'
 import ToastProvider from './Toast'
 import supabase from '../lib/supabaseClient'
 
-vi.mock('../lib/supabaseClient', () => ({
-  __esModule: true,
-  default: {
-    from: vi.fn(),
-    functions: {
-      invoke: vi.fn(),
-    },
-  },
-}))
-
 function mockPlan(items, prices = {}) {
-  const order = vi.fn().mockResolvedValue({ data: items, error: null })
-  const eq = vi.fn().mockReturnValue({ order })
-  const select = vi.fn().mockReturnValue({ eq })
-  const update = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }))
-  const insert = vi.fn().mockResolvedValue({ error: null })
-  const del = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }))
-  supabase.from.mockImplementation((table) =>
-    table === 'portfolio_plan' ? { select, update, insert, delete: del } : {},
-  )
+  supabase.mockTable('portfolio_plan', {
+    rows: items,
+    insert: items[0] ?? null,
+  })
   supabase.functions.invoke.mockResolvedValue({
     data: {
       quotes: Object.fromEntries(
@@ -331,10 +316,7 @@ describe('InvestmentPlan', () => {
   })
 
   it('muestra un error si no se puede cargar el plan', async () => {
-    const order = vi.fn().mockRejectedValue(new Error('red'))
-    const eq = vi.fn().mockReturnValue({ order })
-    const select = vi.fn().mockReturnValue({ eq })
-    supabase.from.mockImplementation((table) => (table === 'portfolio_plan' ? { select } : {}))
+    supabase.mockTable('portfolio_plan', [], new Error('red'))
     supabase.functions.invoke.mockResolvedValue({ data: { quotes: {}, rates: {} }, error: null })
     wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
     expect(await screen.findByText('No se pudo cargar el plan de inversión')).toBeInTheDocument()

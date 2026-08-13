@@ -4,49 +4,15 @@ import userEvent from '@testing-library/user-event'
 import App from './App'
 import supabase from './lib/supabaseClient'
 
-vi.mock('./lib/supabaseClient', () => ({
-  __esModule: true,
-  default: {
-    auth: {
-      getSession: vi.fn(),
-      onAuthStateChange: vi.fn(),
-      signOut: vi.fn(),
-    },
-    from: vi.fn(),
-    storage: {
-      from: vi.fn(),
-    },
-    functions: {
-      invoke: vi.fn(),
-    },
-  },
-}))
-
 const session = { user: { id: 'u1', email: 'a@b.com' } }
 
 const EMPTY_STATE = 'Subí un resumen para empezar.'
 
-function mockData(table, data) {
-  const order = vi.fn().mockResolvedValue({ data, error: null })
-  const eq = vi.fn().mockReturnValue({ order })
-  const select = vi.fn().mockReturnValue({ eq, order })
-  return { select, eq, order }
-}
-
 function mockApp(txs, summaries = []) {
-  const tx = mockData('transactions', txs)
-  const summariesData = mockData('card_summaries', summaries)
-  const meta = (_table) => {
-    const order = vi.fn().mockResolvedValue({ data: [], error: null })
-    const eq = vi.fn().mockReturnValue({ order })
-    const select = vi.fn().mockReturnValue({ eq, order })
-    return { select }
-  }
-  supabase.from.mockImplementation((table) => {
-    if (table === 'transactions') return { select: tx.select }
-    if (table === 'card_summaries') return { select: summariesData.select }
-    return meta(table)
-  })
+  supabase.mockTable('transactions', txs)
+  supabase.mockTable('card_summaries', summaries)
+  supabase.mockTable('merchant_overrides', [])
+  supabase.mockTable('custom_categories', [])
 }
 
 describe('App', () => {
@@ -133,19 +99,11 @@ describe('App', () => {
       { id: '2', symbol: 'QQQ', target_weight: 14 },
       { id: '3', symbol: 'KO', target_weight: 12 },
     ]
-    const limit = vi.fn().mockResolvedValue({ data: plan, error: null })
-    const order = vi.fn().mockReturnValue({ limit })
-    const planSelect = vi.fn().mockReturnValue({ order })
-    const tx = mockData('transactions', [])
-    const summariesData = mockData('card_summaries', [])
-    const metaEq = vi.fn().mockResolvedValue({ data: [], error: null })
-    const metaSelect = vi.fn().mockReturnValue({ eq: metaEq })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'portfolio_plan') return { select: planSelect }
-      if (table === 'transactions') return { select: tx.select }
-      if (table === 'card_summaries') return { select: summariesData.select }
-      return { select: metaSelect }
-    })
+    supabase.mockTable('portfolio_plan', plan)
+    supabase.mockTable('transactions', [])
+    supabase.mockTable('card_summaries', [])
+    supabase.mockTable('merchant_overrides', [])
+    supabase.mockTable('custom_categories', [])
     supabase.functions.invoke.mockResolvedValue({
       data: {
         quotes: {

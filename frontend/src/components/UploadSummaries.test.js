@@ -4,28 +4,13 @@ import UploadSummaries from './UploadSummaries'
 import ToastProvider from './Toast'
 import supabase from '../lib/supabaseClient'
 
-vi.mock('../lib/supabaseClient', () => ({
-  __esModule: true,
-  default: {
-    from: vi.fn(),
-    storage: {
-      from: vi.fn(() => ({ upload: vi.fn() })),
-    },
-    functions: {
-      invoke: vi.fn().mockResolvedValue({}),
-    },
-  },
-}))
-
 function mockSummaries(list) {
-  const order = vi.fn().mockResolvedValue({ data: list, error: null })
-  const eq = vi.fn().mockReturnValue({ order })
-  const select = vi.fn().mockReturnValue({ eq })
-  supabase.from.mockImplementation((table) => (table === 'card_summaries' ? { select } : {}))
+  supabase.mockTable('card_summaries', list)
 }
 
 describe('UploadSummaries', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     mockSummaries([])
   })
 
@@ -63,25 +48,8 @@ describe('UploadSummaries', () => {
 
   it('dispara la subida y el parseo con un archivo y muestra toast de éxito', async () => {
     const upload = vi.fn().mockResolvedValue({ error: null })
-    const insert = vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: vi.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
-      })),
-    }))
     supabase.storage.from.mockReturnValue({ upload })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'card_summaries') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({ data: [], error: null }),
-            }),
-          }),
-          insert,
-        }
-      }
-      return {}
-    })
+    supabase.mockTable('card_summaries', { rows: [], insert: { id: 'new-id' } })
     const onDataChanged = vi.fn()
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} onDataChanged={onDataChanged} />)
@@ -114,25 +82,9 @@ describe('UploadSummaries', () => {
 
   it('sanitiza el nombre en el path de Storage y conserva el nombre original', async () => {
     const upload = vi.fn().mockResolvedValue({ error: null })
-    const insert = vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: vi.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
-      })),
-    }))
     supabase.storage.from.mockReturnValue({ upload })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'card_summaries') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({ data: [], error: null }),
-            }),
-          }),
-          insert,
-        }
-      }
-      return {}
-    })
+    supabase.mockTable('card_summaries', { rows: [], insert: { id: 'new-id' } })
+    const insert = supabase.tableChain('card_summaries').insert
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
     const file = new File(['x'], 'Nación.csv', { type: 'text/csv' })
@@ -154,36 +106,19 @@ describe('UploadSummaries', () => {
 
   it('dedupe: avisa con toast cuando el path sanitizado ya existía', async () => {
     const upload = vi.fn().mockResolvedValue({ error: null })
-    const insert = vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: vi.fn().mockResolvedValue({ data: { id: 'new-id' }, error: null }),
-      })),
-    }))
     supabase.storage.from.mockReturnValue({ upload })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'card_summaries') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'a',
-                    file_name: 'Nacion.csv',
-                    file_path: 'u1/Nacion.csv',
-                    status: 'done',
-                    error: null,
-                    created_at: '2026-07-01',
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-          insert,
-        }
-      }
-      return {}
+    supabase.mockTable('card_summaries', {
+      rows: [
+        {
+          id: 'a',
+          file_name: 'Nacion.csv',
+          file_path: 'u1/Nacion.csv',
+          status: 'done',
+          error: null,
+          created_at: '2026-07-01',
+        },
+      ],
+      insert: { id: 'new-id' },
     })
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
@@ -210,32 +145,9 @@ describe('UploadSummaries', () => {
         created_at: '2026-07-01',
       },
     ])
-    const eq = vi.fn().mockResolvedValue({ error: null })
-    const update = vi.fn().mockReturnValue({ eq })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'card_summaries') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'a',
-                    file_name: 'visa-julio.pdf',
-                    status: 'done',
-                    error: null,
-                    created_at: '2026-07-01',
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-          update,
-        }
-      }
-      return {}
-    })
+    const chain = supabase.tableChain('card_summaries')
+    const update = chain.update
+    const eq = chain.eq
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
     await screen.findByText('visa-julio.pdf')
@@ -262,31 +174,7 @@ describe('UploadSummaries', () => {
         created_at: '2026-07-01',
       },
     ])
-    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'card_summaries') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'a',
-                    file_name: 'visa-julio.pdf',
-                    status: 'done',
-                    error: null,
-                    created_at: '2026-07-01',
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-          update,
-        }
-      }
-      return {}
-    })
+    const update = supabase.tableChain('card_summaries').update
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
     await screen.findByText('visa-julio.pdf')
@@ -312,34 +200,10 @@ describe('UploadSummaries', () => {
       },
     ])
     const remove = vi.fn().mockResolvedValue({ data: null, error: null })
-    const eq = vi.fn().mockResolvedValue({ error: null })
-    const del = vi.fn().mockReturnValue({ eq })
     supabase.storage.from.mockReturnValue({ remove })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'card_summaries') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'a',
-                    file_name: 'visa-julio.pdf',
-                    file_path: 'u1/visa-julio.pdf',
-                    status: 'done',
-                    error: null,
-                    created_at: '2026-07-01',
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-          delete: del,
-        }
-      }
-      return {}
-    })
+    const chain = supabase.tableChain('card_summaries')
+    const del = chain.delete
+    const eq = chain.eq
     const onDataChanged = vi.fn()
     const onSelect = vi.fn()
 
@@ -399,33 +263,19 @@ describe('UploadSummaries', () => {
       },
     ])
     const remove = vi.fn().mockResolvedValue({ data: null, error: null })
-    const eq = vi.fn().mockResolvedValue({ error: { message: 'denied' } })
-    const del = vi.fn().mockReturnValue({ eq })
     supabase.storage.from.mockReturnValue({ remove })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'card_summaries') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'a',
-                    file_name: 'visa-julio.pdf',
-                    file_path: 'u1/visa-julio.pdf',
-                    status: 'done',
-                    error: null,
-                    created_at: '2026-07-01',
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-          delete: del,
-        }
-      }
-      return {}
+    supabase.mockTable('card_summaries', {
+      rows: [
+        {
+          id: 'a',
+          file_name: 'visa-julio.pdf',
+          file_path: 'u1/visa-julio.pdf',
+          status: 'done',
+          error: null,
+          created_at: '2026-07-01',
+        },
+      ],
+      deleteError: new Error('denied'),
     })
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
@@ -469,35 +319,9 @@ describe('UploadSummaries', () => {
         period_year: 2026,
       },
     ])
-    const eq = vi.fn().mockResolvedValue({ error: null })
-    const update = vi.fn().mockReturnValue({ eq })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'card_summaries') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'a',
-                    file_name: 'visa-julio.pdf',
-                    status: 'done',
-                    error: null,
-                    created_at: '2026-07-01',
-                    summary_type: 'VISA',
-                    period_month: 7,
-                    period_year: 2026,
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-          update,
-        }
-      }
-      return {}
-    })
+    const chain = supabase.tableChain('card_summaries')
+    const eq = chain.eq
+    const update = chain.update
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
     await screen.findByText('VISA · jul 2026')
@@ -538,34 +362,7 @@ describe('UploadSummaries', () => {
         period_year: 2026,
       },
     ])
-    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    supabase.from.mockImplementation((table) => {
-      if (table === 'card_summaries') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'a',
-                    file_name: 'visa-julio.pdf',
-                    status: 'done',
-                    error: null,
-                    created_at: '2026-07-01',
-                    summary_type: 'VISA',
-                    period_month: 7,
-                    period_year: 2026,
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-          update,
-        }
-      }
-      return {}
-    })
+    const update = supabase.tableChain('card_summaries').update
 
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
     await screen.findByText('VISA · jul 2026')
@@ -582,10 +379,7 @@ describe('UploadSummaries', () => {
   })
 
   it('muestra un error si no se pueden cargar los resúmenes', async () => {
-    const order = vi.fn().mockRejectedValue(new Error('red'))
-    const eq = vi.fn().mockReturnValue({ order })
-    const select = vi.fn().mockReturnValue({ eq })
-    supabase.from.mockImplementation((table) => (table === 'card_summaries' ? { select } : {}))
+    supabase.mockTable('card_summaries', [], new Error('red'))
     wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
     expect(await screen.findByText('No se pudieron cargar los resúmenes')).toBeInTheDocument()
   })

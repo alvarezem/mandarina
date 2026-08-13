@@ -4,6 +4,12 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom/vitest'
 import { createElement } from 'react'
+import { createSupabaseMock } from './test/setup'
+
+// Mock global de supabase (Fase 6: 1 sola definición). Cada archivo de tests
+// importa el cliente y setea comportamientos con mockTable()/auth/storage/functions.
+const supabaseMock = createSupabaseMock()
+vi.mock('./lib/supabaseClient', () => ({ __esModule: true, default: supabaseMock }))
 
 const chart = (testId) => {
   const Chart = () => createElement('div', { 'data-testid': testId })

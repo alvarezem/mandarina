@@ -4,37 +4,20 @@ import Dashboard from './Dashboard'
 import ToastProvider from './Toast'
 import supabase from '../lib/supabaseClient'
 
-vi.mock('../lib/supabaseClient', () => ({
-  __esModule: true,
-  default: {
-    from: vi.fn(),
-  },
-}))
-
 function mockTx(data, { overrides = [], customCategories = [] } = {}) {
-  const eq = vi.fn().mockResolvedValue({ data: null, error: null })
-  const update = vi.fn().mockReturnValue({ eq })
-  const order = vi.fn().mockResolvedValue({ data, error: null })
-  const txEq = vi.fn().mockReturnValue({ order })
-  const select = vi.fn().mockReturnValue({ eq: txEq, order })
-
-  const ovUpsert = vi.fn().mockResolvedValue({ data: null, error: null })
-  const ovEq = vi.fn().mockResolvedValue({ data: overrides, error: null })
-  const ovSelect = vi.fn().mockReturnValue({ eq: ovEq })
-  const ccUpsert = vi.fn().mockResolvedValue({ data: null, error: null })
-  const ccEq = vi.fn().mockResolvedValue({ data: customCategories, error: null })
-  const ccSelect = vi.fn().mockReturnValue({ eq: ccEq })
-
-  const overridesTable = { select: ovSelect, upsert: ovUpsert }
-  const categoriesTable = { select: ccSelect, upsert: ccUpsert }
-
-  supabase.from.mockImplementation((table) => {
-    if (table === 'transactions') return { select, update }
-    if (table === 'merchant_overrides') return overridesTable
-    if (table === 'custom_categories') return categoriesTable
-    return {}
-  })
-  return { select, update, eq, ovUpsert, ccUpsert }
+  supabase.mockTable('transactions', data)
+  supabase.mockTable('merchant_overrides', overrides)
+  supabase.mockTable('custom_categories', customCategories)
+  const tx = supabase.tableChain('transactions')
+  const ov = supabase.tableChain('merchant_overrides')
+  const cc = supabase.tableChain('custom_categories')
+  return {
+    select: tx.select,
+    update: tx.update,
+    eq: tx.eq,
+    ovUpsert: ov.upsert,
+    ccUpsert: cc.upsert,
+  }
 }
 
 const txs = [
@@ -119,18 +102,7 @@ describe('Dashboard', () => {
   })
 
   it('muestra un error si no se pueden cargar los gastos', async () => {
-    supabase.from.mockImplementation((table) => {
-      if (table === 'transactions') {
-        return {
-          select: vi.fn().mockReturnValue({ order: vi.fn().mockRejectedValue(new Error('red')) }),
-        }
-      }
-      return {
-        select: vi
-          .fn()
-          .mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: [], error: null }) }),
-      }
-    })
+    supabase.mockTable('transactions', [], new Error('red'))
     renderDashboard()
     expect(await screen.findByText('No se pudieron cargar los gastos')).toBeInTheDocument()
   })

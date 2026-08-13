@@ -3,18 +3,6 @@ import userEvent from '@testing-library/user-event'
 import Auth from './Auth'
 import supabase from '../lib/supabaseClient'
 
-vi.mock('../lib/supabaseClient', () => ({
-  __esModule: true,
-  default: {
-    auth: {
-      signUp: vi.fn(),
-      signInWithPassword: vi.fn(),
-      signInWithOAuth: vi.fn(),
-      resetPasswordForEmail: vi.fn(),
-    },
-  },
-}))
-
 describe('Auth', () => {
   beforeEach(() => {
     supabase.auth.signUp.mockReset()

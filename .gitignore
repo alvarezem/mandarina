@@ -1,6 +1,9 @@
 # Datos financieros personales — no subir al repo
 examples/
 
+# Memoria del agente (config local, no viaja en el repo)
+.opencode/opencode.json
+
 # Sistema operativo / editor
 .DS_Store
 *.local

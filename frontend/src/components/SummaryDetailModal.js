@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Dashboard from './Dashboard'
 
 const MODES = [
@@ -17,7 +18,7 @@ export default function SummaryDetailModal({ file, session, dark, refreshKey, on
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto p-4 sm:p-6">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div
@@ -81,8 +82,10 @@ export default function SummaryDetailModal({ file, session, dark, refreshKey, on
           refreshKey={refreshKey}
           mode={mode}
           hideSummaryFilter
+          compact
         />
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

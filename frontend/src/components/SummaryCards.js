@@ -8,7 +8,7 @@ function CountUp({ value, format }) {
 
 function Card({ label, value, format, sub, valueClass = 'text-slate-900 dark:text-slate-100' }) {
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm shadow-slate-200/40 transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20 dark:hover:shadow-black/30">
+    <div className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm shadow-slate-200/40 transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20 dark:hover:shadow-black/30">
       <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {label}
       </span>
@@ -115,14 +115,12 @@ function cardsFromIncome(analysis) {
   return cards
 }
 
-export default function SummaryCards({ analysis, gridKey, variant = 'egresos' }) {
+export default function SummaryCards({ analysis, gridKey, variant = 'egresos', compact = false }) {
+  const gridClass = compact ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-3 md:grid-cols-4'
+
   if (!analysis) {
     return (
-      <div
-        className="grid grid-cols-2 gap-3 md:grid-cols-4"
-        key={gridKey}
-        data-testid="summary-cards"
-      >
+      <div className={gridClass} key={gridKey} data-testid="summary-cards">
         <CardSkeleton />
         <CardSkeleton />
         <CardSkeleton />
@@ -134,11 +132,7 @@ export default function SummaryCards({ analysis, gridKey, variant = 'egresos' })
   const cards = variant === 'ingresos' ? cardsFromIncome(analysis) : cardsFromAnalysis(analysis)
 
   return (
-    <div
-      className="grid grid-cols-2 gap-3 md:grid-cols-4"
-      key={gridKey}
-      data-testid="summary-cards"
-    >
+    <div className={gridClass} key={gridKey} data-testid="summary-cards">
       {cards.map((card, i) => (
         <Card key={`${card.label}-${i}`} {...card} />
       ))}

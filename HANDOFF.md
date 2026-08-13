@@ -23,6 +23,14 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
      ['mandarina:include-payments']` y el aviso cambia según estado (Incluir/
      Excluir pagos, solo egresos). Suite **249/249** (+11) + lint limpio +
      coverage lib 96.4% / hooks 99.1%.
+  4. **Fix visual del modal de detalle de resumen** (bug reportado por el
+     usuario): **portal a `document.body`** con `createPortal` (el `fixed`
+     anidado bajo `.animate-fade-in-up` + `<main overflow-y-auto>` cortaba el
+     backdrop a mitad de pantalla) y **prop `compact`** en `SummaryCards`
+     (grilla fija de 2 columnas para que los montos entren en el modal `max-w-3xl`);
+     `Dashboard` recibe `compact` opcional, el modal lo setea, `min-w-0` en las
+     cards. Suite **250/250** (+1 test del compact) + lint limpio + coverage
+     lib 96.4% / hooks 99.1%. Detalle completo en `DONE.md`.
   - **Nota**: el modal monta un segundo `Dashboard` (refetch de transacciones);
     aceptado como quick win, candidato a optimización futura.
 - **Sesión anterior (2026-08-12)** — quick wins de análisis: vista de Ingresos
@@ -51,12 +59,40 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 - **Fase 6 y 7** (cerradas, anteriores): ver `improvements.md` secciones FASE 6/7
   y Decisiones abajo.
 
+## ⚡ Próxima tarea — QW-C: Ingresos con subtotales y recurrencia
+
+El fix del modal está hecho (ver DONE.md). Sigue la cola de producto, item
+**QW-C Ingresos** (frontend-only, sin backend):
+
+1. **Subtotales de acreditaciones** — en `lib/analysis.js` `buildIncomeAnalysis`,
+   agrupar las transacciones `amount > 0` por **merchant** (y/o categoría):
+   `count`, `total`, `totalUSD` y **meses distintos** donde aparece (recurrencia).
+   La data del joined `card_summaries` ya viene con `period_month`/`period_year`
+   en el fetch del `Dashboard` → no hace falta tocar la edge ni la DB.
+2. **Recurrencia sueldo vs devoluciones** — definir el umbral con el usuario
+   (sugerencia: ≥2 meses distintos = "Recurrente"). El objetivo es distinguir el
+   **sueldo** de las **devoluciones/otros** sin hardcodear merchants.
+3. **UI** — en modo ingresos (`Dashboard` con `mode="ingresos"`), sección
+   compacta tipo tabla/lista de "Acreditaciones por origen" con badge
+   "Recurrente", sumando un subtotal. Reusar estilos existentes
+   (`TransactionsTable`/`SpendingCharts` como referencia).
+4. **Tests** — `analysis.test.js` (nueva función de agrupación) + componente.
+   Verificación: `npm test` (suite completa), `npm run lint`, coverage lib/hooks ≥80%.
+
+Luego de QW-C: **flujo de cambio de contraseña** → **drawer móvil custom**.
+Backend todo al final (ver `TODO.md`).
+
 ## En progreso
 
+- **QW-C Ingresos (subtotales + recurrencia)** — ver sección "⚡ Próxima tarea"
+  arriba. **Orden de cola (decisión del usuario 2026-08-13)**: 1) QW-C → 2)
+  **flujo de cambio de contraseña** → 3) **drawer móvil custom y lindo** (no el
+  default; branding/logo/animación coherentes con el rail). **Todo lo de backend
+  se anota al final de `TODO.md`**: watchlist (decisión DB vs localStorage),
+  ledger (Plan Fase 2), ONs/cauciones en la edge `quotes`, y migrar a las nuevas
+  API keys de Supabase (`sb_publishable_`/`sb_secret_`) antes de fines 2026.
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
-  cerradas. Próximos pasos = items del roadmap de `TODO.md` (destacados: migrar a
-  las nuevas API keys de Supabase antes de fines 2026; watchlist/ledger de
-  inversiones; flujo de cambio de contraseña).
+  cerradas.
 - **Deploy**: orden obligatorio **`supabase db push` (0014) ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz.
 - **Tarea aparte** (anotada, sin empezar): flujo de **cambio de contraseña** (link del email → pantalla de nueva contraseña; hoy el redirect maneja el token de Supabase).
 

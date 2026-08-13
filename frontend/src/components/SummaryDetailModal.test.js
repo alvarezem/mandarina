@@ -67,6 +67,14 @@ describe('SummaryDetailModal', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('usa la grilla compacta de 2 columnas para las cards', async () => {
+    renderModal()
+    await screen.findByText('resumen-julio.csv')
+    const cards = screen.getByTestId('summary-cards')
+    expect(cards.className).toContain('grid-cols-2')
+    expect(cards.className).not.toContain('md:grid-cols-4')
+  })
+
   it('alterna a modo ingresos con su toggle', async () => {
     renderModal()
     await userEvent.click(screen.getByRole('tab', { name: 'Ingresos' }))

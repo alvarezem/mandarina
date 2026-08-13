@@ -87,6 +87,7 @@ export default function Dashboard({
   onSummarySelect,
   mode = 'egresos',
   hideSummaryFilter = false,
+  compact = false,
 }) {
   const pushToast = useToast()
   const isIngresos = mode === 'ingresos'
@@ -372,7 +373,7 @@ export default function Dashboard({
   }
 
   if (loading) {
-    return <SummaryCards analysis={null} gridKey={filterKey} />
+    return <SummaryCards analysis={null} gridKey={filterKey} compact={compact} />
   }
   if (error) return <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
   if (allTx.length === 0) {
@@ -447,7 +448,7 @@ export default function Dashboard({
         />
       ) : (
         <>
-          <SummaryCards analysis={analysis} gridKey={filterKey} variant={mode} />
+          <SummaryCards analysis={analysis} gridKey={filterKey} variant={mode} compact={compact} />
 
           <SpendingCharts
             analysis={analysis}

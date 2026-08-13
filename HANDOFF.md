@@ -7,32 +7,25 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-13
-- **Qué se hizo** — **Quick wins 2** (detalle en `DONE.md`):
-  1. **Detalle por modo (filtro por signo)**: `filtered` en `Dashboard.js` filtra
-     `amount > 0` en Ingresos / `< 0` en Egresos antes del análisis → cards y
-     tabla homogéneos.
-  2. **Modal de detalle de resumen**: click en un resumen (antes no cambiaba la
-     vista) abre `SummaryDetailModal.js` (overlay, X/Esc/backdrop) con toggle
-     propio Ingresos↔Egresos y un `Dashboard` con `summaryId` fijo;
-     `hideSummaryFilter`/`hideSummary` ocultan el dropdown "Resumen" dentro del
-     modal. Wiring: `ResumenesView` (estado `detail` + `onOpenDetail`) →
-     `UploadSummaries`/`SummaryItem`.
-  3. **Toggle de pagos de tarjeta persistido**: `buildAnalysis`/
-     `buildIncomeAnalysis` aceptan `{ includePayments }` (antes re-excluían
-     `'Pagos'` internamente); `Dashboard` lee `localStorage
-     ['mandarina:include-payments']` y el aviso cambia según estado (Incluir/
-     Excluir pagos, solo egresos). Suite **249/249** (+11) + lint limpio +
-     coverage lib 96.4% / hooks 99.1%.
-  4. **Fix visual del modal de detalle de resumen** (bug reportado por el
-     usuario): **portal a `document.body`** con `createPortal` (el `fixed`
-     anidado bajo `.animate-fade-in-up` + `<main overflow-y-auto>` cortaba el
-     backdrop a mitad de pantalla) y **prop `compact`** en `SummaryCards`
-     (grilla fija de 2 columnas para que los montos entren en el modal `max-w-3xl`);
-     `Dashboard` recibe `compact` opcional, el modal lo setea, `min-w-0` en las
-     cards. Suite **250/250** (+1 test del compact) + lint limpio + coverage
-     lib 96.4% / hooks 99.1%. Detalle completo en `DONE.md`.
-  - **Nota**: el modal monta un segundo `Dashboard` (refetch de transacciones);
-    aceptado como quick win, candidato a optimización futura.
+- **Qué se hizo** — **QW-C Ingresos: subtotales y recurrencia** (detalle en `DONE.md`):
+  1. **`lib/analysis.js`** — nueva `buildIncomeSources(txs, { minMonthsRecurring = 2 })`:
+     agrupa créditos por merchant → `{ merchant, category, count, total, monthCount,
+     recurring }`; `monthCount` = meses distintos del joined
+     `card_summaries.period_year/period_month` con fallback al mes de `tx.date`
+     (helper `monthKey`); `recurring = monthCount >= 2`; ordenado por total desc,
+     todos los orígenes, totales en moneda nativa. `buildIncomeAnalysis` expone
+     `result.sources`; el `byMerchant` top-10 del gráfico no cambió.
+  2. **`components/IncomeSources.js`** (nuevo) — tarjeta "Acreditaciones por
+     origen": fila con merchant truncado, badge **"Recurrente"** (pill verde),
+     subtítulo `categoría · ×N`, total con `fmt`, contador de orígenes y click que
+     filtra la tabla. Wiring en `Dashboard.js` solo con `isIngresos`
+     (`setQuery(merchant)` + `scrollToTable()`).
+  3. Suite **262/262** (+11) + lint limpio + coverage lib 96.0% / hooks 99.1%.
+  - **Sesión anterior (2026-08-13, mañana)**: fix visual del modal de resumen en
+    2 rondas (portal a `document.body` + backdrop `fixed` y scroll en wrapper
+    propio, aplicado también a `QuoteModal`) — ver `DONE.md`.
+- **Quick wins 2 (2026-08-13)**: detalle por modo (filtro por signo), modal de
+  detalle de resumen, toggle de pagos persistido — ver `DONE.md`.
 - **Sesión anterior (2026-08-12)** — quick wins de análisis: vista de Ingresos
   separada (`buildIncomeAnalysis`, `ResumenesView`, `Dashboard` con `mode`), nav a
   2 items, fix `fmtUSD` (13 tests en rojo), copy de pagos excluidos, toast de top
@@ -59,34 +52,29 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 - **Fase 6 y 7** (cerradas, anteriores): ver `improvements.md` secciones FASE 6/7
   y Decisiones abajo.
 
-## ⚡ Próxima tarea — QW-C: Ingresos con subtotales y recurrencia
+## ⚡ Próxima tarea — Flujo de cambio de contraseña
 
-El fix del modal está hecho (ver DONE.md). Sigue la cola de producto, item
-**QW-C Ingresos** (frontend-only, sin backend):
+QW-C Ingresos está hecho (ver DONE.md). Sigue la cola de producto, item
+**flujo de cambio de contraseña** (frontend-only, sin backend). Hoy
+`resetPasswordForEmail` (`Auth.js`) vuelve a `window.location.origin` con el
+token en el hash; Supabase auto-crea sesión `PASSWORD_RECOVERY` pero `App.js`
+no la maneja → el usuario llega al dashboard sin pantalla para setear la
+contraseña nueva. Plan (detalle en `TODO.md`):
 
-1. **Subtotales de acreditaciones** — en `lib/analysis.js` `buildIncomeAnalysis`,
-   agrupar las transacciones `amount > 0` por **merchant** (y/o categoría):
-   `count`, `total`, `totalUSD` y **meses distintos** donde aparece (recurrencia).
-   La data del joined `card_summaries` ya viene con `period_month`/`period_year`
-   en el fetch del `Dashboard` → no hace falta tocar la edge ni la DB.
-2. **Recurrencia sueldo vs devoluciones** — definir el umbral con el usuario
-   (sugerencia: ≥2 meses distintos = "Recurrente"). El objetivo es distinguir el
-   **sueldo** de las **devoluciones/otros** sin hardcodear merchants.
-3. **UI** — en modo ingresos (`Dashboard` con `mode="ingresos"`), sección
-   compacta tipo tabla/lista de "Acreditaciones por origen" con badge
-   "Recurrente", sumando un subtotal. Reusar estilos existentes
-   (`TransactionsTable`/`SpendingCharts` como referencia).
-4. **Tests** — `analysis.test.js` (nueva función de agrupación) + componente.
-   Verificación: `npm test` (suite completa), `npm run lint`, coverage lib/hooks ≥80%.
+1. **`App.js`** — escuchar el evento `PASSWORD_RECOVERY` en `onAuthStateChange` y
+   mostrar una pantalla "Nueva contraseña" en vez del dashboard.
+2. **Pantalla nueva** — reusa la validación `letters_digits`/fuerza de `Auth.js` y
+   `updateUser({ password })`; logout + mensaje de éxito → login.
+3. **Tests** — `App.test.js`/`Auth.test.js`; verificación `npm test`, `npm run lint`,
+   coverage lib/hooks ≥80%.
 
-Luego de QW-C: **flujo de cambio de contraseña** → **drawer móvil custom**.
-Backend todo al final (ver `TODO.md`).
+Luego: **drawer móvil custom** → backend todo al final (ver `TODO.md`).
 
 ## En progreso
 
-- **QW-C Ingresos (subtotales + recurrencia)** — ver sección "⚡ Próxima tarea"
-  arriba. **Orden de cola (decisión del usuario 2026-08-13)**: 1) QW-C → 2)
-  **flujo de cambio de contraseña** → 3) **drawer móvil custom y lindo** (no el
+- **Flujo de cambio de contraseña** — ver sección "⚡ Próxima tarea" arriba.
+  **Orden de cola (decisión del usuario 2026-08-13)**: 1) QW-C Ingresos → **HECHO**
+  2) **flujo de cambio de contraseña** → 3) **drawer móvil custom y lindo** (no el
   default; branding/logo/animación coherentes con el rail). **Todo lo de backend
   se anota al final de `TODO.md`**: watchlist (decisión DB vs localStorage),
   ledger (Plan Fase 2), ONs/cauciones en la edge `quotes`, y migrar a las nuevas
@@ -94,7 +82,6 @@ Backend todo al final (ver `TODO.md`).
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 - **Deploy**: orden obligatorio **`supabase db push` (0014) ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz.
-- **Tarea aparte** (anotada, sin empezar): flujo de **cambio de contraseña** (link del email → pantalla de nueva contraseña; hoy el redirect maneja el token de Supabase).
 
 ## Decisiones tomadas (a no re-litigar sin motivo)
 

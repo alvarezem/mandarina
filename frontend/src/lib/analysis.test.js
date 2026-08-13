@@ -3,6 +3,7 @@ import {
   aggregate,
   buildAnalysis,
   buildIncomeAnalysis,
+  buildIncomeSources,
   EXCLUDED_CATEGORIES,
 } from './analysis'
 
@@ -210,6 +211,104 @@ describe('buildIncomeAnalysis', () => {
   it('no incluye bloque USD si no hay transacciones en esa moneda', () => {
     const r = buildIncomeAnalysis([tx({ amount: 5000 })])
     expect(r.usd).toBeUndefined()
+  })
+})
+
+describe('buildIncomeSources', () => {
+  it('agrupa créditos por merchant con count y total', () => {
+    const r = buildIncomeSources([
+      tx({ merchant: 'SUELDO', amount: 5000 }),
+      tx({ merchant: 'SUELDO', amount: 5000 }),
+      tx({ merchant: 'REINTEGRO', amount: 1000 }),
+    ])
+    expect(r).toHaveLength(2)
+    expect(r[0]).toMatchObject({ merchant: 'SUELDO', count: 2, total: 10000, recurring: false })
+  })
+
+  it('marca recurrente un origen que aparece en 2+ meses distintos del summary', () => {
+    const r = buildIncomeSources([
+      tx({
+        merchant: 'SUELDO',
+        amount: 5000,
+        date: '2026-07-01',
+        card_summaries: { period_month: 7, period_year: 2026 },
+      }),
+      tx({
+        merchant: 'SUELDO',
+        amount: 5000,
+        date: '2026-08-01',
+        card_summaries: { period_month: 8, period_year: 2026 },
+      }),
+    ])
+    expect(r[0].monthCount).toBe(2)
+    expect(r[0].recurring).toBe(true)
+  })
+
+  it('usa el mes de tx.date como fallback cuando el summary no trae período', () => {
+    const r = buildIncomeSources([
+      tx({
+        merchant: 'SUELDO',
+        amount: 5000,
+        date: '2026-07-15',
+        card_summaries: { file_name: 'v' },
+      }),
+      tx({ merchant: 'SUELDO', amount: 5000, date: '2026-08-15' }),
+    ])
+    expect(r[0].monthCount).toBe(2)
+    expect(r[0].recurring).toBe(true)
+  })
+
+  it('considera un mes único cuando todas las transacciones caen el mismo mes', () => {
+    const r = buildIncomeSources([
+      tx({ merchant: 'DEVOLUCIÓN', amount: 1000, date: '2026-07-02' }),
+      tx({ merchant: 'DEVOLUCIÓN', amount: 800, date: '2026-07-10' }),
+    ])
+    expect(r[0].monthCount).toBe(1)
+    expect(r[0].recurring).toBe(false)
+  })
+
+  it('un origen sin fecha ni período del summary queda con monthCount 0', () => {
+    const r = buildIncomeSources([tx({ merchant: 'SUELDO', amount: 5000, date: null })])
+    expect(r[0].monthCount).toBe(0)
+    expect(r[0].recurring).toBe(false)
+  })
+
+  it('ordena por total desc y respeta un umbral custom', () => {
+    const r = buildIncomeSources(
+      [
+        tx({ merchant: 'A', amount: 1000, date: '2026-07-01' }),
+        tx({ merchant: 'B', amount: 5000, date: '2026-07-01' }),
+      ],
+      { minMonthsRecurring: 3 },
+    )
+    expect(r[0].merchant).toBe('B')
+    expect(r[0].recurring).toBe(false)
+  })
+
+  it('expone sources ordenadas en buildIncomeAnalysis', () => {
+    const r = buildIncomeAnalysis([
+      tx({ merchant: 'REINTEGRO', amount: 1000, date: '2026-07-01' }),
+      tx({ merchant: 'SUELDO', amount: 5000, date: '2026-07-01' }),
+      tx({ merchant: 'SUELDO', amount: 5000, date: '2026-08-01' }),
+    ])
+    expect(r.sources).toEqual([
+      {
+        merchant: 'SUELDO',
+        category: 'Compras',
+        count: 2,
+        total: 10000,
+        monthCount: 2,
+        recurring: true,
+      },
+      {
+        merchant: 'REINTEGRO',
+        category: 'Compras',
+        count: 1,
+        total: 1000,
+        monthCount: 1,
+        recurring: false,
+      },
+    ])
   })
 })
 

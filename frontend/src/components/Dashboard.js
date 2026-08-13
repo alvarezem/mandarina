@@ -7,6 +7,7 @@ import FiltersBar from './FiltersBar'
 import SpendingCharts from './SpendingCharts'
 import TransactionsTable from './TransactionsTable'
 import SummaryCards from './SummaryCards'
+import IncomeSources from './IncomeSources'
 import { useToast } from './Toast'
 
 const CATEGORY_OPTIONS = [
@@ -469,6 +470,16 @@ export default function Dashboard({
               scrollToTable()
             }}
           />
+
+          {isIngresos && analysis.sources?.length > 0 && (
+            <IncomeSources
+              sources={analysis.sources}
+              onSelect={(merchant) => {
+                setQuery(merchant)
+                scrollToTable()
+              }}
+            />
+          )}
 
           <div
             ref={tableRef}

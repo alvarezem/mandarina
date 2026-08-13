@@ -174,6 +174,8 @@ describe('Dashboard', () => {
     expect(screen.getByText('Ingresos acumulados')).toBeInTheDocument()
     expect(screen.queryByText('Gastos acumulados')).not.toBeInTheDocument()
     expect(screen.queryByText(/se excluye.*pago de tarjeta/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Acreditaciones por origen' })).toBeInTheDocument()
+    expect(screen.getByText('2 orígenes')).toBeInTheDocument()
   })
 
   it('en modo egresos excluye los créditos (montos positivos) de la tabla', async () => {

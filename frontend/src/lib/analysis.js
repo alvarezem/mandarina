@@ -145,6 +145,7 @@ function buildIncomeAnalysis(txs, { includePayments = false } = {}) {
       .slice(0, 10),
     byDay: byDaySorted,
     incomeTrend,
+    sources: buildIncomeSources(incomes),
     excludedCount: includePayments ? 0 : txs.length - relevant.length,
   }
 
@@ -174,4 +175,55 @@ function buildIncomeAnalysis(txs, { includePayments = false } = {}) {
   return result
 }
 
-export { computeTotals, aggregate, buildAnalysis, buildIncomeAnalysis, EXCLUDED_CATEGORIES }
+// Mes de una transacción para la recurrencia: prefiere el período del summary
+// joined (card_summaries.period_year/period_month) y cae al mes de tx.date si
+// el summary no trae período (datos viejos).
+function monthKey(tx) {
+  const cs = tx.card_summaries
+  const summary = Array.isArray(cs) ? cs[0] : cs
+  if (summary && summary.period_year && summary.period_month) {
+    return `${summary.period_year}-${String(summary.period_month).padStart(2, '0')}`
+  }
+  if (tx.date) return tx.date.slice(0, 7)
+  return null
+}
+
+function buildIncomeSources(txs, { minMonthsRecurring = 2 } = {}) {
+  const map = new Map()
+  for (const tx of txs) {
+    if (tx.amount <= 0 || !tx.merchant) continue
+    const key = tx.merchant
+    const e = map.get(key) || {
+      merchant: tx.merchant,
+      category: null,
+      count: 0,
+      total: 0,
+      months: new Set(),
+    }
+    e.count += 1
+    e.total += tx.amount
+    if (e.category === null && tx.category) e.category = tx.category
+    const mk = monthKey(tx)
+    if (mk) e.months.add(mk)
+    map.set(key, e)
+  }
+  return [...map.values()]
+    .map((e) => ({
+      merchant: e.merchant,
+      category: e.category,
+      count: e.count,
+      total: Math.round(e.total * 100) / 100,
+      monthCount: e.months.size,
+      recurring: e.months.size >= minMonthsRecurring,
+    }))
+    .sort((a, b) => b.total - a.total)
+}
+
+export {
+  computeTotals,
+  aggregate,
+  buildAnalysis,
+  buildIncomeAnalysis,
+  buildIncomeSources,
+  EXCLUDED_CATEGORIES,
+}

@@ -4,16 +4,16 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 ## 🔄 En progreso
 
-- _(vacío)_ — el **fix visual del modal de detalle de resumen se completó** (2026-08-13, detalle en `DONE.md`): portal a `document.body` + grilla compacta de 2 columnas. Suite 250/250, lint limpio, coverage OK.
-- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos** → 2) **flujo de cambio de contraseña** → 3) **drawer móvil custom**. **Backend todo al final** (últimos items del roadmap).
+- **Flujo de cambio de contraseña** — pendiente anotado en HANDOFF, sin empezar. Hoy `resetPasswordForEmail` (`Auth.js`) vuelve a `window.location.origin` con el token en el hash; Supabase auto-crea sesión `PASSWORD_RECOVERY` pero `App.js` no la maneja → el usuario llega al dashboard sin pantalla para setear la contraseña nueva. Alcance (frontend-only): escuchar el evento `PASSWORD_RECOVERY` en `App.js` (`onAuthStateChange`), pantalla "Nueva contraseña" que reusa la validación `letters_digits`/fuerza de `Auth.js`, `updateUser({ password })`, logout + mensaje de éxito → login. El `secure_password_change` de `config.toml` no bloquea el recovery (sesión con grant). Tests en `App.test.js`/`Auth.test.js`.
+- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos → HECHO** (ver DONE) 2) **flujo de cambio de contraseña** → 3) **drawer móvil custom**. **Backend todo al final** (últimos items del roadmap).
 
 ## 📋 Pendiente (roadmap)
 
 ### Frontend-only (orden sugerido de ejecución)
 
-- **Ingresos: vista de detalle propia (QW-C)** — la pestaña **Ingresos** ya cubre lo esencial (cards, totales ARS/USD, mayor ingreso, desglose por categoría/origen y tendencia de créditos). **Próxima tarea**: tabla con subtotales de acreditaciones + análisis de recurrencia (**sueldo vs devoluciones**) en `buildIncomeAnalysis` (mismo merchant en ≥2 meses distintos vía el joined `card_summaries.period_month` — definir umbral con el usuario) y sección compacta en modo ingresos con badge "Recurrente". Sin backend.
+- **Ingresos: vista de detalle propia (QW-C) — HECHO (2026-08-13, ver DONE.md)** — la pestaña **Ingresos** ya cubría lo esencial (cards, totales ARS/USD, mayor ingreso, desglose por categoría/origen y tendencia de créditos). **Completado**: tabla con subtotales de acreditaciones + análisis de recurrencia (**sueldo vs devoluciones**) vía `buildIncomeSources` en `buildIncomeAnalysis` (mismo merchant en ≥2 meses distintos del joined `card_summaries.period_month`, umbral decidido con el usuario) y sección compacta en modo ingresos con badge "Recurrente". Sin backend.
 
-- **Flujo de cambio de contraseña** — pendiente anotado en HANDOFF, sin empezar. Hoy `resetPasswordForEmail` (`Auth.js`) vuelve a `window.location.origin` con el token en el hash; Supabase auto-crea sesión `PASSWORD_RECOVERY` pero `App.js` no la maneja → el usuario llega al dashboard sin pantalla para setear la contraseña nueva. Alcance (frontend-only): escuchar el evento `PASSWORD_RECOVERY` en `App.js` (`onAuthStateChange`), pantalla "Nueva contraseña" que reusa la validación `letters_digits`/fuerza de `Auth.js`, `updateUser({ password })`, logout + mensaje de éxito → login. El `secure_password_change` de `config.toml` no bloquea el recovery (sesión con grant). Tests en `App.test.js`/`Auth.test.js`.
+- **Flujo de cambio de contraseña — EN PROGRESO** (detalle en `En progreso` arriba y en `HANDOFF.md`).
 
 - **Móvil (`<lg`)** — diferido hasta estabilizar escritorio. La navegación móvil actual (bottom nav con logo central + header con solo título) convive con el nuevo header desktop ([≡] + logo Mandarina están `hidden lg:flex`). **Decisión del usuario: si se hace una barra lateral/drawer, hacerla LINDA y custom (no el default)**: drawer deslizante con branding (logo, blur de backdrop, animación, items con iconos coherentes con el rail desktop); decidir si reemplaza o convive con la bottom nav.
 

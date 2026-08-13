@@ -86,6 +86,7 @@ export default function Dashboard({
   resetKey,
   onSummarySelect,
   mode = 'egresos',
+  hideSummaryFilter = false,
 }) {
   const pushToast = useToast()
   const isIngresos = mode === 'ingresos'
@@ -97,6 +98,9 @@ export default function Dashboard({
   const [categories, setCategories] = useState([])
   const [currency, setCurrency] = useState('all')
   const [query, setQuery] = useState('')
+  const [includePayments, setIncludePayments] = useState(
+    () => localStorage.getItem('mandarina:include-payments') === 'true',
+  )
   const [sort, setSort] = useState({ key: 'date', dir: 'desc' })
   const tableRef = useRef(null)
   const userId = session?.user?.id
@@ -191,10 +195,13 @@ export default function Dashboard({
   }, [allTx, summaryId, period, customFrom, customTo])
 
   const working = useMemo(
-    () => base.filter((t) => !EXCLUDED_CATEGORIES.includes(t.category)),
+    () => base.filter((t) => includePayments || !EXCLUDED_CATEGORIES.includes(t.category)),
+    [base, includePayments],
+  )
+  const paymentsCount = useMemo(
+    () => base.filter((t) => EXCLUDED_CATEGORIES.includes(t.category)).length,
     [base],
   )
-  const paymentsCount = base.length - working.length
 
   const categoryOptions = useMemo(
     () => [...new Set(working.map((t) => t.category).filter(Boolean))].sort(),
@@ -228,7 +235,7 @@ export default function Dashboard({
     categories.length > 0 ||
     currency !== 'all' ||
     query.trim() !== '' ||
-    summaryId !== null
+    (!hideSummaryFilter && summaryId !== null)
 
   const clearFilters = () => {
     setPeriod('todo')
@@ -242,17 +249,22 @@ export default function Dashboard({
 
   const filtered = useMemo(() => {
     let txs = working
+    if (isIngresos) txs = txs.filter((t) => t.amount > 0)
+    else txs = txs.filter((t) => t.amount < 0)
     if (currency === 'ARS') txs = txs.filter((t) => t.currency !== 'USD')
     if (currency === 'USD') txs = txs.filter((t) => t.currency === 'USD')
     if (categories.length) txs = txs.filter((t) => categories.includes(t.category))
     const q = query.trim().toLowerCase()
     if (q) txs = txs.filter((t) => t.merchant.toLowerCase().includes(q))
     return txs
-  }, [working, currency, categories, query])
+  }, [working, isIngresos, currency, categories, query])
 
   const analysis = useMemo(
-    () => (isIngresos ? buildIncomeAnalysis(filtered) : buildAnalysis(filtered)),
-    [filtered, isIngresos],
+    () =>
+      isIngresos
+        ? buildIncomeAnalysis(filtered, { includePayments })
+        : buildAnalysis(filtered, { includePayments }),
+    [filtered, isIngresos, includePayments],
   )
 
   const onSort = (key) =>
@@ -282,6 +294,14 @@ export default function Dashboard({
 
   const toggleCategory = (cat) =>
     setCategories((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]))
+
+  const togglePayments = () => {
+    setIncludePayments((prev) => {
+      const next = !prev
+      localStorage.setItem('mandarina:include-payments', String(next))
+      return next
+    })
+  }
 
   const focusCategory = (cat) =>
     setCategories((prev) => (prev.length === 1 && prev[0] === cat ? [] : [cat]))
@@ -387,13 +407,30 @@ export default function Dashboard({
           onQuery={setQuery}
           hasActiveFilters={hasActiveFilters}
           onClearFilters={clearFilters}
+          hideSummary={hideSummaryFilter}
         />
         {paymentsCount > 0 && !isIngresos && (
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-            Se excluye{paymentsCount === 1 ? '' : 'n'} {paymentsCount}{' '}
-            {paymentsCount === 1 ? 'pago' : 'pagos'} de tarjeta de los totales (categoría
-            &lsquo;Pagos&rsquo;: son pagos de la tarjeta, no gastos).
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            {includePayments ? (
+              <span>
+                Incluyendo {paymentsCount} {paymentsCount === 1 ? 'pago' : 'pagos'} de tarjeta en
+                los totales (categoría &lsquo;Pagos&rsquo;).
+              </span>
+            ) : (
+              <span>
+                Se excluye{paymentsCount === 1 ? '' : 'n'} {paymentsCount}{' '}
+                {paymentsCount === 1 ? 'pago' : 'pagos'} de tarjeta de los totales (categoría
+                &lsquo;Pagos&rsquo;: son pagos de la tarjeta, no gastos).
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={togglePayments}
+              className="inline-flex items-center rounded-full border border-slate-300 px-2.5 py-0.5 font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              {includePayments ? 'Excluir pagos' : 'Incluir pagos'}
+            </button>
+          </div>
         )}
       </div>
 

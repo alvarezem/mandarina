@@ -32,6 +32,7 @@ export default function SummaryItem({
   file,
   selectedId,
   onSelect,
+  onOpenDetail,
   editingId,
   renameDraft,
   onRenameChange,
@@ -110,7 +111,10 @@ export default function SummaryItem({
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"
-              onClick={() => onSelect(file.id)}
+              onClick={() => {
+                onSelect(file.id)
+                onOpenDetail?.(file)
+              }}
               className="min-w-0 flex-1 text-left"
             >
               <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">

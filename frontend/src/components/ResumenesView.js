@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Dashboard from './Dashboard'
 import UploadSummaries from './UploadSummaries'
+import SummaryDetailModal from './SummaryDetailModal'
 
 const TABS = [
   { key: 'ingresos', label: 'Ingresos' },
@@ -18,6 +19,7 @@ export default function ResumenesView({
   onDataChanged,
 }) {
   const [tab, setTab] = useState('egresos')
+  const [detail, setDetail] = useState(null)
 
   return (
     <div className="animate-fade-in-up">
@@ -72,8 +74,19 @@ export default function ResumenesView({
             selectedId={summaryId}
             onSelect={onSelect}
             onDataChanged={onDataChanged}
+            onOpenDetail={(file) => setDetail({ id: file.id, file_name: file.file_name })}
           />
         </div>
+      )}
+
+      {detail && (
+        <SummaryDetailModal
+          file={detail}
+          session={session}
+          dark={dark}
+          refreshKey={refreshKey}
+          onClose={() => setDetail(null)}
+        />
       )}
     </div>
   )

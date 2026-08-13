@@ -88,6 +88,7 @@ async function rowsOfTable() {
 
 describe('Dashboard', () => {
   beforeEach(() => {
+    localStorage.clear()
     mockTx(txs)
   })
 
@@ -175,6 +176,51 @@ describe('Dashboard', () => {
     expect(screen.queryByText(/se excluye.*pago de tarjeta/i)).not.toBeInTheDocument()
   })
 
+  it('en modo egresos excluye los créditos (montos positivos) de la tabla', async () => {
+    mockTx([
+      ...txs,
+      {
+        id: '6',
+        date: '2026-07-05',
+        merchant: 'SUELDO',
+        category: 'Ingresos',
+        currency: 'ARS',
+        amount: 500000,
+        summary_id: 's1',
+        card_summaries: { file_name: 'resumen-julio.csv' },
+      },
+    ])
+    renderDashboard()
+    await screen.findByText('Débitos')
+
+    const [_, ...rows] = await rowsOfTable()
+    const merchants = rows.map((r) => within(r).getAllByRole('cell')[1].textContent)
+    expect(merchants).toContain('MERCADO LIBRE')
+    expect(merchants).not.toContain('SUELDO')
+  })
+
+  it('en modo ingresos muestra solo los créditos en la tabla', async () => {
+    mockTx([
+      ...txs,
+      {
+        id: '6',
+        date: '2026-07-05',
+        merchant: 'SUELDO',
+        category: 'Ingresos',
+        currency: 'ARS',
+        amount: 500000,
+        summary_id: 's1',
+        card_summaries: { file_name: 'resumen-julio.csv' },
+      },
+    ])
+    renderDashboard({ mode: 'ingresos' })
+    await screen.findByText('Mayor ingreso ARS')
+
+    const [_, ...rows] = await rowsOfTable()
+    const merchants = rows.map((r) => within(r).getAllByRole('cell')[1].textContent)
+    expect(merchants).toEqual(['SUELDO'])
+  })
+
   it('filtra por categoría desde el dropdown', async () => {
     renderDashboard()
     await screen.findByText('Débitos')
@@ -194,6 +240,39 @@ describe('Dashboard', () => {
     const [_, ...rows] = await rowsOfTable()
     const merchants = rows.map((r) => within(r).getAllByRole('cell')[1].textContent)
     expect(merchants).toEqual(['MERCADO LIBRE'])
+  })
+
+  it('incluye los pagos de tarjeta al togglear y persiste la preferencia', async () => {
+    renderDashboard()
+    await screen.findByText('Débitos')
+    expect(screen.queryByRole('button', { name: 'Excluir pagos' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Incluir pagos' }))
+    expect(localStorage.getItem('mandarina:include-payments')).toBe('true')
+    expect(screen.getByText(/Incluyendo 1 pago de tarjeta/i)).toBeInTheDocument()
+
+    const [_, ...rows] = await rowsOfTable()
+    const merchants = rows.map((r) => within(r).getAllByRole('cell')[1].textContent)
+    expect(merchants).toContain('PAGO TC')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Excluir pagos' }))
+    expect(localStorage.getItem('mandarina:include-payments')).toBe('false')
+    expect(screen.getByText(/se excluye 1 pago de tarjeta/i)).toBeInTheDocument()
+    const excluded = (await rowsOfTable())
+      .slice(1)
+      .map((r) => within(r).getAllByRole('cell')[1].textContent)
+    expect(excluded).not.toContain('PAGO TC')
+  })
+
+  it('recuerda la preferencia de incluir pagos entre sesiones', async () => {
+    localStorage.setItem('mandarina:include-payments', 'true')
+    renderDashboard()
+    await screen.findByText('Débitos')
+
+    expect(screen.getByText(/Incluyendo 1 pago de tarjeta/i)).toBeInTheDocument()
+    const [_, ...rows] = await rowsOfTable()
+    const merchants = rows.map((r) => within(r).getAllByRole('cell')[1].textContent)
+    expect(merchants).toContain('PAGO TC')
   })
 
   it('filtra por resumen individual vía prop summaryId', async () => {

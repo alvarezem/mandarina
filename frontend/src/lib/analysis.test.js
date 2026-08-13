@@ -60,6 +60,20 @@ describe('buildAnalysis', () => {
     expect(r.totals.txCount).toBe(1)
   })
 
+  it('incluye Pagos en los agregados cuando includePayments es true', () => {
+    const r = buildAnalysis([tx({ amount: -100 }), tx({ amount: -50, category: 'Pagos' })], {
+      includePayments: true,
+    })
+    expect(r.excludedCount).toBe(0)
+    expect(r.totals.debits).toBe(-150)
+    expect(r.totals.txCount).toBe(2)
+    expect(r.byCategory.some((c) => c.category === 'Pagos')).toBe(true)
+    expect(r.byCategory.find((c) => c.category === 'Pagos')).toMatchObject({
+      count: 1,
+      total: -50,
+    })
+  })
+
   it('calcula período, mayor gasto y tendencia acumulada', () => {
     const r = buildAnalysis([
       tx({ id: 'a', date: '2026-07-01', amount: -100 }),
@@ -135,6 +149,19 @@ describe('buildIncomeAnalysis', () => {
       { merchant: 'SUELDO', count: 1, total: 5000 },
       { merchant: 'DÉBITO', count: 1, total: 2500 },
     ])
+  })
+
+  it('no excluye Pagos cuando includePayments es true en ingresos', () => {
+    const r = buildIncomeAnalysis(
+      [
+        tx({ merchant: 'SUELDO', category: 'Ingresos', amount: 5000 }),
+        tx({ merchant: 'PAGO TC', category: 'Pagos', amount: -50000 }),
+      ],
+      { includePayments: true },
+    )
+    expect(r.excludedCount).toBe(0)
+    expect(r.totals.txCount).toBe(2)
+    expect(r.totals.debits).toBe(-50000)
   })
 
   it('marca el mayor ingreso y acumula tendencia por día', () => {

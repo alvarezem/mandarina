@@ -37,6 +37,7 @@ export default function FiltersBar({
   onQuery,
   hasActiveFilters,
   onClearFilters,
+  hideSummary = false,
 }) {
   const periodSummary = PERIODS.find((p) => p.key === period)?.label ?? 'Todo'
   const categorySummary =
@@ -77,34 +78,36 @@ export default function FiltersBar({
         )}
       </Dropdown>
 
-      <Dropdown
-        label="Resumen"
-        summary={summaryOptions.find((s) => s.id === summaryId)?.name ?? 'Todos los resúmenes'}
-      >
-        <button
-          type="button"
-          onClick={() => onSummarySelect(null)}
-          className={`${itemBase} ${summaryId === null ? itemActive : itemInactive}`}
+      {!hideSummary && (
+        <Dropdown
+          label="Resumen"
+          summary={summaryOptions.find((s) => s.id === summaryId)?.name ?? 'Todos los resúmenes'}
         >
-          <Check on={summaryId === null} />
-          Todos los resúmenes
-        </button>
-        {summaryOptions.length === 0 ? (
-          <p className="px-3 py-1.5 text-xs text-slate-400">(sin resúmenes)</p>
-        ) : (
-          summaryOptions.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => onSummarySelect(s.id)}
-              className={`${itemBase} ${summaryId === s.id ? itemActive : itemInactive}`}
-            >
-              <Check on={summaryId === s.id} />
-              {s.name}
-            </button>
-          ))
-        )}
-      </Dropdown>
+          <button
+            type="button"
+            onClick={() => onSummarySelect(null)}
+            className={`${itemBase} ${summaryId === null ? itemActive : itemInactive}`}
+          >
+            <Check on={summaryId === null} />
+            Todos los resúmenes
+          </button>
+          {summaryOptions.length === 0 ? (
+            <p className="px-3 py-1.5 text-xs text-slate-400">(sin resúmenes)</p>
+          ) : (
+            summaryOptions.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onSummarySelect(s.id)}
+                className={`${itemBase} ${summaryId === s.id ? itemActive : itemInactive}`}
+              >
+                <Check on={summaryId === s.id} />
+                {s.name}
+              </button>
+            ))
+          )}
+        </Dropdown>
+      )}
 
       <Dropdown label="Categorías" summary={categorySummary}>
         <div className="mb-1 flex items-center justify-between border-b border-slate-100 px-2 pb-1.5 dark:border-slate-800">

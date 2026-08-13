@@ -7,7 +7,13 @@ import SummaryItem from './SummaryItem'
 
 const NOW_YEAR = new Date().getFullYear()
 
-export default function UploadSummaries({ session, selectedId, onSelect, onDataChanged }) {
+export default function UploadSummaries({
+  session,
+  selectedId,
+  onSelect,
+  onDataChanged,
+  onOpenDetail,
+}) {
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
@@ -350,6 +356,7 @@ export default function UploadSummaries({ session, selectedId, onSelect, onDataC
                   file={f}
                   selectedId={selectedId}
                   onSelect={onSelect}
+                  onOpenDetail={onOpenDetail}
                   editingId={editingId}
                   renameDraft={draft}
                   onRenameChange={setDraft}

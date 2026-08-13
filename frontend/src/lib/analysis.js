@@ -27,8 +27,10 @@ function aggregate(txs, kind) {
   return [...map.values()]
 }
 
-function buildAnalysis(txs) {
-  const relevant = txs.filter((t) => !EXCLUDED_CATEGORIES.includes(t.category))
+function buildAnalysis(txs, { includePayments = false } = {}) {
+  const relevant = includePayments
+    ? txs
+    : txs.filter((t) => !EXCLUDED_CATEGORIES.includes(t.category))
   const ars = relevant.filter((t) => t.currency !== 'USD')
   const usd = relevant.filter((t) => t.currency === 'USD')
 
@@ -72,7 +74,7 @@ function buildAnalysis(txs) {
     byCategory: aggregate(spending, 'category').sort((a, b) => b.total - a.total),
     byDay: byDaySorted,
     expenseTrend,
-    excludedCount: txs.length - relevant.length,
+    excludedCount: includePayments ? 0 : txs.length - relevant.length,
   }
 
   if (usd.length > 0) {
@@ -95,8 +97,10 @@ function buildAnalysis(txs) {
   return result
 }
 
-function buildIncomeAnalysis(txs) {
-  const relevant = txs.filter((t) => !EXCLUDED_CATEGORIES.includes(t.category))
+function buildIncomeAnalysis(txs, { includePayments = false } = {}) {
+  const relevant = includePayments
+    ? txs
+    : txs.filter((t) => !EXCLUDED_CATEGORIES.includes(t.category))
   const ars = relevant.filter((t) => t.currency !== 'USD')
   const usd = relevant.filter((t) => t.currency === 'USD')
 
@@ -141,7 +145,7 @@ function buildIncomeAnalysis(txs) {
       .slice(0, 10),
     byDay: byDaySorted,
     incomeTrend,
-    excludedCount: txs.length - relevant.length,
+    excludedCount: includePayments ? 0 : txs.length - relevant.length,
   }
 
   if (usd.length > 0) {

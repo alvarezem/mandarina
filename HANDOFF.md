@@ -7,33 +7,35 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-12
-- **Qué se hizo** — **FASE 6 CERRADA** (ver `improvements.md`):
-  1. **Mock de supabase único** (`src/test/setup.js`): `createSupabaseMock()` con
-     `mockTable(table, rowsOrConfig?, error?)` (cadenas cacheadas por tabla + modos
-     insert/update/delete/upsert), `tableChain(table)` para asertar, y factories
-     `wrap/tx/summary/planItem`. Registrado **una sola vez** como mock global en
-     `src/setupTests.js` (setupFiles). Los 7 test files que mockeaban a mano
-     (`App`, `Auth`, `Dashboard`, `InvestmentPlan`, `MarketQuotes`, `UploadSummaries`,
-     `usePortfolioQuotes`) ahora usan `mockTable`/`tableChain`; `vi.clearAllMocks()`
-     en `beforeEach`. `UploadSummaries.test.js` fue el último convertido (antes
-     mockeaba `.insert().select().single()`, update/delete `.eq()` a mano).
-  2. **Tests de huecos**: cubiertos `Toast`, `Dropdown` (portal + eventos globales),
-     `FiltersBar`, `PriceChart`, `Sidebar`, `MarketClosedNotice`, `useCountUp`,
-     `useTheme`. `usePortfolioQuotes` ampliado a 8 tests (MEP/CCL, scaling ARS↔USD,
-     mercado cerrado, catch de refresh).
-  3. **Coverage**: `@vitest/coverage-v8` instalado; `vite.config.js` con
-     `include: ['src/lib/**', 'src/hooks/**']`, `exclude: ['src/lib/supabaseClient.js']`
-     (siempre mocked, sin lógica) y thresholds globales ≥80. Script `npm run coverage`.
-  4. **Cierre verificado**: **230 tests / 26 files** green (era 183/18 al iniciar);
-     coverage real **statements 97.8, branches 89.3, functions 97.7, lines 98.9**
-     (meta ≥80). `npm run lint` limpio, prettier limpio, `npm run build` OK,
-     `npm audit` 0. `coverage/` agregado a los ignores de ESLint.
-- **Fase 7** (cerrada, anterior): ver `fase7.md` y sección Decisiones abajo.
+- **Qué se hizo** — **FASE 8 CERRADA** (ver `improvements.md` + `fase8.md`):
+  1. **Limpieza de disco**: borrados `backend/supabase/.temp/` (catálogos pgdelta),
+     `frontend/coverage/` (salida de coverage) y `backend/supabase/snippets/`
+     (dir vacío). `frontend/frontend/`/`frontend/build/` ya no existían.
+  2. **`.opencode/` fuera del repo**: `opencode.json` destraqueado
+     (`git rm --cached`, queda en disco) e ignorado en `.gitignore` raíz; la
+     memoria (AGENTS.md + HANDOFF.md) sigue auto-cargándose local. Nota en
+     `AGENTS.md` (Recordatorio de memoria).
+  3. **README raíz reescrito**: stack real (Vite/Vitest/Deno/Tailwind), estructura
+     actual, comandos completos, env vars, orden de deploy (db push antes que
+     functions). Cero referencias a CRA/Cloudflare. `frontend/README.md` sumó
+     `coverage`/`lint`/`format` y reformuló la nota del plugin.
+  4. **`.md` obsoletos borrados** (decisión del usuario): `fase7.md`,
+     `compromised.md` y `AGENTS_TEAM.md`. Referencias ajustadas: `AGENTS.md`
+     (índice de memoria), `HANDOFF.md:31`, `frontend/eslint.config.js:39`,
+     `improvements.md` (FASE 8 + checklist global).
+  5. **Cierre de docs**: `improvements.md` (FASE 8 con checks `[x]`, checklist
+     global completo), `TODO.md` (quitados items muertos `logo.svg`/
+     `reportWebVitals.js` y el de `.opencode`), `DONE.md`, `HANDOFF.md`.
+- **Fase 6 y 7** (cerradas, anteriores): ver `improvements.md` secciones FASE 6/7
+  y Decisiones abajo.
 
 ## En progreso
 
-- **FASE 6** (ver `improvements.md`): tests — mocks compartidos (`createSupabaseMock`, factory de datos en `src/test/setup.js`), mover mock de `react-chartjs-2`/polyfills a `setupTests.js`, cubrir `Toast.js`/`Dropdown.js`/`FiltersBar.js`/`PriceChart.js`/`Sidebar.js`/`MarketClosedNotice.js`/`useCountUp.js` + hooks de Fase 3, y coverage con `@vitest/coverage-v8` (meta ≥80% en `src/lib/` y `src/hooks/`, progresivo en componentes).
-- **Deploy**: orden obligatorio **`supabase db push` (0014) ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql`.
+- **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
+  cerradas. Próximos pasos = items del roadmap de `TODO.md` (destacados: migrar a
+  las nuevas API keys de Supabase antes de fines 2026; watchlist/ledger de
+  inversiones; flujo de cambio de contraseña).
+- **Deploy**: orden obligatorio **`supabase db push` (0014) ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz.
 - **Tarea aparte** (anotada, sin empezar): flujo de **cambio de contraseña** (link del email → pantalla de nueva contraseña; hoy el redirect maneja el token de Supabase).
 
 ## Decisiones tomadas (a no re-litigar sin motivo)

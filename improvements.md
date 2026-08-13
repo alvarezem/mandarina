@@ -452,15 +452,24 @@ _Objetivo: automatizar lint/format/tests y detectar vulnerabilidades en el CI._
 
 ---
 
-## FASE 8 — Limpieza final y documentación
-1. Borrar basura en disco: `backend/supabase/.temp/` (catalogos pgdelta de 1.5MB,
-   gitignored pero presentes), `frontend/frontend/`, `frontend/build/` (viejo CRA).
+## FASE 8 — Limpieza final y documentación HECHA el 2026-08-12
+1. Borrar basura en disco: `backend/supabase/.temp/` (catálogos pgdelta de 5.6MB,
+   gitignored), `frontend/coverage/` (salida gitignored de coverage) y
+   `backend/supabase/snippets/` (dir vacío). `frontend/frontend/`/`frontend/build/`
+   ya no existían.
 2. Reescribir `README.md` (raíz): stack real (Vite/Vitest/Deno), estructura
-   actualizada, scripts, env vars, flujo de deploy. Hoy menciona CRA y estructura vieja.
-3. Reescribir `frontend/README.md` con scripts reales.
-4. Actualizar `AGENT.md` con los comandos de verificación definitivos
-   (`npm test`, `npm run lint`, `deno test`, `npm run build`).
-5. Actualizar `TODO.md`/`DONE.md` al cierre de cada fase.
+   actualizada, scripts, env vars, flujo de deploy. Hoy mencionaba CRA y
+   estructura vieja.
+3. Reescribir `frontend/README.md` con scripts reales (`coverage`/`lint`/`format`).
+4. Actualizar `AGENTS.md` (índice de memoria y comandos). Plan de ejecución en
+   `fase8.md` (archivado al cierre).
+5. **`.opencode/` fuera del repo** (decisión del usuario): `opencode.json` se
+   destraquea (`git rm --cached`) y se ignora; la memoria sigue auto-cargándose
+   local. Documentado en `AGENTS.md`.
+6. **Borrar `.md` obsoletos** (decisión del usuario): `fase7.md`, `compromised.md`
+   y `AGENTS_TEAM.md`. La protección de deps la dan hoy `npm audit` + Dependabot;
+   las decisiones de Fase 7 viven en esta sección.
+7. Actualizar `TODO.md`/`DONE.md`/`HANDOFF.md` al cierre.
 
 **Verificación**:
 - [x] `git status` limpio de residuos; solo quedan archivos intencionales.
@@ -624,10 +633,11 @@ razonamiento de cada una, incluido por qué sumamos cosas que hoy no existen.
 8. Fase 8 (limpieza/docs).
 
 ## Checklist global de cierre
-- [ ] Ninguna dependencia de compromised.md en ningún árbol.
-- [ ] Sin service role ni anon keys fuera de `.env` gitignored; `backend/.env` borrado (rotación legacy no disponible; migración a nuevas API keys en TODO).
-- [ ] RLS + filtros de `user_id` en todos los fetches.
-- [ ] CI verde (build + tests frontend, deno tests backend, lint).
-- [ ] Duplicación de helpers/lógica eliminada (grep de 1 sola definición).
-- [ ] Sin archivos muertos ni directorios huérfanos.
-- [ ] Docs (README, AGENT) reflejan el stack real.
+- [x] `npm audit` en 0 y Dependabot activo (los `.md` de la lista histórica del
+      supply-chain se borraron en Fase 8).
+- [x] Sin service role ni anon keys fuera de `.env` gitignored; `backend/.env` borrado (rotación legacy no disponible; migración a nuevas API keys en TODO).
+- [x] RLS + filtros de `user_id` en todos los fetches.
+- [x] CI verde (build + tests frontend, deno tests backend, lint).
+- [x] Duplicación de helpers/lógica eliminada (grep de 1 sola definición).
+- [x] Sin archivos muertos ni directorios huérfanos.
+- [x] Docs (README, AGENTS) reflejan el stack real.

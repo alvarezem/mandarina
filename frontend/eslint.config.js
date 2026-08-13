@@ -36,7 +36,7 @@ export default [
       react: { version: 'detect' },
     },
     rules: {
-      // El proyecto descartó TypeScript y no usa PropTypes (ver fase7.md).
+      // El proyecto descartó TypeScript y no usa PropTypes (ver improvements.md Fase 7).
       'react/prop-types': 'off',
     },
   },

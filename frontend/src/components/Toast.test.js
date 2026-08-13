@@ -2,10 +2,14 @@ import { render, screen, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ToastProvider, { useToast } from './Toast'
 
-function Consumer({ message, type = 'success', icon }) {
+function Consumer({ message, type = 'success', icon, segments }) {
   const pushToast = useToast()
   return (
-    <button type="button" onClick={() => pushToast({ type, icon, message })} data-testid="disparar">
+    <button
+      type="button"
+      onClick={() => pushToast({ type, icon, message, segments })}
+      data-testid="disparar"
+    >
       disparar
     </button>
   )
@@ -64,5 +68,28 @@ describe('Toast', () => {
     await userEvent.click(screen.getAllByTestId('disparar')[1])
     expect(await screen.findByTestId('toast-icon-wave')).toBeInTheDocument()
     expect(screen.getAllByRole('status')).toHaveLength(2)
+  })
+
+  it('renderiza segmentos de texto con tonos de color', async () => {
+    render(
+      <ToastProvider>
+        <Consumer
+          message="posiciones"
+          segments={[
+            { text: 'Tus posiciones: ' },
+            { text: 'VIST ▲1.20%', tone: 'up' },
+            { text: ' · QQQ ▼0.50%', tone: 'down' },
+            { text: ' · KO —' },
+          ]}
+        />
+      </ToastProvider>,
+    )
+    await userEvent.click(screen.getByTestId('disparar'))
+
+    expect(await screen.findByText('VIST ▲1.20%')).toBeInTheDocument()
+    expect(screen.getByText('VIST ▲1.20%').className).toContain('text-emerald-600')
+    expect(screen.getByText(/QQQ ▼0\.50%/)).toBeInTheDocument()
+    expect(screen.getByText(/QQQ ▼0\.50%/).className).toContain('text-red-600')
+    expect(screen.getByText(/KO —/).className).toBe('')
   })
 })

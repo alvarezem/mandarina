@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import supabase from '../lib/supabaseClient'
-import { buildAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
+import { buildAnalysis, buildIncomeAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
 import { fileOf } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
 import FiltersBar from './FiltersBar'
@@ -85,8 +85,10 @@ export default function Dashboard({
   refreshKey,
   resetKey,
   onSummarySelect,
+  mode = 'egresos',
 }) {
   const pushToast = useToast()
+  const isIngresos = mode === 'ingresos'
   const [overrides, setOverrides] = useState([])
   const [customCategories, setCustomCategories] = useState([])
   const [period, setPeriod] = useState('todo')
@@ -248,7 +250,10 @@ export default function Dashboard({
     return txs
   }, [working, currency, categories, query])
 
-  const analysis = useMemo(() => buildAnalysis(filtered), [filtered])
+  const analysis = useMemo(
+    () => (isIngresos ? buildIncomeAnalysis(filtered) : buildAnalysis(filtered)),
+    [filtered, isIngresos],
+  )
 
   const onSort = (key) =>
     setSort((s) =>
@@ -383,26 +388,34 @@ export default function Dashboard({
           hasActiveFilters={hasActiveFilters}
           onClearFilters={clearFilters}
         />
-        {paymentsCount > 0 && (
+        {paymentsCount > 0 && !isIngresos && (
           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-            {paymentsCount} {paymentsCount === 1 ? 'pago' : 'pagos'} de tarjeta excluido
-            {paymentsCount === 1 ? '' : 's'} de los totales.
+            Se excluye{paymentsCount === 1 ? '' : 'n'} {paymentsCount}{' '}
+            {paymentsCount === 1 ? 'pago' : 'pagos'} de tarjeta de los totales (categoría
+            &lsquo;Pagos&rsquo;: son pagos de la tarjeta, no gastos).
           </p>
         )}
       </div>
 
       {filtered.length === 0 ? (
         <EmptyState
-          title="Sin transacciones para este período."
-          hint="Probá con otro rango de fechas o quitá los filtros."
+          title={
+            isIngresos ? 'Sin ingresos para este período.' : 'Sin transacciones para este período.'
+          }
+          hint={
+            isIngresos
+              ? 'No se registraron créditos en este rango de fechas.'
+              : 'Probá con otro rango de fechas o quitá los filtros.'
+          }
         />
       ) : (
         <>
-          <SummaryCards analysis={analysis} gridKey={filterKey} />
+          <SummaryCards analysis={analysis} gridKey={filterKey} variant={mode} />
 
           <SpendingCharts
             analysis={analysis}
             dark={dark}
+            variant={mode}
             onPoint={(date) => {
               setPeriod('custom')
               setCustomFrom(date)

@@ -7,7 +7,23 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-12
-- **Qué se hizo** — **FASE 8 CERRADA** (ver `improvements.md` + `fase8.md`):
+- **Qué se hizo** — **Quick wins de análisis** (detalle en `DONE.md`):
+  1. **Vista de Ingresos separada de Egresos**: `buildIncomeAnalysis` en
+     `lib/analysis.js` (totales solo de créditos, mayor ingreso ARS/USD, desglose
+     por categoría/origen, tendencia); pestañas **Ingresos/Egresos/Resúmenes** en
+     la nueva `components/ResumenesView.js`; `SummaryCards`/`SpendingCharts` con
+     variante `ingresos`; `Dashboard` con prop `mode` (`egresos`/`ingresos`).
+  2. **Nav a 2 items** (`Resúmenes`, `Inversiones`) en rail y bottom nav
+     (grid-cols-2); view por defecto y home = `resumenes`. Tour actualizado:
+     paso "Egresos" (target `egresos` sobre la pestaña).
+  3. **Fix preexistente**: `SummaryCards.js` usaba `fmtUSD` inexistente
+     (→ `fmt(n, 'USD')`); tenía **13 tests de Dashboard en rojo**. Suite hoy
+     **238/238 verdes** + lint limpio.
+  4. **QW1 copy**: mensaje de pagos excluidos claro ("Se excluye(n) N pagos de
+     tarjeta de los totales (categoría 'Pagos')") y oculto en modo ingresos.
+  5. **QW2 toast**: top 3 posiciones con **segmentos coloreados** por variación
+     (verde/rojo/neutro) y tipo `info` (no `success`); `Toast` soporta `segments`.
+- **Fase anterior**: **FASE 8 CERRADA** (ver `improvements.md` + `fase8.md`):
   1. **Limpieza de disco**: borrados `backend/supabase/.temp/` (catálogos pgdelta),
      `frontend/coverage/` (salida de coverage) y `backend/supabase/snippets/`
      (dir vacío). `frontend/frontend/`/`frontend/build/` ya no existían.

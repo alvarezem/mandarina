@@ -120,9 +120,9 @@ export default function ToastProvider({ children }) {
   }, [])
 
   const pushToast = useCallback(
-    ({ type = 'info', icon, message }) => {
+    ({ type = 'info', icon, message, segments }) => {
       const id = ++idRef.current
-      setToasts((list) => [...list.slice(-2), { id, type, icon, message }])
+      setToasts((list) => [...list.slice(-2), { id, type, icon, message, segments }])
       timers.current.push(window.setTimeout(() => dismiss(id), 3200))
     },
     [dismiss],
@@ -142,7 +142,26 @@ export default function ToastProvider({ children }) {
             className={`animate-slide-in-right pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-xl border px-4 py-3 shadow-md backdrop-blur ${STYLES[t.type]}`}
           >
             <Icon type={t.type} icon={t.icon} />
-            <span className="text-sm font-medium leading-snug">{t.message}</span>
+            {t.segments ? (
+              <span className="text-sm font-medium leading-snug">
+                {t.segments.map((s, i) => (
+                  <span
+                    key={i}
+                    className={
+                      s.tone === 'up'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : s.tone === 'down'
+                          ? 'text-red-600 dark:text-red-400'
+                          : undefined
+                    }
+                  >
+                    {s.text}
+                  </span>
+                ))}
+              </span>
+            ) : (
+              <span className="text-sm font-medium leading-snug">{t.message}</span>
+            )}
           </div>
         ))}
       </div>

@@ -2,15 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import supabase from './lib/supabaseClient'
 import { useTheme } from './hooks/useTheme'
 import Auth from './components/Auth'
-import UploadSummaries from './components/UploadSummaries'
-import Dashboard from './components/Dashboard'
+import ResumenesView from './components/ResumenesView'
 import InvestmentsView from './components/InvestmentsView'
 import ThemeToggle from './components/ThemeToggle'
 import Sidebar, { Logo, NAV_ITEMS } from './components/Sidebar'
 import ToastProvider, { useToast } from './components/Toast'
 import OnboardingTour from './components/OnboardingTour'
 
-const VIEW_TITLES = { costos: 'Costos', inversiones: 'Inversiones', resumenes: 'Resúmenes' }
+const VIEW_TITLES = { resumenes: 'Resúmenes', inversiones: 'Inversiones' }
 
 const TOUR_VERSION = 1
 const tourSeenKey = (userId) => `mandarina:tour:${userId}`
@@ -45,11 +44,21 @@ async function pushTopPositions(pushToast) {
             : pct >= 0
               ? `▲${Math.abs(pct).toFixed(2)}%`
               : `▼${Math.abs(pct).toFixed(2)}%`
-        return `${i.symbol} ${arrow}`
+        const tone = pct == null ? 'neutral' : pct >= 0 ? 'up' : 'down'
+        return { text: `${i.symbol} ${arrow}`, tone }
       })
       .filter(Boolean)
-    if (parts.length > 0)
-      pushToast({ type: 'success', icon: 'trend', message: `Tus posiciones: ${parts.join(' · ')}` })
+    if (parts.length === 0) return
+    const msg = `Tus posiciones: ${parts.map((p) => p.text).join(' · ')}`
+    pushToast({
+      type: 'info',
+      icon: 'trend',
+      message: msg,
+      segments: [
+        { text: 'Tus posiciones: ' },
+        ...parts.map((p, i) => ({ text: `${i === 0 ? '' : ' · '}${p.text}`, tone: p.tone })),
+      ],
+    })
   } catch {
     // silencioso: no hay plan, sin precios o error de red
   }
@@ -110,7 +119,7 @@ function App() {
 
 function AppContent({ session, dark, setDark, greeting, setGreeting }) {
   const pushToast = useToast()
-  const [view, setView] = useState('costos')
+  const [view, setView] = useState('resumenes')
   const [selectedId, setSelectedId] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [resetKey, setResetKey] = useState(0)
@@ -177,7 +186,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
   }
 
   const goHome = () => {
-    setView('costos')
+    setView('resumenes')
     setSelectedId(null)
     setResetKey((k) => k + 1)
     mainRef.current?.scrollTo?.({ top: 0 })
@@ -185,27 +194,8 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
 
   const selectSummary = (id) => {
     setSelectedId(id)
-    setView('costos')
+    setView('resumenes')
   }
-
-  const summariesView = (
-    <div className="mx-auto max-w-2xl animate-fade-in-up">
-      <div className="mb-4 text-center sm:text-left">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-          Resúmenes
-        </h1>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-          Tus números, sin cáscara
-        </p>
-      </div>
-      <UploadSummaries
-        session={session}
-        selectedId={selectedId}
-        onSelect={selectSummary}
-        onDataChanged={() => setRefreshKey((k) => k + 1)}
-      />
-    </div>
-  )
 
   return (
     <div className="flex h-screen flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40 dark:text-slate-100">
@@ -296,19 +286,18 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
           className={`flex-1 p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8 ${tourOpen ? 'overflow-hidden' : 'overflow-y-auto'}`}
         >
           <div key={view}>
-            {view === 'costos' ? (
-              <Dashboard
+            {view === 'inversiones' ? (
+              <InvestmentsView session={session} />
+            ) : (
+              <ResumenesView
                 session={session}
                 summaryId={selectedId}
                 dark={dark}
                 refreshKey={refreshKey}
                 resetKey={resetKey}
-                onSummarySelect={selectSummary}
+                onSelect={selectSummary}
+                onDataChanged={() => setRefreshKey((k) => k + 1)}
               />
-            ) : view === 'inversiones' ? (
-              <InvestmentsView session={session} />
-            ) : (
-              summariesView
             )}
           </div>
         </main>
@@ -318,7 +307,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
         aria-label="Navegación principal"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-slate-100/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:hidden"
       >
-        <div className="relative mx-auto grid max-w-md grid-cols-3 items-stretch pt-5">
+        <div className="relative mx-auto grid max-w-md grid-cols-2 items-stretch pt-5">
           {NAV_ITEMS.map((item) => {
             const active = view === item.key
             return (

@@ -8,9 +8,9 @@ const TOUR_STEPS = [
     target: null,
   },
   {
-    title: 'Costos',
-    body: 'Al subir resúmenes, separás los gastos en gajos: se categorizan automáticamente y podés reasignarlos con un clic (la categoría se recuerda por comercio). También filtrás por período, tipo y comercio, y ves totales y gráficos de evolución.',
-    target: 'costos',
+    title: 'Egresos',
+    body: 'Mandarina separa tus resúmenes en dos vistas: Egresos y Ingresos. En Egresos, los gastos se categorizan automáticamente (podés reasignarlos con un clic y la categoría se recuerda por comercio) y filtrás por período, tipo y comercio. En Ingresos, mirás acreditaciones, sueldos y devoluciones.',
+    target: 'egresos',
   },
   {
     title: 'Resúmenes',

@@ -3,15 +3,18 @@ import userEvent from '@testing-library/user-event'
 import Sidebar, { NAV_ITEMS, Logo } from './Sidebar'
 
 const renderSidebar = (props = {}) =>
-  render(<Sidebar view="costos" onNavigate={vi.fn()} {...props} />)
+  render(<Sidebar view="resumenes" onNavigate={vi.fn()} {...props} />)
 
 describe('Sidebar', () => {
-  it('muestra los 3 items de navegación y marca el activo', () => {
+  it('muestra los 2 items de navegación y marca el activo', () => {
     renderSidebar()
     for (const item of NAV_ITEMS) {
       expect(screen.getByRole('button', { name: item.label })).toBeInTheDocument()
     }
-    expect(screen.getByRole('button', { name: 'Costos' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: 'Resúmenes' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
   })
 
   it('colapsa a iconos sin labels cuando expanded está apagado', () => {
@@ -28,7 +31,7 @@ describe('Sidebar', () => {
     renderSidebar({ expanded: true })
     const nav = screen.getByRole('navigation', { name: 'Navegación' })
     expect(nav.className).toContain('w-52')
-    expect(screen.getByText('Costos')).toBeInTheDocument()
+    expect(screen.getByText('Resúmenes')).toBeInTheDocument()
   })
 
   it('navega al hacer click en un item', async () => {

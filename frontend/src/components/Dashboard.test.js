@@ -111,7 +111,7 @@ describe('Dashboard', () => {
     renderDashboard()
     expect(await screen.findByText('Débitos')).toBeInTheDocument()
     expect(await screen.findByText('Movimientos')).toBeInTheDocument()
-    expect(screen.getByText(/1 pago de tarjeta excluido/i)).toBeInTheDocument()
+    expect(screen.getByText(/se excluye 1 pago de tarjeta/i)).toBeInTheDocument()
 
     const [_, ...rows] = await rowsOfTable()
     const merchants = rows.map((r) => within(r).getAllByRole('cell')[1].textContent)
@@ -130,6 +130,49 @@ describe('Dashboard', () => {
     const merchants = rows.map((r) => within(r).getAllByRole('cell')[1].textContent)
     expect(merchants).toEqual(['AMAZON'])
     expect(screen.getByText('Mayor gasto USD')).toBeInTheDocument()
+  })
+
+  it('en modo ingresos muestra cards y gráficos de ingresos (no débitos ni nota de pagos)', async () => {
+    mockTx([
+      {
+        id: 'c1',
+        date: '2026-07-01',
+        merchant: 'SUELDO',
+        category: 'Ingresos',
+        currency: 'ARS',
+        amount: 500000,
+        summary_id: 's1',
+        card_summaries: { file_name: 'resumen-julio.csv' },
+      },
+      {
+        id: 'c2',
+        date: '2026-07-02',
+        merchant: 'REINTEGRO',
+        category: 'Ingresos',
+        currency: 'ARS',
+        amount: 1500,
+        summary_id: 's1',
+        card_summaries: { file_name: 'resumen-julio.csv' },
+      },
+      {
+        id: 'c3',
+        date: '2026-07-03',
+        merchant: 'PAGO TC',
+        category: 'Pagos',
+        currency: 'ARS',
+        amount: -50000,
+        summary_id: 's1',
+        card_summaries: { file_name: 'resumen-julio.csv' },
+      },
+    ])
+    renderDashboard({ mode: 'ingresos' })
+
+    expect(await screen.findByText('Mayor ingreso ARS')).toBeInTheDocument()
+    expect(screen.getByText('Movimientos')).toBeInTheDocument()
+    expect(screen.queryByText('Débitos')).not.toBeInTheDocument()
+    expect(screen.getByText('Ingresos acumulados')).toBeInTheDocument()
+    expect(screen.queryByText('Gastos acumulados')).not.toBeInTheDocument()
+    expect(screen.queryByText(/se excluye.*pago de tarjeta/i)).not.toBeInTheDocument()
   })
 
   it('filtra por categoría desde el dropdown', async () => {
@@ -219,7 +262,7 @@ describe('Dashboard', () => {
     const { update } = mockTx(txs)
     renderDashboard()
     await screen.findByText('Débitos')
-    expect(screen.queryByText(/1 pago de tarjeta excluido/i)).toBeInTheDocument()
+    expect(screen.queryByText(/se excluye 1 pago de tarjeta/i)).toBeInTheDocument()
 
     const [_, ...rows] = await rowsOfTable()
     const amazonRow = rows.find((r) => within(r).getAllByRole('cell')[1].textContent === 'AMAZON')
@@ -227,7 +270,7 @@ describe('Dashboard', () => {
     await userEvent.click(await screen.findByRole('button', { name: /✓\s*Pagos/i }))
 
     expect(update).toHaveBeenCalledWith({ category: 'Pagos' })
-    expect(await screen.findByText(/2 pagos de tarjeta excluido/i)).toBeInTheDocument()
+    expect(await screen.findByText(/se excluyen 2 pagos de tarjeta/i)).toBeInTheDocument()
     const merchants = (await rowsOfTable())
       .slice(1)
       .map((r) => within(r).getAllByRole('cell')[1].textContent)

@@ -27,7 +27,7 @@ describe('OnboardingTour', () => {
     expect(within(dialog).getByRole('button', { name: /Anterior/i })).toBeDisabled()
 
     await userEvent.click(within(dialog).getByRole('button', { name: /Siguiente/i }))
-    expect(within(dialog).getByRole('heading', { name: 'Costos' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('heading', { name: 'Egresos' })).toBeInTheDocument()
 
     await userEvent.click(within(dialog).getByRole('button', { name: /Anterior/i }))
     expect(within(dialog).getByRole('heading', { name: /Bienvenido/i })).toBeInTheDocument()
@@ -74,8 +74,8 @@ describe('OnboardingTour', () => {
   it('hace foco en el ícono de la sección nombrada (hueco + anillo)', async () => {
     render(
       <>
-        <button type="button" data-tour="costos">
-          Costos nav
+        <button type="button" data-tour="egresos">
+          Egresos nav
         </button>
         <OnboardingTour open onClose={onClose} />
       </>,
@@ -89,11 +89,11 @@ describe('OnboardingTour', () => {
     expect(screen.getByTestId('tour-target-ring')).toBeInTheDocument()
   })
 
-  it('menciona la separación de gastos en gajos en el paso de Costos', async () => {
+  it('menciona las vistas de Egresos e Ingresos en el segundo paso', async () => {
     render(<OnboardingTour open onClose={onClose} />)
     const dialog = screen.getByRole('dialog', { name: /Guía de Mandarina/i })
     await userEvent.click(within(dialog).getByRole('button', { name: /Siguiente/i }))
-    expect(within(dialog).getByText(/separás los gastos en gajos/i)).toBeInTheDocument()
+    expect(within(dialog).getByText(/dos vistas: Egresos y Ingresos/i)).toBeInTheDocument()
   })
 
   it('el último paso dice "a sacarle todo el jugo" y muestra el gajo', async () => {

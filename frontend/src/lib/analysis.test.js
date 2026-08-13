@@ -1,4 +1,10 @@
-import { computeTotals, aggregate, buildAnalysis, EXCLUDED_CATEGORIES } from './analysis'
+import {
+  computeTotals,
+  aggregate,
+  buildAnalysis,
+  buildIncomeAnalysis,
+  EXCLUDED_CATEGORIES,
+} from './analysis'
 
 const tx = (overrides) => ({
   id: 't1',
@@ -109,6 +115,74 @@ describe('buildAnalysis', () => {
     expect(r.byCategory[0].category).not.toBe('Ingresos')
     expect(r.byMerchant.some((m) => m.merchant === 'DEPÓSITO')).toBe(false)
     expect(r.byMerchant[0]).toMatchObject({ merchant: 'MERCADO LIBRE', total: -500 })
+  })
+})
+
+describe('buildIncomeAnalysis', () => {
+  it('calcula totales solo con créditos y excluye Pagos', () => {
+    const r = buildIncomeAnalysis([
+      tx({ merchant: 'SUELDO', category: 'Ingresos', amount: 5000 }),
+      tx({ merchant: 'DÉBITO', category: 'Ingresos', amount: 2500 }),
+      tx({ merchant: 'PAGO TC', category: 'Pagos', amount: -50000 }),
+      tx({ merchant: 'MERCADO LIBRE', category: 'Compras', amount: -300 }),
+    ])
+    expect(r.excludedCount).toBe(1)
+    expect(r.totals.credits).toBe(7500)
+    expect(r.totals.debits).toBe(-300)
+    expect(r.totals.txCount).toBe(3)
+    expect(r.byCategory).toEqual([{ category: 'Ingresos', count: 2, total: 7500 }])
+    expect(r.byMerchant).toEqual([
+      { merchant: 'SUELDO', count: 1, total: 5000 },
+      { merchant: 'DÉBITO', count: 1, total: 2500 },
+    ])
+  })
+
+  it('marca el mayor ingreso y acumula tendencia por día', () => {
+    const r = buildIncomeAnalysis([
+      tx({ id: 'a', date: '2026-07-01', merchant: 'SUELDO', amount: 5000 }),
+      tx({ id: 'b', date: '2026-07-03', merchant: 'REINTEGRO', amount: 1000 }),
+    ])
+    expect(r.period.from).toBe('2026-07-01')
+    expect(r.period.to).toBe('2026-07-03')
+    expect(r.period.days).toBe(3)
+    expect(r.maxIncome).toMatchObject({ amount: 5000, merchant: 'SUELDO' })
+    expect(r.byDay).toEqual([
+      { date: '2026-07-01', income: 5000 },
+      { date: '2026-07-03', income: 1000 },
+    ])
+    expect(r.incomeTrend).toEqual([
+      { date: '2026-07-01', accumulated: 5000 },
+      { date: '2026-07-03', accumulated: 6000 },
+    ])
+  })
+
+  it('ignora débitos (montos negativos) en los agregados', () => {
+    const r = buildIncomeAnalysis([
+      tx({ merchant: 'SUELDO', category: 'Ingresos', amount: 4000 }),
+      tx({ merchant: 'MERCADO LIBRE', category: 'Compras', amount: -500 }),
+      tx({ merchant: 'MERCADO LIBRE', category: 'Compras', amount: -200 }),
+    ])
+    expect(r.totals.credits).toBe(4000)
+    expect(r.byCategory).toHaveLength(1)
+    expect(r.byCategory[0].category).toBe('Ingresos')
+    expect(r.byMerchant.some((m) => m.merchant === 'MERCADO LIBRE')).toBe(false)
+  })
+
+  it('separa un bloque USD cuando hay créditos en esa moneda', () => {
+    const r = buildIncomeAnalysis([
+      tx({ amount: 5000 }),
+      tx({ id: 'u', amount: 100, currency: 'USD', merchant: 'BONO' }),
+      tx({ id: 'u2', amount: -50, currency: 'USD', merchant: 'AMAZON' }),
+    ])
+    expect(r.totals.credits).toBe(5000)
+    expect(r.usd.totals.credits).toBe(100)
+    expect(r.usd.maxIncome).toMatchObject({ amount: 100, merchant: 'BONO' })
+    expect(r.usd.byMerchant).toEqual([{ merchant: 'BONO', count: 1, total: 100 }])
+  })
+
+  it('no incluye bloque USD si no hay transacciones en esa moneda', () => {
+    const r = buildIncomeAnalysis([tx({ amount: 5000 })])
+    expect(r.usd).toBeUndefined()
   })
 })
 

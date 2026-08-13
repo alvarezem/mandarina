@@ -124,9 +124,14 @@ describe('App', () => {
       last_sign_in_at: '2026-01-01T00:00:00.000Z',
     })
 
-    expect(
-      await screen.findByText('Tus posiciones: VIST ▲1.20% · QQQ ▼0.50% · KO —'),
-    ).toBeInTheDocument()
+    const up = await screen.findByText('VIST ▲1.20%')
+    expect(up.closest('[role="status"]')).toHaveTextContent(
+      'Tus posiciones: VIST ▲1.20% · QQQ ▼0.50% · KO —',
+    )
+    expect(up.className).toContain('text-emerald-600')
+    const down = screen.getByText(/QQQ ▼0\.50%/)
+    expect(down.className).toContain('text-red-600')
+    expect(screen.getByText(/KO —/).className).toBe('')
     expect(screen.getByTestId('toast-icon-trend')).toBeInTheDocument()
   })
 
@@ -138,7 +143,7 @@ describe('App', () => {
   })
 
   describe('navegación rail (lg+)', () => {
-    it('muestra header con hamburguesa, logo Mandarina y rail con Costos activo', async () => {
+    it('muestra header con hamburguesa, logo Mandarina y rail con Resúmenes activo', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
@@ -147,11 +152,10 @@ describe('App', () => {
       expect(screen.getByRole('button', { name: 'Colapsar barra' })).toBeInTheDocument()
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
-      expect(within(rail).getByRole('button', { name: 'Costos' }).className).toContain(
+      expect(within(rail).getByRole('button', { name: 'Resúmenes' }).className).toContain(
         'bg-brand-50',
       )
       expect(within(rail).getByRole('button', { name: /Inversiones/ })).toBeInTheDocument()
-      expect(within(rail).getByRole('button', { name: /Resúmenes/ })).toBeInTheDocument()
     })
 
     it('navega a Inversiones y muestra el plan de inversión vacío', async () => {
@@ -165,16 +169,56 @@ describe('App', () => {
       expect(screen.queryByText(EMPTY_STATE)).not.toBeInTheDocument()
     })
 
-    it('navega a Resúmenes y muestra el listado centrado', async () => {
+    it('navega a Resúmenes y permite abrir la pestaña de carga', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
       await userEvent.click(within(rail).getByRole('button', { name: /Resúmenes/ }))
 
+      const tabs = screen.getByRole('tablist', { name: 'Secciones de resúmenes' })
+      await userEvent.click(within(tabs).getByRole('tab', { name: 'Resúmenes' }))
+
       expect(await screen.findByText('Subir resumen')).toBeInTheDocument()
       expect(screen.queryByText(EMPTY_STATE)).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
+    })
+
+    it('cambia entre las pestañas Egresos e Ingresos', async () => {
+      mockApp([
+        {
+          id: 'i1',
+          date: '2026-07-01',
+          merchant: 'SUELDO',
+          category: 'Ingresos',
+          currency: 'ARS',
+          amount: 500000,
+          summary_id: 's1',
+          card_summaries: { file_name: 'resumen.csv' },
+        },
+        {
+          id: 'x1',
+          date: '2026-07-02',
+          merchant: 'MERCADO LIBRE',
+          category: 'Compras',
+          currency: 'ARS',
+          amount: -1500,
+          summary_id: 's1',
+          card_summaries: { file_name: 'resumen.csv' },
+        },
+      ])
+      render(<App />)
+      await screen.findByText('Débitos')
+
+      const tabs = screen.getByRole('tablist', { name: 'Secciones de resúmenes' })
+      await userEvent.click(within(tabs).getByRole('tab', { name: 'Ingresos' }))
+
+      expect(await screen.findByText('Mayor ingreso ARS')).toBeInTheDocument()
+      expect(screen.queryByText('Débitos')).not.toBeInTheDocument()
+      expect(screen.getByText('Ingresos acumulados')).toBeInTheDocument()
+
+      await userEvent.click(within(tabs).getByRole('tab', { name: 'Egresos' }))
+      expect(await screen.findByText('Débitos')).toBeInTheDocument()
     })
 
     it('expande y colapsa el rail con el hamburguesa del header', async () => {
@@ -203,19 +247,22 @@ describe('App', () => {
 
       const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
       expect(bottom.className).toContain('lg:hidden')
-      expect(bottom.querySelector('.grid-cols-3')).not.toBeNull()
+      expect(bottom.querySelector('.grid-cols-2')).not.toBeNull()
 
       const home = within(bottom).getByRole('button', { name: 'Inicio' })
       expect(home.className).toContain('absolute')
       expect(home.className).toContain('left-1/2')
     })
 
-    it('navega a Resúmenes desde la bottom nav y muestra el listado centrado', async () => {
+    it('navega a Resúmenes desde la bottom nav y abre la pestaña de carga', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
       const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
       await userEvent.click(within(bottom).getByRole('button', { name: 'Resúmenes' }))
+
+      const tabs = screen.getByRole('tablist', { name: 'Secciones de resúmenes' })
+      await userEvent.click(within(tabs).getByRole('tab', { name: 'Resúmenes' }))
 
       expect(await screen.findByText('Subir resumen')).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
@@ -265,7 +312,7 @@ describe('App', () => {
 
     const cardsGrid = container.querySelector('.grid.grid-cols-2')
     expect(cardsGrid).not.toBeNull()
-    expect(cardsGrid.className).toContain('lg:grid-cols-3')
+    expect(cardsGrid.className).toContain('md:grid-cols-4')
   })
 
   describe('OnboardingTour', () => {
@@ -308,7 +355,7 @@ describe('App', () => {
       expect(within(dialog).getByRole('heading', { name: /Bienvenido/i })).toBeInTheDocument()
 
       await userEvent.click(within(dialog).getByRole('button', { name: /Siguiente/i }))
-      expect(within(dialog).getByRole('heading', { name: 'Costos' })).toBeInTheDocument()
+      expect(within(dialog).getByRole('heading', { name: 'Egresos' })).toBeInTheDocument()
 
       await userEvent.click(within(dialog).getByRole('button', { name: /Anterior/i }))
       expect(within(dialog).getByRole('heading', { name: /Bienvenido/i })).toBeInTheDocument()
@@ -337,15 +384,12 @@ describe('App', () => {
       await screen.findByText(EMPTY_STATE)
 
       const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
-      expect(within(bottom).getByRole('button', { name: 'Costos' }).getAttribute('data-tour')).toBe(
-        'costos',
-      )
-      expect(
-        within(bottom).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour'),
-      ).toBe('inversiones')
       expect(
         within(bottom).getByRole('button', { name: 'Resúmenes' }).getAttribute('data-tour'),
       ).toBe('resumenes')
+      expect(
+        within(bottom).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour'),
+      ).toBe('inversiones')
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
       expect(

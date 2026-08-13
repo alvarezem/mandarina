@@ -3,7 +3,7 @@ import '../lib/chartjs'
 import { fmt, fmtCompact } from '../lib/format'
 import { BRAND_HEX, BRAND_HEX_STRONG, brandRgba, PALETTE } from '../lib/constants'
 
-function lineData(expenseTrend) {
+function lineData(series, isIncome) {
   const gradient = (context) => {
     const { ctx, chartArea } = context.chart
     if (!chartArea) return brandRgba(0.15)
@@ -13,11 +13,11 @@ function lineData(expenseTrend) {
     return g
   }
   return {
-    labels: expenseTrend.map((d) => d.date),
+    labels: series.map((d) => d.date),
     datasets: [
       {
-        label: 'Gastos acumulados',
-        data: expenseTrend.map((d) => d.accumulated),
+        label: isIncome ? 'Ingresos acumulados' : 'Gastos acumulados',
+        data: series.map((d) => d.accumulated),
         borderColor: BRAND_HEX,
         backgroundColor: gradient,
         tension: 0.35,
@@ -44,13 +44,13 @@ function doughnutData(byCategory) {
   }
 }
 
-function barData(byMerchant) {
-  const top = byMerchant.filter((m) => m.total < 0).slice(0, 8)
+function barData(byMerchant, isIncome) {
+  const top = byMerchant.filter((m) => (isIncome ? m.total > 0 : m.total < 0)).slice(0, 8)
   return {
     labels: top.map((m) => m.merchant),
     datasets: [
       {
-        label: 'Gasto por comercio',
+        label: isIncome ? 'Ingreso por origen' : 'Gasto por comercio',
         data: top.map((m) => m.total),
         backgroundColor: BRAND_HEX,
         hoverBackgroundColor: BRAND_HEX_STRONG,
@@ -69,7 +69,7 @@ function axisTicks(dark, currency = 'ARS') {
   }
 }
 
-function lineOptions(dark, onPoint) {
+function lineOptions(dark, onPoint, isIncome) {
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -80,7 +80,10 @@ function lineOptions(dark, onPoint) {
     plugins: {
       legend: { display: false },
       tooltip: {
-        callbacks: { label: (ctx) => ` Gasto acumulado: ${fmt(ctx.parsed.y)}` },
+        callbacks: {
+          label: (ctx) =>
+            ` ${isIncome ? 'Ingreso acumulado' : 'Gasto acumulado'}: ${fmt(ctx.parsed.y)}`,
+        },
       },
     },
     scales: {
@@ -144,7 +147,16 @@ function barOptions(dark, onBar) {
   }
 }
 
-export default function SpendingCharts({ analysis, dark, onPoint, onSlice, onBar }) {
+export default function SpendingCharts({
+  analysis,
+  dark,
+  onPoint,
+  onSlice,
+  onBar,
+  variant = 'egresos',
+}) {
+  const isIncome = variant === 'ingresos'
+  const trend = isIncome ? analysis.incomeTrend : analysis.expenseTrend
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div
@@ -152,10 +164,10 @@ export default function SpendingCharts({ analysis, dark, onPoint, onSlice, onBar
         style={{ animationDelay: '160ms' }}
       >
         <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Gastos acumulados
+          {isIncome ? 'Ingresos acumulados' : 'Gastos acumulados'}
         </h3>
         <div className="h-64">
-          <Line data={lineData(analysis.expenseTrend)} options={lineOptions(dark, onPoint)} />
+          <Line data={lineData(trend, isIncome)} options={lineOptions(dark, onPoint, isIncome)} />
         </div>
         <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
           Clic en un punto filtra el detalle de ese día.
@@ -166,7 +178,7 @@ export default function SpendingCharts({ analysis, dark, onPoint, onSlice, onBar
         style={{ animationDelay: '460ms' }}
       >
         <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Gasto por categoría
+          {isIncome ? 'Ingreso por categoría' : 'Gasto por categoría'}
         </h3>
         <div className="h-64">
           <Doughnut
@@ -183,10 +195,10 @@ export default function SpendingCharts({ analysis, dark, onPoint, onSlice, onBar
         style={{ animationDelay: '360ms' }}
       >
         <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Top comercios con mayor gasto
+          {isIncome ? 'Top orígenes de ingresos' : 'Top comercios con mayor gasto'}
         </h3>
         <div className="h-72">
-          <Bar data={barData(analysis.byMerchant)} options={barOptions(dark, onBar)} />
+          <Bar data={barData(analysis.byMerchant, isIncome)} options={barOptions(dark, onBar)} />
         </div>
         <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
           Clic en una barra filtra el detalle por comercio.

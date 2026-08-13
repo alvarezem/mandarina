@@ -30,7 +30,7 @@ function CardSkeleton() {
 }
 
 function cardsFromAnalysis(analysis) {
-  return [
+  const cards = [
     {
       label: 'Débitos',
       value: analysis.totals.debits,
@@ -42,58 +42,105 @@ function cardsFromAnalysis(analysis) {
       value: analysis.totals.txCount,
       format: (n) => Math.round(n).toLocaleString('es-AR'),
     },
-    ...(analysis.maxExpense
-      ? [
-          {
-            label: 'Mayor gasto ARS',
-            value: analysis.maxExpense.amount,
-            format: fmt,
-            valueClass: 'text-red-600 dark:text-red-400',
-            sub: analysis.maxExpense.merchant,
-          },
-        ]
-      : []),
-    ...(analysis.usd?.maxExpense
-      ? [
-          {
-            label: 'Mayor gasto USD',
-            value: analysis.usd.maxExpense.amount,
-            format: (n) => fmt(n, 'USD'),
-            valueClass: 'text-red-600 dark:text-red-400',
-            sub: analysis.usd.maxExpense.merchant,
-          },
-        ]
-      : []),
-    ...(analysis.usd
-      ? [
-          {
-            label: 'Gastos USD',
-            value: analysis.usd.totals.debits,
-            format: (n) => fmt(n, 'USD'),
-            valueClass: 'text-red-600 dark:text-red-400',
-            sub: `${analysis.usd.totals.txCount} movimientos`,
-          },
-        ]
-      : []),
   ]
+  if (analysis.maxExpense) {
+    cards.push({
+      label: 'Mayor gasto ARS',
+      value: analysis.maxExpense.amount,
+      format: fmt,
+      sub: analysis.maxExpense.merchant,
+      valueClass: 'text-red-600 dark:text-red-400',
+    })
+  }
+  if (analysis.usd?.maxExpense) {
+    cards.push({
+      label: 'Mayor gasto USD',
+      value: analysis.usd.maxExpense.amount,
+      format: (n) => fmt(n, 'USD'),
+      sub: analysis.usd.maxExpense.merchant,
+      valueClass: 'text-red-600 dark:text-red-400',
+    })
+  }
+  if (analysis.usd) {
+    cards.push({
+      label: 'Gastos USD',
+      value: analysis.usd.totals.debits,
+      format: (n) => fmt(n, 'USD'),
+      sub: `${Math.round(analysis.usd.totals.txCount).toLocaleString('es-AR')} movimientos`,
+    })
+  }
+  return cards
 }
 
-export default function SummaryCards({ analysis, gridKey }) {
+function cardsFromIncome(analysis) {
+  const cards = [
+    {
+      label: 'Ingresos',
+      value: analysis.totals.credits,
+      format: fmt,
+      valueClass: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      label: 'Movimientos',
+      value: analysis.totals.txCount,
+      format: (n) => Math.round(n).toLocaleString('es-AR'),
+    },
+  ]
+  if (analysis.maxIncome) {
+    cards.push({
+      label: 'Mayor ingreso ARS',
+      value: analysis.maxIncome.amount,
+      format: fmt,
+      sub: analysis.maxIncome.merchant,
+      valueClass: 'text-emerald-600 dark:text-emerald-400',
+    })
+  }
+  if (analysis.usd?.maxIncome) {
+    cards.push({
+      label: 'Mayor ingreso USD',
+      value: analysis.usd.maxIncome.amount,
+      format: (n) => fmt(n, 'USD'),
+      sub: analysis.usd.maxIncome.merchant,
+      valueClass: 'text-emerald-600 dark:text-emerald-400',
+    })
+  }
+  if (analysis.usd) {
+    cards.push({
+      label: 'Ingresos USD',
+      value: analysis.usd.totals.credits,
+      format: (n) => fmt(n, 'USD'),
+      sub: `${Math.round(analysis.usd.totals.txCount).toLocaleString('es-AR')} movimientos`,
+    })
+  }
+  return cards
+}
+
+export default function SummaryCards({ analysis, gridKey, variant = 'egresos' }) {
   if (!analysis) {
     return (
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4" key={gridKey}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <CardSkeleton key={i} />
-        ))}
+      <div
+        className="grid grid-cols-2 gap-3 md:grid-cols-4"
+        key={gridKey}
+        data-testid="summary-cards"
+      >
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
       </div>
     )
   }
+
+  const cards = variant === 'ingresos' ? cardsFromIncome(analysis) : cardsFromAnalysis(analysis)
+
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4" key={gridKey}>
-      {cardsFromAnalysis(analysis).map((c, i) => (
-        <div key={c.label} className="animate-fade-in-up" style={{ animationDelay: `${i * 90}ms` }}>
-          <Card {...c} />
-        </div>
+    <div
+      className="grid grid-cols-2 gap-3 md:grid-cols-4"
+      key={gridKey}
+      data-testid="summary-cards"
+    >
+      {cards.map((card, i) => (
+        <Card key={`${card.label}-${i}`} {...card} />
       ))}
     </div>
   )

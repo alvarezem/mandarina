@@ -1,20 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { fmt } from '../lib/format'
-import { normalizeSymbol, validateSymbol } from '../lib/watchlist'
 import { commissionAmount, profitability, summarize } from '../lib/ledger'
 import { useAsync } from '../hooks/useAsync'
 import { useWatchQuotes } from '../hooks/useWatchQuotes'
 import { useToast } from './Toast'
 import QuotesErrorNotice from './QuotesErrorNotice'
-
-const SIDES = [
-  { key: 'compra', label: 'Compra' },
-  { key: 'venta', label: 'Venta' },
-  { key: 'ajuste', label: 'Ajuste' },
-]
-
-const today = () => new Date().toISOString().slice(0, 10)
+import RegisterOperationModal from './RegisterOperationModal'
 
 export default function LedgerView({
   session,
@@ -24,25 +16,14 @@ export default function LedgerView({
   setRateMode = () => {},
 }) {
   const pushToast = useToast()
-  const [form, setForm] = useState(() => ({
-    side: 'compra',
-    symbol: '',
-    date: today(),
-    quantity: '',
-    price: '',
-    commission: '',
-    commissionIsPct: false,
-    notes: '',
-  }))
-  const [saving, setSaving] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [formKey, setFormKey] = useState(0)
   const [confirmingId, setConfirmingId] = useState(null)
-  const [draftSymbol, setDraftSymbol] = useState('')
 
-  useEffect(() => {
-    const clean = normalizeSymbol(form.symbol)
-    const t = setTimeout(() => setDraftSymbol(validateSymbol(clean) ? clean : ''), 400)
-    return () => clearTimeout(t)
-  }, [form.symbol])
+  const openForm = () => {
+    setShowForm(true)
+    setFormKey((k) => k + 1)
+  }
 
   const {
     data: rows,
@@ -70,7 +51,7 @@ export default function LedgerView({
   const ops = rows ?? []
   const summary = summarize(ops)
   const { quotes, rates, refreshQuotes, quotesError } = useWatchQuotes({
-    symbols: [...new Set([...summary.map((s) => s.symbol), draftSymbol].filter(Boolean))],
+    symbols: summary.map((s) => s.symbol).filter(Boolean),
   })
 
   const rate = rates[rateMode]?.price || null
@@ -88,65 +69,6 @@ export default function LedgerView({
   const totalValue = priced.reduce((a, s) => a + s.price * s.quantity, 0)
   const totalPnl = totalValue - totalCost
   const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
-
-  const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
-
-  const quoteForDraft = quotes[draftSymbol]
-
-  const handleAdd = async (e) => {
-    e.preventDefault()
-    const symbol = normalizeSymbol(form.symbol)
-    if (!validateSymbol(symbol)) {
-      pushToast({ type: 'error', message: 'Ticker inválido (ej. GGAL, AL30, MELID)' })
-      return
-    }
-    const quantity = Number(form.quantity)
-    const price = form.price === '' ? 0 : Number(form.price)
-    const commission = form.commission === '' ? 0 : Number(form.commission)
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      pushToast({ type: 'error', message: 'La cantidad debe ser mayor a 0' })
-      return
-    }
-    if (!Number.isFinite(price) || price < 0 || !Number.isFinite(commission) || commission < 0) {
-      pushToast({ type: 'error', message: 'Precio y comisión deben ser mayores o iguales a 0' })
-      return
-    }
-    if (!form.date) {
-      pushToast({ type: 'error', message: 'Elegí una fecha para la operación' })
-      return
-    }
-    setSaving(true)
-    try {
-      const { error } = await supabase.from('ledger_operations').insert({
-        user_id: session.user.id,
-        symbol,
-        side: form.side,
-        quantity,
-        price,
-        commission,
-        commission_is_pct: form.commissionIsPct,
-        currency: 'ARS',
-        date: form.date,
-        notes: form.notes.trim() || null,
-      })
-      if (error) {
-        console.error('LedgerView: error al registrar operación', error)
-        pushToast({ type: 'error', message: 'No se pudo registrar la operación' })
-        return
-      }
-      setForm((f) => ({ ...f, symbol: '', quantity: '', price: '', commission: '', notes: '' }))
-      pushToast({
-        type: 'success',
-        message: `${symbol}: ${form.side} de ${quantity} unidades registrada`,
-      })
-      reload()
-    } catch (e) {
-      console.error('LedgerView: error al registrar operación', e)
-      pushToast({ type: 'error', message: 'No se pudo registrar la operación' })
-    } finally {
-      setSaving(false)
-    }
-  }
 
   const removeOp = async (op) => {
     try {
@@ -171,9 +93,6 @@ export default function LedgerView({
     return o.side === 'venta' ? -(amount - comm) : amount + comm
   }
 
-  const inputClass =
-    'min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100'
-
   return (
     <section className="mt-6 rounded-2xl border border-slate-200 bg-white/70 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -186,6 +105,22 @@ export default function LedgerView({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={openForm}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 active:scale-[0.98] dark:bg-brand-500 dark:hover:bg-brand-600"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2.2}
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Registrar operación
+          </button>
           {quotesError && <QuotesErrorNotice />}
           <button
             type="button"
@@ -236,127 +171,6 @@ export default function LedgerView({
         </div>
       </div>
 
-      <form
-        onSubmit={handleAdd}
-        className="mb-4 rounded-xl border border-slate-200 p-3 dark:border-slate-800"
-      >
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Registrar operación
-        </p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <select
-            value={form.side}
-            onChange={setField('side')}
-            aria-label="Tipo de operación"
-            className={inputClass}
-          >
-            {SIDES.map((s) => (
-              <option key={s.key} value={s.key}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-          <input
-            value={form.symbol}
-            onChange={setField('symbol')}
-            placeholder="Ticker *"
-            aria-label="Símbolo de la operación"
-            required
-            maxLength={12}
-            className={inputClass}
-          />
-          <input
-            type="date"
-            value={form.date}
-            onChange={setField('date')}
-            aria-label="Fecha de la operación"
-            required
-            className={inputClass}
-          />
-          <input
-            type="number"
-            min="0"
-            step="any"
-            value={form.quantity}
-            onChange={setField('quantity')}
-            placeholder="Cantidad *"
-            aria-label="Cantidad de la operación"
-            required
-            className={inputClass}
-          />
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min="0"
-              step="any"
-              value={form.price}
-              onChange={setField('price')}
-              placeholder="Precio"
-              aria-label="Precio por unidad"
-              className={inputClass}
-            />
-            {quoteForDraft?.price != null && (
-              <button
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, price: String(quoteForDraft.price) }))}
-                title="Usar el precio BYMA actual"
-                className="shrink-0 rounded-lg border border-slate-300 px-2 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
-              >
-                BYMA
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min="0"
-              step="any"
-              value={form.commission}
-              onChange={setField('commission')}
-              placeholder="Comisión"
-              aria-label="Comisión de la operación"
-              className={inputClass}
-            />
-            <div className="inline-flex shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-              {['$', '%'].map((u) => (
-                <button
-                  key={u}
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, commissionIsPct: u === '%' }))}
-                  aria-label={u === '%' ? 'Comisión en porcentaje' : 'Comisión en pesos'}
-                  aria-pressed={form.commissionIsPct === (u === '%')}
-                  className={`px-2 py-2 text-sm font-medium transition ${
-                    form.commissionIsPct === (u === '%')
-                      ? 'bg-brand-600 text-white dark:bg-brand-500'
-                      : 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {u}
-                </button>
-              ))}
-            </div>
-          </div>
-          <input
-            value={form.notes}
-            onChange={setField('notes')}
-            placeholder="Nota (opcional)"
-            aria-label="Nota de la operación"
-            maxLength={120}
-            className={`${inputClass} col-span-2`}
-          />
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60 dark:bg-brand-500 dark:hover:bg-brand-600"
-          >
-            Registrar
-          </button>
-        </div>
-        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-          Los campos con * son obligatorios · Precio en $ · Comisión en $ o %
-        </p>
-      </form>
-
       {error && (
         <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/50 dark:text-red-400">
           {error}
@@ -380,6 +194,13 @@ export default function LedgerView({
             Cargá tus compras/ventas y la posición inicial (Ajuste) para ver la rentabilidad vs.
             costo.
           </p>
+          <button
+            type="button"
+            onClick={openForm}
+            className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600"
+          >
+            Registrar operación
+          </button>
         </div>
       ) : (
         <>
@@ -573,6 +394,17 @@ export default function LedgerView({
           </div>
         </>
       )}
+
+      <RegisterOperationModal
+        key={formKey}
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        session={session}
+        onRegistered={() => {
+          setShowForm(false)
+          reload()
+        }}
+      />
     </section>
   )
 }

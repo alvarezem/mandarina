@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import LedgerView from './LedgerView'
 import ToastProvider from './Toast'
@@ -23,11 +23,18 @@ describe('LedgerView', () => {
 
   const wrap = (ui) => render(<ToastProvider>{ui}</ToastProvider>)
 
-  it('muestra el estado vacío y el form de alta', async () => {
+  const openModal = async () => {
+    await userEvent.click(screen.getAllByRole('button', { name: 'Registrar operación' })[0])
+    await screen.findByRole('dialog', { name: 'Registrar operación' })
+  }
+
+  it('muestra el estado vacío y abre el modal de registro', async () => {
     wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
     expect(await screen.findByText(/Todavía no registraste ninguna operación/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Registrar' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Registrar operación' }).length).toBeGreaterThan(0)
     expect(supabase.from('ledger_operations').select).toHaveBeenCalled()
+    await openModal()
+    expect(screen.getByRole('dialog', { name: 'Registrar operación' })).toBeInTheDocument()
   })
 
   it('resume por símbolo con costo promedio y rentabilidad vs. el precio', async () => {
@@ -136,6 +143,7 @@ describe('LedgerView', () => {
   it('registra una compra y muestra toast de éxito', async () => {
     supabase.mockTable('ledger_operations', { rows: [], insert: { id: 'o1' } })
     wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
     await userEvent.selectOptions(screen.getByLabelText('Tipo de operación'), 'compra')
     await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'ggal')
     await userEvent.type(screen.getByLabelText('Cantidad de la operación'), '10')
@@ -155,11 +163,15 @@ describe('LedgerView', () => {
       notes: null,
     })
     expect(await screen.findByText('GGAL: compra de 10 unidades registrada')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Registrar operación' })).not.toBeInTheDocument(),
+    )
   })
 
   it('registra la comisión como porcentaje cuando el toggle está en %', async () => {
     supabase.mockTable('ledger_operations', { rows: [], insert: { id: 'o1' } })
     wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
     await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'GGAL')
     await userEvent.type(screen.getByLabelText('Cantidad de la operación'), '10')
     await userEvent.type(screen.getByLabelText('Precio por unidad'), '25')
@@ -175,6 +187,7 @@ describe('LedgerView', () => {
   it('registra un ajuste inicial con su costo', async () => {
     supabase.mockTable('ledger_operations', { rows: [], insert: { id: 'o1' } })
     wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
     await userEvent.selectOptions(screen.getByLabelText('Tipo de operación'), 'ajuste')
     await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'GGAL')
     await userEvent.type(screen.getByLabelText('Cantidad de la operación'), '8')
@@ -186,18 +199,70 @@ describe('LedgerView', () => {
     )
   })
 
-  it('precarga el precio con la cotización BYMA actual', async () => {
+  it('el botón BYMA trae el precio live al hacer click', async () => {
     mockRows([])
-    mockQuotes({ GGAL: { price: 30, changePct: 1 } })
+    supabase.functions.invoke.mockResolvedValue({
+      data: { quotes: { GGAL: { price: 30, changePct: 1 } }, rates: {} },
+      error: null,
+    })
     wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
     await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'GGAL')
-    const byma = await screen.findByRole('button', { name: 'BYMA' }, { timeout: 2000 })
-    await userEvent.click(byma)
-    expect(screen.getByLabelText('Precio por unidad')).toHaveValue(30)
+    await userEvent.click(screen.getByRole('button', { name: 'BYMA' }))
+    await waitFor(() => expect(screen.getByLabelText('Precio por unidad')).toHaveValue(30))
+    expect(supabase.functions.invoke).toHaveBeenCalledWith(
+      'quotes',
+      expect.objectContaining({ body: { symbols: ['GGAL'] } }),
+    )
+  })
+
+  it('el botón BYMA avisa si el ticker es inválido y no consulta', async () => {
+    mockRows([])
+    wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
+    await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'CÓRDOBA')
+    await userEvent.click(screen.getByRole('button', { name: 'BYMA' }))
+
+    expect(await screen.findByText(/Ticker inválido/i)).toBeInTheDocument()
+    expect(supabase.functions.invoke).not.toHaveBeenCalled()
+  })
+
+  it('el botón BYMA avisa si no hay cotización para el ticker', async () => {
+    mockRows([])
+    supabase.functions.invoke.mockResolvedValue({ data: { quotes: {}, rates: {} }, error: null })
+    wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
+    await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'GGAL')
+    await userEvent.click(screen.getByRole('button', { name: 'BYMA' }))
+
+    expect(await screen.findByText('No se pudo obtener la cotización de GGAL')).toBeInTheDocument()
+  })
+
+  it('cierra el modal con Escape, la X o el backdrop', async () => {
+    mockRows([])
+    wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Registrar operación' })).not.toBeInTheDocument(),
+    )
+
+    await openModal()
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar registro' }))
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Registrar operación' })).not.toBeInTheDocument(),
+    )
+
+    await openModal()
+    await userEvent.click(screen.getByTestId('register-modal-backdrop'))
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Registrar operación' })).not.toBeInTheDocument(),
+    )
   })
 
   it('rechaza un ticker inválido con toast y no inserta', async () => {
     wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
     await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'CÓRDOBA')
     await userEvent.type(screen.getByLabelText('Cantidad de la operación'), '5')
     await userEvent.click(screen.getByRole('button', { name: 'Registrar' }))
@@ -208,6 +273,7 @@ describe('LedgerView', () => {
 
   it('rechaza cantidad no positiva', async () => {
     wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
     await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'GGAL')
     await userEvent.type(screen.getByLabelText('Cantidad de la operación'), '0')
     await userEvent.click(screen.getByRole('button', { name: 'Registrar' }))

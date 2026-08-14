@@ -56,7 +56,7 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 ## ⚡ Próxima tarea — Flujo de cambio de contraseña
 
-QW-D está hecho (ver DONE.md). Sigue la cola de producto, item **flujo de cambio
+QW-E está hecho (ver DONE.md). Sigue la cola de producto, item **flujo de cambio
 de contraseña** (frontend-only, sin backend). Hoy `resetPasswordForEmail`
 (`Auth.js`) vuelve a `window.location.origin` con el token en el hash; Supabase
 auto-crea sesión `PASSWORD_RECOVERY` pero `App.js` no la maneja → el usuario
@@ -78,12 +78,13 @@ Luego: **drawer móvil custom** → backend todo al final (ver `TODO.md`).
 
 - **Flujo de cambio de contraseña** — ver sección "⚡ Próxima tarea" arriba.
   **Orden de cola (decisión del usuario 2026-08-13)**: 1) QW-C Ingresos → **HECHO**
-  2) QW-D layout/toggle → **HECHO** 3) **flujo de cambio de contraseña** → 4)
-  **drawer móvil custom y lindo** (no el default; branding/logo/animación
-  coherentes con el rail). **Todo lo de backend se anota al final de `TODO.md`**:
-  watchlist (decisión DB vs localStorage), ledger (Plan Fase 2), ONs/cauciones en
-  la edge `quotes`, y migrar a las nuevas API keys de Supabase
-  (`sb_publishable_`/`sb_secret_`) antes de fines 2026.
+  2) QW-D layout/toggle → **HECHO** 3) QW-E cards 4 simétricas → **HECHO**
+  4) **flujo de cambio de contraseña** (en curso) → 5) **drawer móvil custom y
+  lindo** (no el default; branding/logo/animación coherentes con el rail).
+  **Todo lo de backend se anota al final de `TODO.md`**: watchlist (decisión DB
+  vs localStorage), ledger (Plan Fase 2), ONs/cauciones en la edge `quotes`, y
+  migrar a las nuevas API keys de Supabase (`sb_publishable_`/`sb_secret_`)
+  antes de fines 2026.
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 - **Deploy**: orden obligatorio **`supabase db push` (0014) ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz.

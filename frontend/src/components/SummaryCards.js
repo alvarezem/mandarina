@@ -30,89 +30,71 @@ function CardSkeleton() {
 }
 
 function cardsFromAnalysis(analysis) {
-  const cards = [
+  return [
     {
       label: 'Débitos',
       value: analysis.totals.debits,
       format: fmt,
       valueClass: 'text-red-600 dark:text-red-400',
+      sub: `${Math.round(analysis.totals.txCount).toLocaleString('es-AR')} movimientos`,
     },
     {
-      label: 'Movimientos',
-      value: analysis.totals.txCount,
-      format: (n) => Math.round(n).toLocaleString('es-AR'),
+      label: 'Mayor gasto ARS',
+      value: analysis.maxExpense ? analysis.maxExpense.amount : '—',
+      format: analysis.maxExpense ? fmt : null,
+      sub: analysis.maxExpense?.merchant,
+      valueClass: 'text-red-600 dark:text-red-400',
+    },
+    {
+      label: 'Gastos USD',
+      value: analysis.usd ? analysis.usd.totals.debits : 0,
+      format: (n) => fmt(n, 'USD'),
+      sub: analysis.usd
+        ? `${Math.round(analysis.usd.totals.txCount).toLocaleString('es-AR')} movimientos`
+        : undefined,
+    },
+    {
+      label: 'Mayor gasto USD',
+      value: analysis.usd?.maxExpense ? analysis.usd.maxExpense.amount : '—',
+      format: analysis.usd?.maxExpense ? (n) => fmt(n, 'USD') : null,
+      sub: analysis.usd?.maxExpense?.merchant,
+      valueClass: 'text-red-600 dark:text-red-400',
     },
   ]
-  if (analysis.maxExpense) {
-    cards.push({
-      label: 'Mayor gasto ARS',
-      value: analysis.maxExpense.amount,
-      format: fmt,
-      sub: analysis.maxExpense.merchant,
-      valueClass: 'text-red-600 dark:text-red-400',
-    })
-  }
-  if (analysis.usd?.maxExpense) {
-    cards.push({
-      label: 'Mayor gasto USD',
-      value: analysis.usd.maxExpense.amount,
-      format: (n) => fmt(n, 'USD'),
-      sub: analysis.usd.maxExpense.merchant,
-      valueClass: 'text-red-600 dark:text-red-400',
-    })
-  }
-  if (analysis.usd) {
-    cards.push({
-      label: 'Gastos USD',
-      value: analysis.usd.totals.debits,
-      format: (n) => fmt(n, 'USD'),
-      sub: `${Math.round(analysis.usd.totals.txCount).toLocaleString('es-AR')} movimientos`,
-    })
-  }
-  return cards
 }
 
 function cardsFromIncome(analysis) {
-  const cards = [
+  return [
     {
       label: 'Ingresos',
       value: analysis.totals.credits,
       format: fmt,
       valueClass: 'text-emerald-600 dark:text-emerald-400',
+      sub: `${Math.round(analysis.totals.txCount).toLocaleString('es-AR')} movimientos`,
     },
     {
-      label: 'Movimientos',
-      value: analysis.totals.txCount,
-      format: (n) => Math.round(n).toLocaleString('es-AR'),
+      label: 'Mayor ingreso ARS',
+      value: analysis.maxIncome ? analysis.maxIncome.amount : '—',
+      format: analysis.maxIncome ? fmt : null,
+      sub: analysis.maxIncome?.merchant,
+      valueClass: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      label: 'Ingresos USD',
+      value: analysis.usd ? analysis.usd.totals.credits : 0,
+      format: (n) => fmt(n, 'USD'),
+      sub: analysis.usd
+        ? `${Math.round(analysis.usd.totals.txCount).toLocaleString('es-AR')} movimientos`
+        : undefined,
+    },
+    {
+      label: 'Mayor ingreso USD',
+      value: analysis.usd?.maxIncome ? analysis.usd.maxIncome.amount : '—',
+      format: analysis.usd?.maxIncome ? (n) => fmt(n, 'USD') : null,
+      sub: analysis.usd?.maxIncome?.merchant,
+      valueClass: 'text-emerald-600 dark:text-emerald-400',
     },
   ]
-  if (analysis.maxIncome) {
-    cards.push({
-      label: 'Mayor ingreso ARS',
-      value: analysis.maxIncome.amount,
-      format: fmt,
-      sub: analysis.maxIncome.merchant,
-      valueClass: 'text-emerald-600 dark:text-emerald-400',
-    })
-  }
-  if (analysis.usd?.maxIncome) {
-    cards.push({
-      label: 'Mayor ingreso USD',
-      value: analysis.usd.maxIncome.amount,
-      format: (n) => fmt(n, 'USD'),
-      sub: analysis.usd.maxIncome.merchant,
-      valueClass: 'text-emerald-600 dark:text-emerald-400',
-    })
-  }
-  if (analysis.usd) {
-    cards.push({
-      label: 'Ingresos USD',
-      value: analysis.usd.totals.credits,
-      format: (n) => fmt(n, 'USD'),
-      sub: `${Math.round(analysis.usd.totals.txCount).toLocaleString('es-AR')} movimientos`,
-    })
-  }
-  return cards
 }
 
 export default function SummaryCards({ analysis, gridKey, variant = 'egresos', compact = false }) {

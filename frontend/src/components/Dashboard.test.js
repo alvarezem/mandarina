@@ -95,7 +95,7 @@ describe('Dashboard', () => {
   it('carga los gastos sin filtrar por user_id en transactions', async () => {
     const { select } = mockTx(txs)
     renderDashboard()
-    expect(await screen.findByText('Movimientos')).toBeInTheDocument()
+    expect(await screen.findByText('Débitos')).toBeInTheDocument()
     expect(select).toHaveBeenCalledWith(
       '*, card_summaries(file_name, summary_type, period_month, period_year)',
     )
@@ -111,7 +111,7 @@ describe('Dashboard', () => {
   it('renderiza cards y excluye pagos de tarjeta', async () => {
     renderDashboard()
     expect(await screen.findByText('Débitos')).toBeInTheDocument()
-    expect(await screen.findByText('Movimientos')).toBeInTheDocument()
+    expect(screen.getByText('Gastos USD')).toBeInTheDocument()
     expect(screen.getByText(/se excluye 1 pago de tarjeta/i)).toBeInTheDocument()
 
     const [_, ...rows] = await rowsOfTable()
@@ -119,6 +119,28 @@ describe('Dashboard', () => {
     expect(merchants).toContain('MERCADO LIBRE')
     expect(merchants).toContain('NETFLIX')
     expect(merchants).not.toContain('PAGO TC')
+  })
+
+  it('siempre renderiza 4 cards simétricas (sin huecos)', async () => {
+    renderDashboard()
+    await screen.findByText('Débitos')
+
+    const cards = screen.getByTestId('summary-cards')
+    expect(cards.querySelectorAll(':scope > div')).toHaveLength(4)
+    expect(screen.getByText('Mayor gasto ARS')).toBeInTheDocument()
+    expect(screen.getByText('Gastos USD')).toBeInTheDocument()
+    expect(screen.getByText('Mayor gasto USD')).toBeInTheDocument()
+  })
+
+  it('muestra USD en 0 y — cuando no hay gastos en dólares', async () => {
+    mockTx(txs.filter((t) => t.currency === 'ARS'))
+    renderDashboard()
+    await screen.findByText('Débitos')
+
+    const cards = within(screen.getByTestId('summary-cards'))
+    expect(cards.getByText('$0.00')).toBeInTheDocument()
+    expect(cards.getByText('—')).toBeInTheDocument()
+    expect(screen.getByTestId('summary-cards').querySelectorAll(':scope > div')).toHaveLength(4)
   })
 
   it('filtra por moneda USD', async () => {
@@ -169,7 +191,12 @@ describe('Dashboard', () => {
     renderDashboard({ mode: 'ingresos' })
 
     expect(await screen.findByText('Mayor ingreso ARS')).toBeInTheDocument()
-    expect(screen.getByText('Movimientos')).toBeInTheDocument()
+    const cards = within(screen.getByTestId('summary-cards'))
+    expect(cards.getByText('Ingresos')).toBeInTheDocument()
+    expect(cards.getByText('Ingresos USD')).toBeInTheDocument()
+    expect(cards.getByText('Mayor ingreso USD')).toBeInTheDocument()
+    expect(cards.getByText('$0.00')).toBeInTheDocument()
+    expect(cards.getByText('—')).toBeInTheDocument()
     expect(screen.queryByText('Débitos')).not.toBeInTheDocument()
     expect(screen.getByText('Ingresos acumulados')).toBeInTheDocument()
     expect(screen.queryByText('Gastos acumulados')).not.toBeInTheDocument()

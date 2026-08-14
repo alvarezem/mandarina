@@ -138,7 +138,7 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
             role="dialog"
             aria-modal="true"
             aria-label="Registrar operación"
-            className="relative my-4 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+            className="relative my-4 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -265,21 +265,23 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
                   onChange={setField('notes')}
                   placeholder="Nota (opcional)"
                   aria-label="Nota de la operación"
-                  rows={3}
+                  rows={4}
                   maxLength={120}
-                  className={`${inputClass} col-span-2 w-full resize-y`}
+                  className={`${inputClass} col-span-2 w-full resize-y sm:col-span-4`}
                 />
               </div>
-              <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                Los campos con * son obligatorios · Precio en $ · Comisión en $ o %
-              </p>
-              <button
-                type="submit"
-                disabled={saving}
-                className="mt-3 w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60 dark:bg-brand-500 dark:hover:bg-brand-600"
-              >
-                {saving ? 'Registrando…' : 'Registrar'}
-              </button>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  Los campos con * son obligatorios · Precio en $ · Comisión en $ o %
+                </p>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="self-end rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 active:scale-[0.98] disabled:opacity-60 dark:bg-brand-500 dark:hover:bg-brand-600"
+                >
+                  {saving ? 'Registrando…' : 'Registrar'}
+                </button>
+              </div>
             </form>
           </div>
         </div>

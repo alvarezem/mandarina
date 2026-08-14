@@ -4,8 +4,8 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 ## 🔄 En progreso
 
-- **QW-G: drawer móvil custom** — en curso (2026-08-13). Reemplazar la bottom nav de `<lg` por un **drawer deslizante LINDO** (decisión del usuario: no el default; branding, logo, blur de backdrop, animación e ítems con iconos coherentes con el rail de desktop). Decidir si reemplaza o convive con la bottom nav; plan a armar (items, animaciones, tests de la nav móvil actual en `App.test.js`).
-- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos → HECHO** 2) **QW-D layout/toggle → HECHO** 3) **QW-E cards 4 simétricas → HECHO** 4) **QW-F cambio de contraseña → HECHO** (ver DONE) 5) **drawer móvil custom** (en curso). **Backend todo al final** (últimos items del roadmap).
+- **Backend / diferido** — se cerró la cola frontend-only de los quick wins (QW-A..G, todos HECHOS). Próximos items en orden (ver "Backend / deferido"): **watchlist** (decisión DB vs localStorage), **ledger del Plan de inversión (Fase 2)**, **ONs/cauciones en la edge `quotes`**, y **migrar a las nuevas API keys de Supabase** (`sb_publishable_`/`sb_secret_`) antes de fines 2026 (las legacy keys ya no se pueden rotar). Receta en `HANDOFF.md`.
+- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos → HECHO** 2) **QW-D layout/toggle → HECHO** 3) **QW-E cards 4 simétricas → HECHO** 4) **QW-F cambio de contraseña → HECHO** 5) **QW-G drawer móvil → HECHO** (ver DONE). **Backend todo al final** (últimos items del roadmap).
 
 ## 📋 Pendiente (roadmap)
 
@@ -13,7 +13,7 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 - **Ingresos: vista de detalle propia (QW-C) — HECHO (2026-08-13, ver DONE.md)** — la pestaña **Ingresos** ya cubría lo esencial (cards, totales ARS/USD, mayor ingreso, desglose por categoría/origen y tendencia de créditos). **Completado**: tabla con subtotales de acreditaciones + análisis de recurrencia (**sueldo vs devoluciones**) vía `buildIncomeSources` en `buildIncomeAnalysis` (mismo merchant en ≥2 meses distintos del joined `card_summaries.period_month`, umbral decidido con el usuario) y sección compacta en modo ingresos con badge "Recurrente". Sin backend.
 
-- **Móvil (`<lg`)** — diferido hasta estabilizar escritorio. La navegación móvil actual (bottom nav con logo central + header con solo título) convive con el nuevo header desktop ([≡] + logo Mandarina están `hidden lg:flex`). **Decisión del usuario: si se hace una barra lateral/drawer, hacerla LINDA y custom (no el default)**: drawer deslizante con branding (logo, blur de backdrop, animación, items con iconos coherentes con el rail desktop); decidir si reemplaza o convive con la bottom nav.
+- **Móvil (`<lg`) — drawer HECHO (2026-08-13, ver DONE.md)** — la navegación móvil ya no usa la bottom nav: ahora un **drawer deslizante custom** desde la hamburguesa del header móvil, con branding (logo, blur de backdrop, animación `slide-in-left`), items con iconos coherentes con el rail desktop, email + Cerrar sesión en el footer, cierre con X/backdrop/Escape y cierre automático al navegar. Queda anotado como edge case que el tour no resalta los ítems de nav en mobile con el drawer cerrado (el tour saltea targets sin tamaño visible).
 
 - **Evaluar D3** — si el dashboard necesita visualizaciones custom que Chart.js no cubra bien, migrar/escalar a D3 (anotado; por ahora Chart.js alcanza).
 

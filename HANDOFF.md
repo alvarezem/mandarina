@@ -54,28 +54,27 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 - **Fase 6 y 7** (cerradas, anteriores): ver `improvements.md` secciones FASE 6/7
   y Decisiones abajo.
 
-## ⚡ Próxima tarea — QW-G: drawer móvil custom
+## ⚡ Próxima tarea — Backend (anotado al final de `TODO.md`)
 
-QW-F está hecho (ver DONE.md). Sigue la cola, item **drawer móvil custom**:
-reemplazar la bottom nav de `<lg` (descrita en `TODO.md` → "Móvil (`<lg`)") por
-un **drawer deslizante LINDO** (decisión del usuario: no el default; branding,
-logo, blur de backdrop, animación e ítems con iconos coherentes con el rail de
-desktop). Decidir si reemplaza o convive con la bottom nav. Plan a armar en la
-próxima sesión (requiere definir items del drawer, animaciones y tests de la
-nav móvil actual en `App.test.js`).
-
-Luego: **backend todo al final** (ver `TODO.md`).
+QW-G está hecho (ver DONE.md). Se cerró la cola de **frontend-only** de los
+quick wins. Siguen los items de **backend/deferido** (en orden, ver `TODO.md` →
+"Backend / deferido"): **watchlist** (persistencia DB vs localStorage a
+decidir), **ledger del Plan de inversión (Fase 2)**, **ONs/cauciones en la edge
+`quotes`**, y **migrar a las nuevas API keys de Supabase**
+(`sb_publishable_`/`sb_secret_`) antes de fines 2026 (las legacy keys ya no se
+pueden rotar). Elegir uno y armar plan (los 3 primeros son features; la
+migración de keys es infra con fecha límite).
 
 ## En progreso
 
-- **QW-G: drawer móvil custom** — ver sección "⚡ Próxima tarea" arriba.
+- **Backend / diferido** — ver sección "⚡ Próxima tarea" arriba y `TODO.md`.
   **Orden de cola (decisión del usuario 2026-08-13)**: 1) QW-C Ingresos → **HECHO**
   2) QW-D layout/toggle → **HECHO** 3) QW-E cards 4 simétricas → **HECHO**
-  4) QW-F cambio de contraseña → **HECHO** 5) **drawer móvil custom y lindo**
-  (en curso). **Todo lo de backend se anota al final de `TODO.md`**: watchlist
-  (decisión DB vs localStorage), ledger (Plan Fase 2), ONs/cauciones en la edge
-  `quotes`, y migrar a las nuevas API keys de Supabase (`sb_publishable_`/
-  `sb_secret_`) antes de fines 2026.
+  4) QW-F cambio de contraseña → **HECHO** 5) QW-G drawer móvil → **HECHO**.
+  **Todo lo de backend se anota al final de `TODO.md`**: watchlist (decisión DB
+  vs localStorage), ledger (Plan Fase 2), ONs/cauciones en la edge `quotes`, y
+  migrar a las nuevas API keys de Supabase (`sb_publishable_`/`sb_secret_`)
+  antes de fines 2026.
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 - **Deploy**: orden obligatorio **`supabase db push` (0014) ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz.

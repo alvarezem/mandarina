@@ -274,25 +274,35 @@ describe('App', () => {
   })
 
   describe('navegación móvil (<lg)', () => {
-    it('muestra el logo de mandarina centrado en la bottom nav', async () => {
+    it('la hamburguesa abre el drawer con nav, email y Cerrar sesión', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
-      const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
-      expect(bottom.className).toContain('lg:hidden')
-      expect(bottom.querySelector('.grid-cols-2')).not.toBeNull()
+      expect(
+        screen.queryByRole('navigation', { name: 'Navegación principal' }),
+      ).not.toBeInTheDocument()
 
-      const home = within(bottom).getByRole('button', { name: 'Inicio' })
-      expect(home.className).toContain('absolute')
-      expect(home.className).toContain('left-1/2')
+      await userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+      const drawer = screen.getByRole('navigation', { name: 'Navegación principal' })
+      expect(drawer.className).toContain('w-72')
+      expect(within(drawer).getByRole('button', { name: 'Resúmenes' })).toBeInTheDocument()
+      expect(within(drawer).getByRole('button', { name: 'Inversiones' })).toBeInTheDocument()
+      expect(within(drawer).getByText('a@b.com')).toBeInTheDocument()
+      expect(within(drawer).getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument()
     })
 
-    it('navega a Resúmenes desde la bottom nav y abre la pestaña de carga', async () => {
+    it('navega a Resúmenes desde el drawer y abre la pestaña de carga', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
-      const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
-      await userEvent.click(within(bottom).getByRole('button', { name: 'Resúmenes' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+      const drawer = screen.getByRole('navigation', { name: 'Navegación principal' })
+      await userEvent.click(within(drawer).getByRole('button', { name: 'Resúmenes' }))
+
+      expect(
+        screen.queryByRole('navigation', { name: 'Navegación principal' }),
+      ).not.toBeInTheDocument()
 
       const tabs = screen.getByRole('tablist', { name: 'Secciones de resúmenes' })
       await userEvent.click(within(tabs).getByRole('tab', { name: 'Resúmenes' }))
@@ -301,26 +311,74 @@ describe('App', () => {
       expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
     })
 
-    it('cambia de vista desde la bottom nav', async () => {
+    it('cambia de vista desde el drawer y lo cierra', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
-      const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
-      await userEvent.click(within(bottom).getByRole('button', { name: 'Inversiones' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+      const drawer = screen.getByRole('navigation', { name: 'Navegación principal' })
+      await userEvent.click(within(drawer).getByRole('button', { name: 'Inversiones' }))
 
       expect(await screen.findByRole('heading', { name: 'Plan de inversión' })).toBeInTheDocument()
+      expect(
+        screen.queryByRole('navigation', { name: 'Navegación principal' }),
+      ).not.toBeInTheDocument()
     })
 
-    it('el logo central vuelve al inicio', async () => {
+    it('cierra el drawer con la X', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
-      const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
-      await userEvent.click(within(bottom).getByRole('button', { name: 'Inversiones' }))
-      await screen.findByRole('heading', { name: 'Plan de inversión' })
+      await userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+      const drawer = screen.getByRole('navigation', { name: 'Navegación principal' })
+      await userEvent.click(within(drawer).getByRole('button', { name: 'Cerrar menú' }))
 
-      await userEvent.click(within(bottom).getByRole('button', { name: 'Inicio' }))
-      expect(await screen.findByText(EMPTY_STATE)).toBeInTheDocument()
+      expect(
+        screen.queryByRole('navigation', { name: 'Navegación principal' }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('cierra el drawer con el backdrop', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+      expect(screen.getByRole('navigation', { name: 'Navegación principal' })).toBeInTheDocument()
+
+      await userEvent.click(screen.getAllByRole('button', { name: 'Cerrar menú' })[0])
+
+      expect(
+        screen.queryByRole('navigation', { name: 'Navegación principal' }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('cierra el drawer con Escape', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+      expect(screen.getByRole('navigation', { name: 'Navegación principal' })).toBeInTheDocument()
+
+      await userEvent.keyboard('{Escape}')
+
+      expect(
+        screen.queryByRole('navigation', { name: 'Navegación principal' }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('Cerrar sesión del drawer cierra la sesión', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+      const drawer = screen.getByRole('navigation', { name: 'Navegación principal' })
+      await userEvent.click(within(drawer).getByRole('button', { name: 'Cerrar sesión' }))
+
+      expect(await screen.findByText('¡Nos vemos!')).toBeInTheDocument()
+      expect(supabase.auth.signOut).toHaveBeenCalled()
+      expect(
+        screen.queryByRole('navigation', { name: 'Navegación principal' }),
+      ).not.toBeInTheDocument()
     })
   })
 
@@ -416,12 +474,13 @@ describe('App', () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
-      const bottom = screen.getByRole('navigation', { name: 'Navegación principal' })
+      await userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+      const drawer = screen.getByRole('navigation', { name: 'Navegación principal' })
       expect(
-        within(bottom).getByRole('button', { name: 'Resúmenes' }).getAttribute('data-tour'),
+        within(drawer).getByRole('button', { name: 'Resúmenes' }).getAttribute('data-tour'),
       ).toBe('resumenes')
       expect(
-        within(bottom).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour'),
+        within(drawer).getByRole('button', { name: 'Inversiones' }).getAttribute('data-tour'),
       ).toBe('inversiones')
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })

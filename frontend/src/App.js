@@ -6,7 +6,8 @@ import NewPasswordScreen from './components/NewPasswordScreen'
 import ResumenesView from './components/ResumenesView'
 import InvestmentsView from './components/InvestmentsView'
 import ThemeToggle from './components/ThemeToggle'
-import Sidebar, { Logo, NAV_ITEMS } from './components/Sidebar'
+import Sidebar, { Logo } from './components/Sidebar'
+import MobileDrawer from './components/MobileDrawer'
 import ToastProvider, { useToast } from './components/Toast'
 import OnboardingTour from './components/OnboardingTour'
 
@@ -141,6 +142,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
   const mainRef = useRef(null)
 
   const [tourOpen, setTourOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Ajuste en render (patrón de React): abre el tour cuando llega el id de
   // sesión y el usuario aún no lo vio, sin setState síncrono en el effect.
@@ -179,6 +181,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
 
   const handleSignOut = async () => {
     try {
+      setDrawerOpen(false)
       await supabase.auth.signOut()
       pushToast({ type: 'success', icon: 'wave', message: '¡Nos vemos!' })
     } catch {
@@ -197,10 +200,16 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
     mainRef.current?.scrollTo?.({ top: 0 })
   }
 
+  const handleNavigate = (key) => {
+    navigate(key)
+    setDrawerOpen(false)
+  }
+
   const goHome = () => {
     setView('resumenes')
     setSelectedId(null)
     setResetKey((k) => k + 1)
+    setDrawerOpen(false)
     mainRef.current?.scrollTo?.({ top: 0 })
   }
 
@@ -212,6 +221,32 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
   return (
     <div className="flex h-screen flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40 dark:text-slate-100">
       <header className="z-30 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-100/70 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Abrir menú"
+            title="Abrir menú"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.8}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+              />
+            </svg>
+          </button>
+          <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200 lg:hidden">
+            {VIEW_TITLES[view]}
+          </span>
+        </div>
         <div className="-ml-4 hidden items-center gap-1 lg:flex sm:-ml-6">
           <div className="flex w-16 shrink-0 items-center justify-center">
             <button
@@ -250,9 +285,6 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
             a tu plata, sacale todo el jugo
           </span>
         </div>
-        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 lg:hidden">
-          {VIEW_TITLES[view]}
-        </span>
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -295,7 +327,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
 
         <main
           ref={mainRef}
-          className={`flex-1 p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8 ${tourOpen ? 'overflow-hidden' : 'overflow-y-auto'}`}
+          className={`flex-1 p-4 sm:p-6 lg:p-8 lg:pb-8 ${tourOpen ? 'overflow-hidden' : 'overflow-y-auto'}`}
         >
           <div key={view}>
             {view === 'inversiones' ? (
@@ -315,42 +347,14 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
         </main>
       </div>
 
-      <nav
-        aria-label="Navegación principal"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-slate-100/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:hidden"
-      >
-        <div className="relative mx-auto grid max-w-md grid-cols-2 items-stretch pt-5">
-          {NAV_ITEMS.map((item) => {
-            const active = view === item.key
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => navigate(item.key)}
-                aria-current={active ? 'page' : undefined}
-                data-tour={item.key}
-                className={`flex flex-col items-center justify-center gap-0.5 pb-2 active:scale-[0.98] ${
-                  active
-                    ? 'text-brand-600 dark:text-brand-400'
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {item.icon}
-                <span className="text-[10px] font-medium">{item.label}</span>
-              </button>
-            )
-          })}
-
-          <button
-            type="button"
-            onClick={goHome}
-            aria-label="Inicio"
-            className="absolute left-1/2 top-0 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
-          >
-            <Logo className="h-9 w-9" />
-          </button>
-        </div>
-      </nav>
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        view={view}
+        onNavigate={handleNavigate}
+        userEmail={session.user.email}
+        onSignOut={handleSignOut}
+      />
 
       <OnboardingTour open={tourOpen} onClose={closeTour} />
     </div>

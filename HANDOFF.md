@@ -7,11 +7,10 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-14
-- **Qué se hizo** — **Implementación completa de la watchlist + arreglo del CI de GitHub + fix del header desktop** (detalle en `DONE.md`):
-  1. **Watchlist HECHA**: migración `0015_watchlist.sql` (tabla `public.watchlist`, RLS own, espejo de `0007`) **aplicada en prod** (`supabase db push`, previa `supabase link` — el dir no estaba linkeado). Frontend: `lib/watchlist.js` (`normalizeSymbol`/`validateSymbol`), `hooks/useWatchQuotes.js` (`{ symbols }` → `{ quotes, rates, refreshQuotes, quotesError }`, sin `buildPlan`), `components/Watchlist.js` (alta con ticker + etiqueta opcional, baja con confirmación inline, precio + change% ▲▼, sigue el toggle ARS/USD vía `display`/`rateMode`) renderizado en el tab **Cotizaciones** de `InvestmentsView.js`. La edge `quotes` NO cambió. Suite **297/297** (+22), lint 0, coverage lib 96.4% / hooks 97.9%.
-  2. **CI arreglado**: `npm audit fix` bumpó `nanoid` 3.3.17→**3.3.18** (transitiva de postcss/vite) → `npm audit` 0 vulnerabilidades; `actions/checkout@v4`/`actions/setup-node@v4` → **`@v7`** en `frontend.yml` (y `checkout@v7` en `backend.yml`). Commits de la sesión: `feat(backend)`, `feat(frontend)`, `fix(deps)+ci`, `docs` (a confirmar hashes tras el push).
-  3. **Fix header desktop (regresión de QW-G)**: el grupo móvil del header (`App.js`) conservaba `flex-1` en `lg+` (su contenido es `lg:hidden` pero el contenedor no) → el branding (toggle del rail + logo + tagline) quedaba pegado a la derecha contra los botones de guía/tema en vez de alineado con el rail. **Fix**: `lg:hidden` en el grupo móvil + test estructural en `App.test.js`. Suite **298/298** (+1), lint 0.
-- **Sesión anterior (2026-08-14, plan)**: elección de la cola (watchlist) + relevamiento del CI — ver historial. La decisión de **tabla DB `watchlist`** quedó confirmada e implementada (no re-litigar; ver Decisiones).
+- **Qué se hizo** — **Ledger de operaciones del Plan HECHO** (tab "Operaciones"; detalle en `DONE.md`):
+  1. **Backend**: migración `0016_ledger.sql` (tabla `public.ledger_operations` con RLS own, `side` check compra/venta/ajuste, trigger `set_updated_at`) **aplicada en prod** (`supabase db push`, previo `supabase link` ya existía de la sesión de la watchlist). Independiente de `portfolio_plan` (decisión: no derivar `quantity`; el plan intacto). Frontend: `lib/ledger.js` (`ledgerQuantity`/`costBasis` promedio móvil con comisiones/`profitability`/`summarize`), `components/LedgerView.js` (form de alta compra/venta/ajuste con botón **BYMA** que precarga el precio live — debounce 400ms del ticker del form para no spamear la edge, panel Invertido/Valor/Ganancia-Pérdida, tabla por símbolo con rentabilidad ▲▼, tabla de operaciones con subtotal y baja con confirmación, toggle ARS/USD + CCL/MEP compartidos) renderizado en el tab **Operaciones** de `InvestmentsView.js`, y `applyBuy` (presupuesto) ahora **también inserta la compra en el ledger**. Suite **324/324** (+26), lint 0, coverage lib 96.5% / hooks 97.9%, build prod OK.
+  2. **Docs**: `TODO.md` (ledger → HECHO; quedan ONs/cauciones y API keys), `DONE.md` (entrada completa), `HANDOFF.md` (esta sesión).
+- **Sesión anterior (2026-08-14)**: watchlist HECHO + CI arreglado + fix header desktop — ver historial y `DONE.md`.
 - **Sesión anterior (2026-08-13, noche)** — **QW-E..QW-H** (detalle en `DONE.md`): cards de resumen 4 simétricas (USD `0`/`—`), pantalla de nueva contraseña (flujo recovery), drawer móvil en reemplazo de la bottom nav, y fix de botón de cerrar sesión duplicado + números que caben en las cards (header logout `hidden lg:inline-flex`, grilla `grid-cols-1 sm:grid-cols-2 xl:grid-cols-4`). Commits `8923868`..`af8380d`. Suite **275/275**, lint 0, coverage lib 96.3% / hooks 99.1%.
 - **Sesión anterior (2026-08-13)** — **QW-D: pulido de layout y toggle de filtros** (detalle en `DONE.md`):
   1. **`SpendingCharts.js`** — `lg:col-span-2` en la tarjeta de la barra ("Top
@@ -60,27 +59,26 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 - **Fase 6 y 7** (cerradas, anteriores): ver `improvements.md` secciones FASE 6/7
   y Decisiones abajo.
 
-## ⚡ Próxima tarea — Ledger del Plan de inversión (Fase 2, item backend/deferido)
+## ⚡ Próxima tarea — ONs/cauciones en la edge `quotes` (Backend / deferido)
 
-**Decisión tomada (2026-08-14)**: la watchlist quedó **HECHA** (tabla DB
-`watchlist`, ver "Última sesión" y `DONE.md`). Próximo en orden de la cola
-(`TODO.md` → "Backend / deferido"): **ledger de compras/ventas del Plan** —
-registrar operaciones para sacar cantidades/costo y rentabilidad vs. costo, y
-alimentar a **Mandi**. Plan inicial (a confirmar en la sesión):
+**Decisión tomada (2026-08-14)**: el ledger quedó **HECHO** (tabla DB
+`ledger_operations`, ver "Última sesión" y `DONE.md`). Próximo en orden de la
+cola (`TODO.md` → "Backend / deferido"): **ONs/cauciones en la edge `quotes`**.
+Contexto: BYMA Open Data ya resuelve ONs (símbolo `+`, ej. `AA37`) y cauciones;
+hoy `ASSET_TYPES` del Plan/Cotizaciones no las contemplan. Plan inicial (a
+confirmar en la sesión):
 
-1. **Backend — migración `0016_ledger.sql`** (a definir): tabla de operaciones
-   (`symbol`, tipo compra/venta, cantidad, precio, fecha, comisiones?) con RLS
-   own por `user_id`, espejo de `0007`/`0015`. Impacto en `portfolio_plan`:
-   `quantity` pasaría a derivarse del ledger (o mantenerla y reconciliar).
-2. **Frontend**: sección de operaciones en el Plan (alta/edición/baja),
-   cálculo de costo promedio y rentabilidad (`lib/ledger.js` puro), visual de
-   ganancia/pérdida. Alimentación futura a Mandi.
-3. **Tests + docs + deploy**: `supabase db push` ANTES del push a `master`.
+1. **Backend**: ampliar `ASSET_TYPES` (ON `+`, cauciones) y verificar/ajustar la
+   edge `quotes` para esos instrumentos (probablemente sin cambios, BYMA ya los
+   devuelve — verificar `settlementType` y caché).
+2. **Frontend**: labels/tipos en el Plan y Cotizaciones para ONs/cauciones.
+3. **Tests + docs + deploy**: `supabase db push` (si hubiera migración) ANTES del
+   push a `master`.
 
-**Después del ledger** quedan, en orden (`TODO.md` → "Backend / deferido"):
-**ONs/cauciones en la edge `quotes`**, y **migrar a las nuevas API keys de
-Supabase** (`sb_publishable_`/`sb_secret_`) antes de fines 2026 (las legacy keys
-ya no se pueden rotar).
+**Después** queda, en orden (`TODO.md` → "Backend / deferido"):
+**migrar a las nuevas API keys de Supabase** (`sb_publishable_`/`sb_secret_`)
+antes de fines 2026 (las legacy keys ya no se pueden rotar), y más adelante
+**Mandi** (asistente IA; lee `ledger_operations`).
 
 ## En progreso
 
@@ -90,16 +88,17 @@ ya no se pueden rotar).
   4) QW-F cambio de contraseña → **HECHO** 5) QW-G drawer móvil → **HECHO**
   6) QW-H fix botón duplicado + números → **HECHO**.
   **Todo lo de backend se anota al final de `TODO.md`**: watchlist → **HECHO**
-  (tabla DB `watchlist`, 2026-08-14 — ver "Última sesión"), ledger (Plan Fase
-  2, ver "⚡ Próxima tarea"), ONs/cauciones en la edge `quotes`, y migrar a las
-  nuevas API keys de Supabase (`sb_publishable_`/`sb_secret_`) antes de fines
-  2026.
+  (tabla DB `watchlist`, 2026-08-14), ledger → **HECHO** (tabla DB
+  `ledger_operations`, 2026-08-14 — ver "Última sesión"), ONs/cauciones en la
+  edge `quotes` (ver "⚡ Próxima tarea"), y migrar a las nuevas API keys de
+  Supabase (`sb_publishable_`/`sb_secret_`) antes de fines 2026.
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
-- **Deploy**: orden obligatorio **`supabase db push` ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz. La migración `0015_watchlist.sql` ya está aplicada en prod (y en local).
+- **Deploy**: orden obligatorio **`supabase db push` ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz. La migración `0015_watchlist.sql` **y la `0016_ledger.sql`** ya están aplicadas en prod (y en local).
 
 ## Decisiones tomadas (a no re-litigar sin motivo)
 
+- **Ledger — tab independiente, NO derivar `quantity` del plan (2026-08-14)**: reframe del usuario ("el plan es una cosa, las ganancias que hiciste otra") → el ledger vive en su **propio tab "Operaciones"** y es **independiente de `portfolio_plan`** (se descartó derivar `quantity`; el plan y sus 3 vías de escritura — import-plan, edición manual, `applyBuy` — quedan intactos). Tipos de operación: **compra/venta/ajuste** (el ajuste cubre la posición inicial). Costo: **promedio móvil** con comisiones (ventas no alteran el costo por unidad). Costo inicial: **precio BYMA actual** vía botón **BYMA** en el form (prefill con la cotización live; el ticker del form se suma a `useWatchQuotes` con debounce de 400ms para que funcione con símbolos nuevos sin spamear la edge). `applyBuy` del presupuesto **también registra la compra** en el ledger (`price = amount/qty`, best-effort tras el update del plan). **IMPLEMENTADO** (migración `0016` + `LedgerView.js`, 2026-08-14).
 - **Watchlist — persistencia en DB (2026-08-14)**: se eligió una tabla
   **`watchlist` en PostgreSQL** (patrón `portfolio_plan`, RLS own por
   `user_id`) y NO localStorage. Racional: es dato del usuario (sincronizable

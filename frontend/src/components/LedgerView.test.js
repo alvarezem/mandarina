@@ -93,6 +93,46 @@ describe('LedgerView', () => {
     expect(within(opsTable).getByText('-$ 79,00')).toBeInTheDocument()
   })
 
+  it('muestra la nota de la operación y la comisión en %', async () => {
+    mockRows([
+      {
+        id: 'o1',
+        symbol: 'GGAL',
+        side: 'compra',
+        quantity: 10,
+        price: 25,
+        commission: 0.6,
+        commission_is_pct: true,
+        date: '2026-07-10',
+        notes: 'Compré de contado inmediato',
+      },
+      {
+        id: 'o2',
+        symbol: 'AAPL',
+        side: 'compra',
+        quantity: 1,
+        price: 40,
+        commission: 0,
+        date: '2026-07-20',
+        notes: null,
+      },
+    ])
+    wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+
+    const tables = await screen.findAllByRole('table')
+    const opsTable = tables[tables.length - 1]
+    expect(within(opsTable).getByText('Compré de contado inmediato')).toBeInTheDocument()
+    expect(within(opsTable).getByText('0.6%')).toBeInTheDocument()
+    expect(within(opsTable).getByText('Compré de contado inmediato')).toHaveAttribute(
+      'title',
+      'Compré de contado inmediato',
+    )
+    const aaplRow = within(opsTable)
+      .getAllByRole('row')
+      .find((r) => within(r).queryByText('AAPL'))
+    expect(within(aaplRow).getAllByText('—').length).toBeGreaterThan(0)
+  })
+
   it('registra una compra y muestra toast de éxito', async () => {
     supabase.mockTable('ledger_operations', { rows: [], insert: { id: 'o1' } })
     wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
@@ -109,11 +149,27 @@ describe('LedgerView', () => {
       quantity: 10,
       price: 25,
       commission: 0,
+      commission_is_pct: false,
       currency: 'ARS',
       date: today(),
       notes: null,
     })
     expect(await screen.findByText('GGAL: compra de 10 unidades registrada')).toBeInTheDocument()
+  })
+
+  it('registra la comisión como porcentaje cuando el toggle está en %', async () => {
+    supabase.mockTable('ledger_operations', { rows: [], insert: { id: 'o1' } })
+    wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'GGAL')
+    await userEvent.type(screen.getByLabelText('Cantidad de la operación'), '10')
+    await userEvent.type(screen.getByLabelText('Precio por unidad'), '25')
+    await userEvent.click(screen.getByRole('button', { name: 'Comisión en porcentaje' }))
+    await userEvent.type(screen.getByLabelText('Comisión de la operación'), '0.6')
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar' }))
+
+    expect(supabase.from('ledger_operations').insert).toHaveBeenCalledWith(
+      expect.objectContaining({ commission: 0.6, commission_is_pct: true }),
+    )
   })
 
   it('registra un ajuste inicial con su costo', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { costBasis, ledgerQuantity, profitability, summarize } from './ledger'
+import { commissionAmount, costBasis, ledgerQuantity, profitability, summarize } from './ledger'
 
 function op(overrides = {}) {
   return {
@@ -32,6 +32,25 @@ describe('ledgerQuantity', () => {
   })
 })
 
+describe('commissionAmount', () => {
+  it('devuelve el monto fijo cuando no hay flag (filas legacy o fijas)', () => {
+    expect(commissionAmount(op({ commission: 12.5 }))).toBe(12.5)
+    expect(commissionAmount(op({ commission: 12.5, commission_is_pct: false }))).toBe(12.5)
+  })
+
+  it('calcula el porcentaje sobre cantidad × precio', () => {
+    const o = op({ quantity: 10, price: 250, commission: 1.5, commission_is_pct: true })
+    expect(commissionAmount(o)).toBe(37.5)
+  })
+
+  it('tolera comisión ausente', () => {
+    expect(commissionAmount(op({ commission: 0 }))).toBe(0)
+    expect(commissionAmount(op({}))).toBe(0)
+    expect(commissionAmount(undefined)).toBe(0)
+    expect(commissionAmount(null)).toBe(0)
+  })
+})
+
 describe('costBasis', () => {
   it('calcula el promedio móvil con comisiones', () => {
     const ops = [
@@ -42,6 +61,17 @@ describe('costBasis', () => {
     expect(h.quantity).toBe(15)
     expect(h.invested).toBe(252 + 152)
     expect(h.avgCost).toBeCloseTo(404 / 15, 6)
+  })
+
+  it('computa comisiones porcentuales sobre cantidad × precio', () => {
+    const ops = [
+      op({ side: 'compra', quantity: 10, price: 100, commission: 1, commission_is_pct: true }),
+      op({ side: 'compra', quantity: 5, price: 200, commission: 0.5, commission_is_pct: true }),
+    ]
+    const h = costBasis(ops)
+    expect(h.quantity).toBe(15)
+    expect(h.invested).toBe(10 * 100 + 10 + 5 * 200 + 5)
+    expect(h.avgCost).toBeCloseTo((10 * 100 + 10 + 5 * 200 + 5) / 15, 6)
   })
 
   it('las ventas bajan la cantidad sin tocar el costo promedio', () => {

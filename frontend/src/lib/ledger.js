@@ -11,6 +11,19 @@ export function ledgerQuantity(ops) {
   }, 0)
 }
 
+// Monto en currency de la comisión de una operación: si `commission_is_pct`
+// es true, commission es un porcentaje de (cantidad × precio); si no (o si el
+// flag falta — filas legacy), es un monto fijo.
+export function commissionAmount(op) {
+  const comm = Number(op?.commission) || 0
+  if (op?.commission_is_pct) {
+    const qty = Number(op.quantity) || 0
+    const price = Number(op.price) || 0
+    return (qty * price * comm) / 100
+  }
+  return comm
+}
+
 export function costBasis(ops) {
   const sorted = [...(Array.isArray(ops) ? ops : [])].sort(
     (a, b) => new Date(a.date) - new Date(b.date),
@@ -19,7 +32,7 @@ export function costBasis(ops) {
     (acc, op) => {
       const qty = Number(op.quantity) || 0
       const price = Number(op.price) || 0
-      const commission = Number(op.commission) || 0
+      const commission = commissionAmount(op)
       if (op.side === 'venta') {
         acc.quantity = Math.max(0, acc.quantity - qty)
       } else {

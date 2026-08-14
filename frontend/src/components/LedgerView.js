@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { fmt } from '../lib/format'
 import { normalizeSymbol, validateSymbol } from '../lib/watchlist'
-import { profitability, summarize } from '../lib/ledger'
+import { commissionAmount, profitability, summarize } from '../lib/ledger'
 import { useAsync } from '../hooks/useAsync'
 import { useWatchQuotes } from '../hooks/useWatchQuotes'
 import { useToast } from './Toast'
@@ -31,6 +31,7 @@ export default function LedgerView({
     quantity: '',
     price: '',
     commission: '',
+    commissionIsPct: false,
     notes: '',
   }))
   const [saving, setSaving] = useState(false)
@@ -123,6 +124,7 @@ export default function LedgerView({
         quantity,
         price,
         commission,
+        commission_is_pct: form.commissionIsPct,
         currency: 'ARS',
         date: form.date,
         notes: form.notes.trim() || null,
@@ -165,7 +167,7 @@ export default function LedgerView({
 
   const signedAmount = (o) => {
     const amount = (Number(o.quantity) || 0) * (Number(o.price) || 0)
-    const comm = Number(o.commission) || 0
+    const comm = commissionAmount(o)
     return o.side === 'venta' ? -(amount - comm) : amount + comm
   }
 
@@ -257,8 +259,9 @@ export default function LedgerView({
           <input
             value={form.symbol}
             onChange={setField('symbol')}
-            placeholder="Ticker"
+            placeholder="Ticker *"
             aria-label="Símbolo de la operación"
+            required
             maxLength={12}
             className={inputClass}
           />
@@ -267,6 +270,7 @@ export default function LedgerView({
             value={form.date}
             onChange={setField('date')}
             aria-label="Fecha de la operación"
+            required
             className={inputClass}
           />
           <input
@@ -275,8 +279,9 @@ export default function LedgerView({
             step="any"
             value={form.quantity}
             onChange={setField('quantity')}
-            placeholder="Cantidad"
+            placeholder="Cantidad *"
             aria-label="Cantidad de la operación"
+            required
             className={inputClass}
           />
           <div className="flex gap-2">
@@ -301,16 +306,36 @@ export default function LedgerView({
               </button>
             )}
           </div>
-          <input
-            type="number"
-            min="0"
-            step="any"
-            value={form.commission}
-            onChange={setField('commission')}
-            placeholder="Comisión"
-            aria-label="Comisión de la operación"
-            className={inputClass}
-          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={form.commission}
+              onChange={setField('commission')}
+              placeholder="Comisión"
+              aria-label="Comisión de la operación"
+              className={inputClass}
+            />
+            <div className="inline-flex shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+              {['$', '%'].map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, commissionIsPct: u === '%' }))}
+                  aria-label={u === '%' ? 'Comisión en porcentaje' : 'Comisión en pesos'}
+                  aria-pressed={form.commissionIsPct === (u === '%')}
+                  className={`px-2 py-2 text-sm font-medium transition ${
+                    form.commissionIsPct === (u === '%')
+                      ? 'bg-brand-600 text-white dark:bg-brand-500'
+                      : 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          </div>
           <input
             value={form.notes}
             onChange={setField('notes')}
@@ -327,6 +352,9 @@ export default function LedgerView({
             Registrar
           </button>
         </div>
+        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+          Los campos con * son obligatorios · Precio en $ · Comisión en $ o %
+        </p>
       </form>
 
       {error && (
@@ -438,6 +466,7 @@ export default function LedgerView({
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400 dark:border-slate-800">
                   <th className="py-2 pr-3 font-medium">Fecha</th>
                   <th className="py-2 pr-3 font-medium">Símbolo</th>
+                  <th className="py-2 pr-3 font-medium">Nota</th>
                   <th className="py-2 pr-3 font-medium">Tipo</th>
                   <th className="py-2 pr-3 text-right font-medium">Cant.</th>
                   <th className="py-2 pr-3 text-right font-medium">Precio</th>
@@ -456,6 +485,12 @@ export default function LedgerView({
                     </td>
                     <td className="py-2 pr-3 font-semibold text-slate-800 dark:text-slate-100">
                       {o.symbol}
+                    </td>
+                    <td
+                      className="max-w-[12rem] truncate py-2 pr-3 text-slate-500 dark:text-slate-400"
+                      title={o.notes || undefined}
+                    >
+                      {o.notes || '—'}
                     </td>
                     <td className="py-2 pr-3">
                       <span
@@ -477,7 +512,11 @@ export default function LedgerView({
                       {fmt(toDisplay(o.price), display)}
                     </td>
                     <td className="py-2 pr-3 text-right tabular-nums text-slate-500 dark:text-slate-400">
-                      {o.commission > 0 ? fmt(toDisplay(o.commission), display) : '—'}
+                      {o.commission > 0
+                        ? o.commission_is_pct
+                          ? `${o.commission}%`
+                          : fmt(toDisplay(o.commission), display)
+                        : '—'}
                     </td>
                     <td className="py-2 pr-3 text-right font-medium tabular-nums text-slate-800 dark:text-slate-100">
                       {fmt(toDisplay(signedAmount(o)), display)}

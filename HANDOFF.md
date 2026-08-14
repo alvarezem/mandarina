@@ -6,8 +6,13 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 ## Última sesión
 
-- **Fecha**: 2026-08-13
-- **Qué se hizo** — **QW-D: pulido de layout y toggle de filtros** (detalle en `DONE.md`):
+- **Fecha**: 2026-08-14
+- **Qué se hizo** — **Implementación completa de la watchlist + arreglo del CI de GitHub** (detalle en `DONE.md`):
+  1. **Watchlist HECHA**: migración `0015_watchlist.sql` (tabla `public.watchlist`, RLS own, espejo de `0007`) **aplicada en prod** (`supabase db push`, previa `supabase link` — el dir no estaba linkeado). Frontend: `lib/watchlist.js` (`normalizeSymbol`/`validateSymbol`), `hooks/useWatchQuotes.js` (`{ symbols }` → `{ quotes, rates, refreshQuotes, quotesError }`, sin `buildPlan`), `components/Watchlist.js` (alta con ticker + etiqueta opcional, baja con confirmación inline, precio + change% ▲▼, sigue el toggle ARS/USD vía `display`/`rateMode`) renderizado en el tab **Cotizaciones** de `InvestmentsView.js`. La edge `quotes` NO cambió. Suite **297/297** (+22), lint 0, coverage lib 96.4% / hooks 97.9%.
+  2. **CI arreglado**: `npm audit fix` bumpó `nanoid` 3.3.17→**3.3.18** (transitiva de postcss/vite) → `npm audit` 0 vulnerabilidades; `actions/checkout@v4`/`actions/setup-node@v4` → **`@v7`** en `frontend.yml` (y `checkout@v7` en `backend.yml`). Commits de la sesión: `feat(backend)`, `feat(frontend)`, `fix(deps)+ci` (a confirmar hashes tras el push).
+- **Sesión anterior (2026-08-14, plan)**: elección de la cola (watchlist) + relevamiento del CI — ver historial. La decisión de **tabla DB `watchlist`** quedó confirmada e implementada (no re-litigar; ver Decisiones).
+- **Sesión anterior (2026-08-13, noche)** — **QW-E..QW-H** (detalle en `DONE.md`): cards de resumen 4 simétricas (USD `0`/`—`), pantalla de nueva contraseña (flujo recovery), drawer móvil en reemplazo de la bottom nav, y fix de botón de cerrar sesión duplicado + números que caben en las cards (header logout `hidden lg:inline-flex`, grilla `grid-cols-1 sm:grid-cols-2 xl:grid-cols-4`). Commits `8923868`..`af8380d`. Suite **275/275**, lint 0, coverage lib 96.3% / hooks 99.1%.
+- **Sesión anterior (2026-08-13)** — **QW-D: pulido de layout y toggle de filtros** (detalle en `DONE.md`):
   1. **`SpendingCharts.js`** — `lg:col-span-2` en la tarjeta de la barra ("Top
      orígenes de ingresos" / "Top comercios con mayor gasto") → full-width en
      ambos modos; desaparece el hueco de la celda derecha del grid.
@@ -54,16 +59,27 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 - **Fase 6 y 7** (cerradas, anteriores): ver `improvements.md` secciones FASE 6/7
   y Decisiones abajo.
 
-## ⚡ Próxima tarea — Backend (anotado al final de `TODO.md`)
+## ⚡ Próxima tarea — Ledger del Plan de inversión (Fase 2, item backend/deferido)
 
-QW-H está hecho (ver DONE.md). Se cerró la cola de **frontend-only** de los
-quick wins. Siguen los items de **backend/deferido** (en orden, ver `TODO.md` →
-"Backend / deferido"): **watchlist** (persistencia DB vs localStorage a
-decidir), **ledger del Plan de inversión (Fase 2)**, **ONs/cauciones en la edge
-`quotes`**, y **migrar a las nuevas API keys de Supabase**
-(`sb_publishable_`/`sb_secret_`) antes de fines 2026 (las legacy keys ya no se
-pueden rotar). Elegir uno y armar plan (los 3 primeros son features; la
-migración de keys es infra con fecha límite).
+**Decisión tomada (2026-08-14)**: la watchlist quedó **HECHA** (tabla DB
+`watchlist`, ver "Última sesión" y `DONE.md`). Próximo en orden de la cola
+(`TODO.md` → "Backend / deferido"): **ledger de compras/ventas del Plan** —
+registrar operaciones para sacar cantidades/costo y rentabilidad vs. costo, y
+alimentar a **Mandi**. Plan inicial (a confirmar en la sesión):
+
+1. **Backend — migración `0016_ledger.sql`** (a definir): tabla de operaciones
+   (`symbol`, tipo compra/venta, cantidad, precio, fecha, comisiones?) con RLS
+   own por `user_id`, espejo de `0007`/`0015`. Impacto en `portfolio_plan`:
+   `quantity` pasaría a derivarse del ledger (o mantenerla y reconciliar).
+2. **Frontend**: sección de operaciones en el Plan (alta/edición/baja),
+   cálculo de costo promedio y rentabilidad (`lib/ledger.js` puro), visual de
+   ganancia/pérdida. Alimentación futura a Mandi.
+3. **Tests + docs + deploy**: `supabase db push` ANTES del push a `master`.
+
+**Después del ledger** quedan, en orden (`TODO.md` → "Backend / deferido"):
+**ONs/cauciones en la edge `quotes`**, y **migrar a las nuevas API keys de
+Supabase** (`sb_publishable_`/`sb_secret_`) antes de fines 2026 (las legacy keys
+ya no se pueden rotar).
 
 ## En progreso
 
@@ -72,16 +88,25 @@ migración de keys es infra con fecha límite).
   2) QW-D layout/toggle → **HECHO** 3) QW-E cards 4 simétricas → **HECHO**
   4) QW-F cambio de contraseña → **HECHO** 5) QW-G drawer móvil → **HECHO**
   6) QW-H fix botón duplicado + números → **HECHO**.
-  **Todo lo de backend se anota al final de `TODO.md`**: watchlist (decisión DB
-  vs localStorage), ledger (Plan Fase 2), ONs/cauciones en la edge `quotes`, y
-  migrar a las nuevas API keys de Supabase (`sb_publishable_`/`sb_secret_`)
-  antes de fines 2026.
+  **Todo lo de backend se anota al final de `TODO.md`**: watchlist → **HECHO**
+  (tabla DB `watchlist`, 2026-08-14 — ver "Última sesión"), ledger (Plan Fase
+  2, ver "⚡ Próxima tarea"), ONs/cauciones en la edge `quotes`, y migrar a las
+  nuevas API keys de Supabase (`sb_publishable_`/`sb_secret_`) antes de fines
+  2026.
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
-- **Deploy**: orden obligatorio **`supabase db push` (0014) ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz.
+- **Deploy**: orden obligatorio **`supabase db push` ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz. La migración `0015_watchlist.sql` ya está aplicada en prod (y en local).
 
 ## Decisiones tomadas (a no re-litigar sin motivo)
 
+- **Watchlist — persistencia en DB (2026-08-14)**: se eligió una tabla
+  **`watchlist` en PostgreSQL** (patrón `portfolio_plan`, RLS own por
+  `user_id`) y NO localStorage. Racional: es dato del usuario (sincronizable
+  entre dispositivos, disponible para features futuras como Mandi/ledger), no
+  una preferencia de UI; localStorage queda reservado para preferencias (ej.
+  `planSort`). UI: **sección dedicada** en el tab Cotizaciones, sin acoplar a
+  `QuotesTable` ni al Plan. **IMPLEMENTADA** (migración `0015` + `Watchlist.js`,
+  2026-08-14).
 - **Fase 7 — TypeScript en frontend**: considerado y **descartado por ahora** (misma postura que AGENTS.md). Con 183 tests + JS de lint limpio, el tipo no aporta valor proporcional al costo (renombrar 56 archivos `.js`→`.tsx`, migrar el plugin `transform-jsx-in-js`, tipar toda la UI). El backend ya es TS; la frontend habla con Supabase REST (sin tipos compartibles con las Edge Functions). Revisitar cuando el scope crezca o aparezca un bug de tipos. (Detalle completo en respuesta a la sesión 2026-08-11.)
 - **Fase 7 — imports bare en `deno.json`**: el import map pasó de claves inline (`jsr:@std/csv`, `https://esm.sh/xlsx@0.18.5`) a **claves bare** (`@std/csv`, `xlsx`); los archivos importan con names cortos y el pinning vive solo en `deno.json` + `deno.lock`. Patrón Deno moderno.
 - **Fase 7 — husky en subdirectorio**: husky 9 exige `.git` en el cwd literal, y el repo raíz no tiene package.json (es frontend-only). El script `prepare: "cd .. && husky frontend/.husky"` inicializa el hooksPath `frontend/.husky/_` desde la raíz. Si algún día el repo gana un package.json raíz, mudar husky ahí es la variante estándar de monorepo.

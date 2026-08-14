@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import supabase from './lib/supabaseClient'
 import { useTheme } from './hooks/useTheme'
 import Auth from './components/Auth'
+import NewPasswordScreen from './components/NewPasswordScreen'
 import ResumenesView from './components/ResumenesView'
 import InvestmentsView from './components/InvestmentsView'
 import ThemeToggle from './components/ThemeToggle'
@@ -76,6 +77,7 @@ function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [greeting, setGreeting] = useState(null)
+  const [recovery, setRecovery] = useState(false)
   const [dark, setDark] = useTheme()
 
   useEffect(() => {
@@ -94,6 +96,11 @@ function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecovery(true)
+      } else if (event === 'SIGNED_OUT') {
+        setRecovery(false)
+      }
       if (event === 'SIGNED_IN' && session) {
         setGreeting(isFirstLogin(session.user) ? 'first' : 'return')
       }
@@ -112,12 +119,13 @@ function App() {
         setDark={setDark}
         greeting={greeting}
         setGreeting={setGreeting}
+        recovery={recovery}
       />
     </ToastProvider>
   )
 }
 
-function AppContent({ session, dark, setDark, greeting, setGreeting }) {
+function AppContent({ session, dark, setDark, greeting, setGreeting, recovery }) {
   const pushToast = useToast()
   const [view, setView] = useState('resumenes')
   const [selectedId, setSelectedId] = useState(null)
@@ -176,6 +184,10 @@ function AppContent({ session, dark, setDark, greeting, setGreeting }) {
     } catch {
       pushToast({ type: 'error', message: 'No se pudo cerrar la sesión' })
     }
+  }
+
+  if (session && recovery) {
+    return <NewPasswordScreen dark={dark} onToggleTheme={() => setDark((d) => !d)} />
   }
 
   if (!session) return <Auth dark={dark} onToggleTheme={() => setDark((d) => !d)} />

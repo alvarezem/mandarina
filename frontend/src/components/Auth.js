@@ -1,24 +1,11 @@
 import { useMemo, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { authErrorToSpanish } from '../lib/authErrors'
+import { strengthOf, STRENGTH_LABEL, STRENGTH_BAR, validatePassword } from '../lib/password'
 import ThemeToggle from './ThemeToggle'
 import { Logo } from './Sidebar'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-function strengthOf(password) {
-  if (!password) return 0
-  let score = 0
-  if (password.length >= 8) score++
-  if (password.length >= 12) score++
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++
-  if (/\d/.test(password)) score++
-  if (/[^a-zA-Z0-9]/.test(password)) score++
-  return Math.min(4, score)
-}
-
-const STRENGTH_LABEL = ['', 'Débil', 'Media', 'Buena', 'Fuerte']
-const STRENGTH_BAR = ['', 'bg-red-500', 'bg-amber-500', 'bg-lime-500', 'bg-emerald-500']
 
 function GoogleIcon({ className = '' }) {
   return (
@@ -81,9 +68,8 @@ export default function Auth({ dark, onToggleTheme }) {
     const errors = {}
     if (!EMAIL_RE.test(email)) errors.email = 'Ingresá un email válido'
     if (isSignUp) {
-      if (password.length < 8) errors.password = 'La contraseña debe tener al menos 8 caracteres'
-      else if (!/[A-Za-z]/.test(password) || !/\d/.test(password))
-        errors.password = 'La contraseña debe incluir letras y números'
+      const passwordError = validatePassword(password)
+      if (passwordError) errors.password = passwordError
       if (confirm !== password) errors.confirm = 'Las contraseñas no coinciden'
     } else if (!password) {
       errors.password = 'Ingresá tu contraseña'

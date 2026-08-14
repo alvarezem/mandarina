@@ -142,6 +142,39 @@ describe('App', () => {
     expect(screen.queryByText(/¡Bienvenido|¡Volviste!/)).not.toBeInTheDocument()
   })
 
+  it('muestra la pantalla de nueva contraseña ante PASSWORD_RECOVERY (sin dashboard ni saludo)', async () => {
+    render(<App />)
+    await screen.findByText(EMPTY_STATE)
+
+    act(() => authListener('PASSWORD_RECOVERY', { user: { id: 'u1', email: 'a@b.com' } }))
+
+    expect(await screen.findByRole('heading', { name: 'Nueva contraseña' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
+    expect(screen.getByLabelText('Confirmar contraseña')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/¡Bienvenido|¡Volviste!/)).not.toBeInTheDocument()
+  })
+
+  it('cambia la contraseña desde el recovery, cierra la sesión y vuelve al login', async () => {
+    supabase.auth.updateUser.mockResolvedValue({ error: null })
+    render(<App />)
+    await screen.findByText(EMPTY_STATE)
+
+    act(() => authListener('PASSWORD_RECOVERY', { user: { id: 'u1', email: 'a@b.com' } }))
+    await screen.findByRole('heading', { name: 'Nueva contraseña' })
+
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'Abc12345')
+    await userEvent.type(screen.getByLabelText('Confirmar contraseña'), 'Abc12345')
+    await userEvent.click(screen.getByRole('button', { name: /Guardar contraseña/i }))
+
+    expect(await screen.findByText('Contraseña actualizada')).toBeInTheDocument()
+    expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'Abc12345' })
+    expect(supabase.auth.signOut).toHaveBeenCalled()
+
+    act(() => authListener('SIGNED_OUT', null))
+    expect(await screen.findByRole('button', { name: /Iniciar sesión/i })).toBeInTheDocument()
+  })
+
   describe('navegación rail (lg+)', () => {
     it('muestra header con hamburguesa, logo Mandarina y rail con Resúmenes activo', async () => {
       render(<App />)

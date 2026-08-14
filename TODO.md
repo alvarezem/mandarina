@@ -4,8 +4,8 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 ## 🔄 En progreso
 
-- **Flujo de cambio de contraseña** — en ejecución (2026-08-13). Hoy `resetPasswordForEmail` (`Auth.js`) vuelve a `window.location.origin` con el token en el hash; Supabase auto-crea sesión `PASSWORD_RECOVERY` pero `App.js` no la maneja → el usuario llega al dashboard sin pantalla para setear la contraseña nueva. Alcance (frontend-only): escuchar el evento `PASSWORD_RECOVERY` en `App.js` (`onAuthStateChange`), pantalla "Nueva contraseña" que reusa la validación `letters_digits`/fuerza de `Auth.js`, `updateUser({ password })`, logout + mensaje de éxito → login. El `secure_password_change` de `config.toml` no bloquea el recovery (sesión con grant). Tests en `App.test.js`/`Auth.test.js`. Receta en `HANDOFF.md`.
-- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos → HECHO** 2) **QW-D layout/toggle → HECHO** 3) **QW-E cards 4 simétricas → HECHO** (ver DONE) 4) **flujo de cambio de contraseña** (en curso) → 5) **drawer móvil custom**. **Backend todo al final** (últimos items del roadmap).
+- **QW-G: drawer móvil custom** — en curso (2026-08-13). Reemplazar la bottom nav de `<lg` por un **drawer deslizante LINDO** (decisión del usuario: no el default; branding, logo, blur de backdrop, animación e ítems con iconos coherentes con el rail de desktop). Decidir si reemplaza o convive con la bottom nav; plan a armar (items, animaciones, tests de la nav móvil actual en `App.test.js`).
+- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos → HECHO** 2) **QW-D layout/toggle → HECHO** 3) **QW-E cards 4 simétricas → HECHO** 4) **QW-F cambio de contraseña → HECHO** (ver DONE) 5) **drawer móvil custom** (en curso). **Backend todo al final** (últimos items del roadmap).
 
 ## 📋 Pendiente (roadmap)
 

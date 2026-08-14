@@ -65,6 +65,7 @@ export function createSupabaseMock() {
       signInWithPassword: vi.fn(),
       signInWithOAuth: vi.fn(),
       resetPasswordForEmail: vi.fn(),
+      updateUser: vi.fn(),
     },
     storage: {
       from: vi.fn(() => ({

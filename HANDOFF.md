@@ -56,7 +56,7 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 ## ⚡ Próxima tarea — Backend (anotado al final de `TODO.md`)
 
-QW-G está hecho (ver DONE.md). Se cerró la cola de **frontend-only** de los
+QW-H está hecho (ver DONE.md). Se cerró la cola de **frontend-only** de los
 quick wins. Siguen los items de **backend/deferido** (en orden, ver `TODO.md` →
 "Backend / deferido"): **watchlist** (persistencia DB vs localStorage a
 decidir), **ledger del Plan de inversión (Fase 2)**, **ONs/cauciones en la edge
@@ -68,9 +68,10 @@ migración de keys es infra con fecha límite).
 ## En progreso
 
 - **Backend / diferido** — ver sección "⚡ Próxima tarea" arriba y `TODO.md`.
-  **Orden de cola (decisión del usuario 2026-08-13)**: 1) QW-C Ingresos → **HECHO**
+  **Orden de la cola (decisión del usuario 2026-08-13)**: 1) QW-C Ingresos → **HECHO**
   2) QW-D layout/toggle → **HECHO** 3) QW-E cards 4 simétricas → **HECHO**
-  4) QW-F cambio de contraseña → **HECHO** 5) QW-G drawer móvil → **HECHO**.
+  4) QW-F cambio de contraseña → **HECHO** 5) QW-G drawer móvil → **HECHO**
+  6) QW-H fix botón duplicado + números → **HECHO**.
   **Todo lo de backend se anota al final de `TODO.md`**: watchlist (decisión DB
   vs localStorage), ledger (Plan Fase 2), ONs/cauciones en la edge `quotes`, y
   migrar a las nuevas API keys de Supabase (`sb_publishable_`/`sb_secret_`)

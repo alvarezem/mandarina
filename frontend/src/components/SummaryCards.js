@@ -98,7 +98,9 @@ function cardsFromIncome(analysis) {
 }
 
 export default function SummaryCards({ analysis, gridKey, variant = 'egresos', compact = false }) {
-  const gridClass = compact ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-3 md:grid-cols-4'
+  const gridClass = compact
+    ? 'grid grid-cols-2 gap-3'
+    : 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'
 
   if (!analysis) {
     return (

@@ -401,9 +401,10 @@ describe('App', () => {
     const tableScroll = container.querySelector('.overflow-x-auto')
     expect(tableScroll).not.toBeNull()
 
-    const cardsGrid = container.querySelector('.grid.grid-cols-2')
+    const cardsGrid = container.querySelector('.grid.grid-cols-1')
     expect(cardsGrid).not.toBeNull()
-    expect(cardsGrid.className).toContain('md:grid-cols-4')
+    expect(cardsGrid.className).toContain('sm:grid-cols-2')
+    expect(cardsGrid.className).toContain('xl:grid-cols-4')
   })
 
   describe('OnboardingTour', () => {

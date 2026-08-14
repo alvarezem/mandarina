@@ -4,8 +4,8 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 ## 🔄 En progreso
 
-- **Backend / diferido** — se cerró la cola frontend-only de los quick wins (QW-A..G, todos HECHOS). Próximos items en orden (ver "Backend / deferido"): **watchlist** (decisión DB vs localStorage), **ledger del Plan de inversión (Fase 2)**, **ONs/cauciones en la edge `quotes`**, y **migrar a las nuevas API keys de Supabase** (`sb_publishable_`/`sb_secret_`) antes de fines 2026 (las legacy keys ya no se pueden rotar). Receta en `HANDOFF.md`.
-- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos → HECHO** 2) **QW-D layout/toggle → HECHO** 3) **QW-E cards 4 simétricas → HECHO** 4) **QW-F cambio de contraseña → HECHO** 5) **QW-G drawer móvil → HECHO** (ver DONE). **Backend todo al final** (últimos items del roadmap).
+- **Backend / diferido** — se cerró la cola frontend-only de los quick wins (QW-A..H, todos HECHOS). Próximos items en orden (ver "Backend / deferido"): **watchlist** (decisión DB vs localStorage), **ledger del Plan de inversión (Fase 2)**, **ONs/cauciones en la edge `quotes`**, y **migrar a las nuevas API keys de Supabase** (`sb_publishable_`/`sb_secret_`) antes de fines 2026 (las legacy keys ya no se pueden rotar). Receta en `HANDOFF.md`.
+- **Orden de la cola (decisión del usuario 2026-08-13)**: 1) **QW-C Ingresos → HECHO** 2) **QW-D layout/toggle → HECHO** 3) **QW-E cards 4 simétricas → HECHO** 4) **QW-F cambio de contraseña → HECHO** 5) **QW-G drawer móvil → HECHO** 6) **QW-H fix botón duplicado + números → HECHO** (ver DONE). **Backend todo al final** (últimos items del roadmap).
 
 ## 📋 Pendiente (roadmap)
 

@@ -315,7 +315,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
           <button
             type="button"
             onClick={handleSignOut}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="hidden rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 lg:inline-flex"
           >
             Cerrar sesión
           </button>

@@ -3,11 +3,13 @@ import InvestmentPlan from './InvestmentPlan'
 import MarketQuotes from './MarketQuotes'
 import MarketClosedNotice from './MarketClosedNotice'
 import Watchlist from './Watchlist'
+import LedgerView from './LedgerView'
 import { loadPlanSort, savePlanSort, SORT_DEFAULT_DIR } from '../lib/planSort'
 
 const TABS = [
   { key: 'plan', label: 'Plan de inversión' },
   { key: 'cotizaciones', label: 'Cotizaciones en vivo' },
+  { key: 'operaciones', label: 'Operaciones' },
 ]
 
 export default function InvestmentsView({ session }) {
@@ -69,6 +71,8 @@ export default function InvestmentsView({ session }) {
 
       {tab === 'plan' ? (
         <InvestmentPlan session={session} {...shared} />
+      ) : tab === 'operaciones' ? (
+        <LedgerView session={session} {...shared} />
       ) : (
         <>
           <MarketQuotes session={session} {...shared} />

@@ -139,6 +139,9 @@ describe('InvestmentPlan', () => {
     await waitFor(() =>
       expect(supabase.from('portfolio_plan').update).toHaveBeenCalledWith({ quantity: 2 }),
     )
+    expect(supabase.from('ledger_operations').insert).toHaveBeenCalledWith(
+      expect.objectContaining({ symbol: 'VIST', side: 'compra', quantity: 1 }),
+    )
   })
 
   it('cambia la prioridad de compra con el selector de estrategia', async () => {

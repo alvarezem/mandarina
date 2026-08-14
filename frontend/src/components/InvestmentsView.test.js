@@ -31,6 +31,13 @@ vi.mock('./Watchlist', () => ({
     </div>
   ),
 }))
+vi.mock('./LedgerView', () => ({
+  default: ({ display, rateMode }) => (
+    <div data-testid="mock-ledger">
+      Ledger {display} {rateMode}
+    </div>
+  ),
+}))
 
 const wrap = (ui) => render(ui)
 
@@ -70,6 +77,18 @@ describe('InvestmentsView', () => {
     await userEvent.click(screen.getByRole('tab', { name: 'Cotizaciones en vivo' }))
     expect(screen.getByTestId('mock-quotes')).toHaveTextContent('Cotizaciones USD CCL')
     expect(screen.getByTestId('mock-watchlist')).toHaveTextContent('Watchlist USD CCL')
+  })
+
+  it('cambia a operaciones con el estado compartido', async () => {
+    wrap(<InvestmentsView session={{ user: { id: 'u1' } }} />)
+    await userEvent.click(screen.getByRole('tab', { name: 'Operaciones' }))
+    expect(screen.getByRole('tab', { name: 'Operaciones' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByTestId('mock-ledger')).toHaveTextContent('Ledger ARS CCL')
+    expect(screen.queryByTestId('mock-plan')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('mock-quotes')).not.toBeInTheDocument()
   })
 
   it('inicia con % Meta desc y comparte el orden con Cotizaciones, persistiéndolo', async () => {

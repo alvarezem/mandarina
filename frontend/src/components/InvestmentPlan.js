@@ -238,6 +238,17 @@ export default function InvestmentPlan({
         pushToast({ type: 'error', message: 'No se pudo registrar la compra' })
         return
       }
+      await supabase.from('ledger_operations').insert({
+        user_id: session.user.id,
+        symbol: step.symbol,
+        side: 'compra',
+        quantity: step.qty,
+        price: step.qty > 0 ? step.amount / step.qty : 0,
+        commission: 0,
+        currency: 'ARS',
+        date: new Date().toISOString().slice(0, 10),
+        notes: 'Compra por presupuesto',
+      })
       setBudget(String(Math.max(0, (Number(budget) || 0) - step.amount)))
       pushToast({
         type: 'success',

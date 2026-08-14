@@ -2,6 +2,7 @@ import { useState } from 'react'
 import InvestmentPlan from './InvestmentPlan'
 import MarketQuotes from './MarketQuotes'
 import MarketClosedNotice from './MarketClosedNotice'
+import Watchlist from './Watchlist'
 import { loadPlanSort, savePlanSort, SORT_DEFAULT_DIR } from '../lib/planSort'
 
 const TABS = [
@@ -69,7 +70,10 @@ export default function InvestmentsView({ session }) {
       {tab === 'plan' ? (
         <InvestmentPlan session={session} {...shared} />
       ) : (
-        <MarketQuotes session={session} {...shared} />
+        <>
+          <MarketQuotes session={session} {...shared} />
+          <Watchlist session={session} display={display} rateMode={rateMode} />
+        </>
       )}
     </div>
   )

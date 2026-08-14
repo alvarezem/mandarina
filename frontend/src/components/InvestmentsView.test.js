@@ -24,6 +24,13 @@ vi.mock('./MarketQuotes', () => ({
     </div>
   ),
 }))
+vi.mock('./Watchlist', () => ({
+  default: ({ display, rateMode }) => (
+    <div data-testid="mock-watchlist">
+      Watchlist {display} {rateMode}
+    </div>
+  ),
+}))
 
 const wrap = (ui) => render(ui)
 
@@ -51,6 +58,7 @@ describe('InvestmentsView', () => {
       'true',
     )
     expect(screen.getByTestId('mock-quotes')).toHaveTextContent('Cotizaciones ARS CCL')
+    expect(screen.getByTestId('mock-watchlist')).toHaveTextContent('Watchlist ARS CCL')
     expect(screen.queryByTestId('mock-plan')).not.toBeInTheDocument()
   })
 
@@ -61,6 +69,7 @@ describe('InvestmentsView', () => {
 
     await userEvent.click(screen.getByRole('tab', { name: 'Cotizaciones en vivo' }))
     expect(screen.getByTestId('mock-quotes')).toHaveTextContent('Cotizaciones USD CCL')
+    expect(screen.getByTestId('mock-watchlist')).toHaveTextContent('Watchlist USD CCL')
   })
 
   it('inicia con % Meta desc y comparte el orden con Cotizaciones, persistiéndolo', async () => {

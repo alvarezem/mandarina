@@ -191,6 +191,15 @@ describe('App', () => {
       expect(within(rail).getByRole('button', { name: /Inversiones/ })).toBeInTheDocument()
     })
 
+    it('oculta el grupo móvil en lg para que el branding quede a la izquierda', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      const mobileGroup = screen.getByRole('button', { name: 'Abrir menú' }).parentElement
+      expect(mobileGroup).toHaveClass('flex-1')
+      expect(mobileGroup).toHaveClass('lg:hidden')
+    })
+
     it('navega a Inversiones y muestra el plan de inversión vacío', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)

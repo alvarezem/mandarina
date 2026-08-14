@@ -221,7 +221,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
   return (
     <div className="flex h-screen flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40 dark:text-slate-100">
       <header className="z-30 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-100/70 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 sm:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2 lg:hidden">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}

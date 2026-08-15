@@ -47,18 +47,43 @@
         "@graph": [
           {
             "@type": "Organization",
+            "@id": "#org",
             "name": "Mandarina",
+            "alternateName": "Mandarina Fi",
             "url": "https://mandarina-fi.vercel.app/",
             "logo": "https://mandarina-fi.vercel.app/logo512.png",
             "description": "App gratuita para analizar el consumo de tarjetas de crédito, planificar inversiones y seguir cotizaciones en vivo."
           },
           {
+            "@type": "WebSite",
+            "@id": "#website",
+            "url": "https://mandarina-fi.vercel.app/",
+            "name": "Mandarina",
+            "publisher": { "@id": "#org" },
+            "inLanguage": ["es-AR", "en"]
+          },
+          {
+            "@type": "FinancialService",
+            "@id": "#service",
+            "name": "Mandarina",
+            "alternateName": "Mandarina Fi",
+            "url": "https://mandarina-fi.vercel.app/",
+            "image": "https://mandarina-fi.vercel.app/logo512.png",
+            "provider": { "@id": "#org" },
+            "description": "App gratuita de finanzas personales para Argentina: analiza resúmenes de tarjetas de crédito, categoriza gastos, detecta ingresos recurrentes y ayuda a planificar inversiones con cotizaciones en vivo de BYMA.",
+            "areaServed": { "@type": "Place", "name": "Argentina" },
+            "availableLanguage": ["es", "en"],
+            "priceRange": "Gratis"
+          },
+          {
             "@type": "SoftwareApplication",
             "name": "Mandarina",
+            "alternateName": "Mandarina Fi",
             "applicationCategory": "FinanceApplication",
             "operatingSystem": "Web",
             "url": "https://mandarina-fi.vercel.app/",
             "image": "https://mandarina-fi.vercel.app/logo512.png",
+            "publisher": { "@id": "#org" },
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "description": "Subís los resúmenes de tus tarjetas de crédito (CSV, XLSX, PDF) y Mandarina te muestra gastos categorizados, ingresos recurrentes, un plan de inversión con metas, cotizaciones en vivo de BYMA y un registro de operaciones con rentabilidad."
           },

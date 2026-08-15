@@ -21,6 +21,17 @@ describe('Landing', () => {
     expect(faq).toHaveTextContent('registro de operaciones')
   })
 
+  it('muestra cómo funciona, cuándo conviene y el testimonio', () => {
+    render(<Landing dark={false} onToggleTheme={vi.fn()} />)
+    expect(screen.getByRole('region', { name: 'Cómo funciona' })).toHaveTextContent('Paso 1')
+    expect(screen.getByRole('region', { name: 'Cuándo conviene Mandarina' })).toHaveTextContent(
+      'planilla de Excel',
+    )
+    const testimonial = screen.getByRole('region', { name: 'Testimonios' })
+    expect(testimonial).toHaveTextContent('planilla de Excel')
+    expect(testimonial).toHaveTextContent('Usuario y creador de Mandarina')
+  })
+
   it('incluye el card de Auth embebido para ingresar', () => {
     render(<Landing dark={false} onToggleTheme={vi.fn()} />)
     expect(screen.getByRole('button', { name: /Iniciar sesión/i })).toBeInTheDocument()

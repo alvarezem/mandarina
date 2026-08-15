@@ -26,3 +26,5 @@ Subís un resumen y Mandarina lo procesa: totales, gastos por categoría y comer
 ## Optional
 
 - Sitio: https://mandarina-fi.vercel.app/
+- Qué es Mandarina (overview): https://mandarina-fi.vercel.app/overview
+- Alternativas: https://mandarina-fi.vercel.app/alternatives

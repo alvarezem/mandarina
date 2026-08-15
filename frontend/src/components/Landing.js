@@ -17,6 +17,34 @@ const FEATURES = [
   },
 ]
 
+const STEPS = [
+  {
+    title: 'Subí tu resumen',
+    text: 'Cargás el resumen de tu tarjeta de crédito en formato CSV, XLSX o PDF.',
+  },
+  {
+    title: 'Mirá tu análisis',
+    text: 'Mandarina clasifica cada movimiento por categoría y comercio, y te muestra totales, ingresos recurrentes y la evolución del consumo.',
+  },
+  {
+    title: 'Planificá e invertí',
+    text: 'Definís tu plan de inversión, seguís cotizaciones en vivo de BYMA y registrás tus operaciones para ver tu rentabilidad.',
+  },
+]
+
+const WHEN = [
+  'Dejar de cargar tus gastos a mano en una planilla de Excel.',
+  'Ver tus gastos e ingresos categorizados automáticamente, en español.',
+  'Armar un plan de inversión con metas porcentuales y seguirlo con cotizaciones en vivo.',
+  'Llevar un registro de tus compras y ventas (costo promedio y rentabilidad).',
+]
+
+const TESTIMONIAL = {
+  quote:
+    'Empecé Mandarina por necesidad: estaba cansado de cargar todos mis gastos a mano en una planilla de Excel. Cuando arranqué con las inversiones, decidí sumar esa sección para tener todas mis finanzas en un mismo lugar de confianza. Hoy subo mi resumen, veo los gastos categorizados y sigo mi plan sin volver a la planilla.',
+  author: 'Usuario y creador de Mandarina',
+}
+
 const FAQ = [
   {
     question: '¿Qué es Mandarina y para quién es?',
@@ -75,6 +103,49 @@ export default function Landing({ dark, onToggleTheme }) {
               <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{f.text}</p>
             </div>
           ))}
+        </section>
+
+        <section className="mb-14" aria-label="Cómo funciona">
+          <h2 className="mb-4 text-center text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            Cómo funciona
+          </h2>
+          <ol className="grid gap-4 sm:grid-cols-3">
+            {STEPS.map((s, i) => (
+              <li
+                key={s.title}
+                className="rounded-2xl border border-slate-200/70 bg-slate-50/95 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80"
+              >
+                <span className="text-sm font-bold text-brand-500">Paso {i + 1}</span>
+                <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-50">{s.title}</h3>
+                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{s.text}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="mx-auto mb-14 max-w-3xl" aria-label="Cuándo conviene Mandarina">
+          <h2 className="mb-4 text-center text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            ¿Cuándo conviene Mandarina?
+          </h2>
+          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/95 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600 dark:text-slate-300">
+              {WHEN.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <section className="mx-auto mb-14 max-w-3xl" aria-label="Testimonios">
+          <h2 className="mb-4 text-center text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            Quién la usa
+          </h2>
+          <blockquote className="rounded-2xl border-l-4 border-brand-500 bg-slate-50/95 p-5 shadow-sm backdrop-blur dark:border-brand-400 dark:bg-slate-900/80">
+            <p className="text-slate-600 italic dark:text-slate-300">“{TESTIMONIAL.quote}”</p>
+            <footer className="mt-3 text-sm font-semibold text-brand-600 dark:text-brand-400">
+              — {TESTIMONIAL.author}
+            </footer>
+          </blockquote>
         </section>
 
         <section className="mx-auto mb-14 max-w-3xl" aria-label="Preguntas frecuentes">

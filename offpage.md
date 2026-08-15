@@ -11,20 +11,52 @@ otras páginas. Los modelos no recomiendan lo que solo aparece en un subdominio 
 > para agregar `sameAs` al JSON-LD (`frontend/index.html`) — un cambio puntual que
 > consolida la entidad "Mandarina" entre el sitio y los perfiles externos.
 
+## Descripciones listas para copiar
+
+Usar siempre el mismo nombre ("Mandarina", con `alternateName` "Mandarina Fi") y el mismo
+link `https://mandarina-fi.vercel.app/` en todos los perfiles.
+
+**Short (ES)** — campo "Description" de GitHub, tags, taglines:
+> Analizá el consumo de tus tarjetas de crédito y planificá inversiones. Gratis y en español.
+
+**Full (ES)** — AlternativeTo, directorios, listicles:
+> Mandarina es una app gratuita de finanzas personales para Argentina. Subís los resúmenes de
+> tus tarjetas de crédito (CSV, XLSX o PDF) y Mandarina los procesa: clasifica cada gasto por
+> categoría y comercio, detecta tus ingresos recurrentes (por ejemplo el sueldo) y te muestra
+> la evolución de tu consumo en el tiempo. Además incluye un plan de inversión con metas
+> porcentuales, cotizaciones en vivo de BYMA (acciones, CEDEARs y bonos) con histórico de
+> precios, y un registro de operaciones (ledger) con costo promedio y rentabilidad para saber
+> cuánto ganaste o perdiste con cada posición. Es 100% gratuita, sin publicidad, y cada cuenta
+> solo ve sus propios datos.
+
+**Full (EN)** — Product Hunt (audiencia internacional):
+> Mandarina is a free personal finance app for Argentina. Upload your credit card statements
+> (CSV, XLSX or PDF) and Mandarina processes them: every expense is categorized by category and
+> merchant, recurring income (like your salary) is detected, and spending trends are charted
+> over time. It also includes an investment plan with percentage targets, live BYMA quotes
+> (stocks, CEDEARs and bonds) with price history, and an operations ledger with average cost and
+> profitability so you always know how much you gained or lost per position. 100% free, no ads,
+> and each account only sees its own data.
+
+**Tags sugeridos**: `finanzas personales`, `personal finance`, `tarjetas de crédito`,
+`inversiones`, `argentina`, `byma`, `presupuesto`.
+
 ## Checklist accionable (gratis, en orden de impacto/tiempo)
 
 ### 1. Hacer público el repo de GitHub + README decente
 - Hoy el repo `alvarezem/mandarina` es **privado**. Un repo público con README es una
   cita externa real (GitHub es una autoridad que los modelos indexan).
-- **Antes de publicarlo**, verificar:
-  - `.gitignore` raíz incluye `examples/` (datos financieros reales del usuario) — confirmado
-    en `DONE.md`, pero re-chequear `git status`/`git ls-files` que nada sensible esté trackeado.
-  - No haya secrets: `frontend/.env` está gitignored (contiene la key publishable — es pública
-    por diseño, pero igual no debe subirse); revisar `git ls-files | grep -i env`.
-  - El historial no tenga datos personales comprometedores (si los hay: reescribir historial
-    antes de hacerlo público — grande, mejor validar primero).
-- Pasos: `git remote -v` OK → GitHub repo Settings → "Change visibility" → Public → escribir
-  un README real (stack, captura, cómo funciona, `mandarina-fi.vercel.app`).
+- **Verificación de seguridad HECHA (2026-08-15) — lista para publicar**:
+  - `examples/` está gitignored y **nunca** fue trackeado (ni en historial).
+  - Todos los `.env*` están gitignored; solo existen `.env.example` (plantillas vacías) en el
+    repo; ningún `.env` real pasó por el historial.
+  - No hay keys/secrets en código trackeado (solo nombres de variables y placeholders). El
+    valor `sb_publishable_…` (pública por diseño) aparece 1 vez, en texto de docs, sin riesgo.
+  - No hay archivos de datos personales (CSV/XLSX/PDF) en el repo.
+- Pasos: `git remote -v` OK (→ `https://github.com/alvarezem/mandarina.git`) → GitHub repo
+  Settings → "Change visibility" → Public → completar el **description** del repo con la
+  **Short (ES)** de arriba + **topics** (los tags sugeridos) → escribir un README real (stack,
+  captura, cómo funciona, link a `mandarina-fi.vercel.app`).
 - Impacto: **alto-medio**. Cita de GitHub + posible mención en respuestas al buscar el repo.
 
 ### 2. AlternativeTo (listado de alternativas)

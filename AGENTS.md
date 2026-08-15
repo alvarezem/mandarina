@@ -98,6 +98,7 @@ lógico; el baseline de formato y los refactors de lint van en commits separados
 2. **Simplicidad primero.** Código mínimo que resuelve el problema. Nada especulativo. Si 200 líneas pueden ser 50, reescribir.
 3. **Cambios quirúrgicos.** Tocar solo lo necesario. No "mejorar" código adyacente. Si hay código muerto no relacionado, mencionarlo — no borrarlo sin permiso. Cada línea cambiada debe trazar a la petición del usuario.
 4. **Ejecución por objetivos.** Transformar tareas en metas verificables. Para tareas multi-paso, declarar un plan breve con check de verificación por paso.
+5. **Documentar el ciclo completo.** Documentar el plan antes de implementar, luego implementar (incluyendo el Autodeploy cuando aplique), y luego volver a documentar el resultado (TODO/DONE/HANDOFF).
 
 ## Recordatorio de memoria (re-evaluar)
 

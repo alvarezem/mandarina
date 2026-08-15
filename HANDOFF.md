@@ -7,6 +7,11 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-14
+- **Qué se hizo** — **Migración a las nuevas API keys de Supabase (publishable) HECHO** (detalle en `DONE.md`):
+  1. **Dashboard**: creada la publishable `default` (`sb_publishable_…`) en Settings → API Keys. La **secret** (`sb_secret_…`) **no se usa** en el proyecto (las Edge Functions autentican con el JWT del usuario, nunca `service_role`) — queda guardada en el dashboard.
+  2. **Frontend**: `frontend/.env` con `VITE_SUPABASE_ANON_KEY` = valor publishable (mismo nombre de var, nuevo valor; `VITE_SUPABASE_URL` intacto). **Vercel actualizado** vía CLI (Production + Preview, `vercel env rm` + `vercel env add`).
+  3. **Backend**: nuevo `_shared/supabase.ts` (`createUserClient`) — lee la publishable de `SUPABASE_PUBLISHABLE_KEYS` (JSON auto-inyectado por la plataforma, key `default`, **sin fallback a la legacy**); `parse-summary`/`import-plan`/`quotes` pasan a usarlo. **Deploy de las 3 functions** (`supabase functions deploy`, sin migración DB → sin `db push`).
+  4. **Verificado**: deno test 64/64 + check/fmt/lint OK; `vercel --prod` → bundle con `sb_publishable_…` y **sin** el JWT anon legacy; edge responde `Unauthorized`/`No autenticado` sin JWT válido. **Pendiente del usuario**: desactivar las legacy keys (`anon`/`service_role`) en Settings → API Keys (reversible) tras confirmar la app en uso.
 - **Qué se hizo** — **Ledger: registro en pop-up + BYMA siempre visible HECHO** (feedback de testing; detalle en `DONE.md`):
   1. **`RegisterOperationModal.js` (nuevo)**: alta de operaciones en un **modal** (patrón `SummaryDetailModal`: portal a body, cierre por X/Esc/backdrop) con grilla Tipo·Ticker·Fecha·Cantidad / Precio+BYMA·Comisión+$|%, **Nota como textarea grande** y **Registrar abajo de todo**; resetea por `key` (remount al abrir). **BYMA siempre visible con fetch on click** (sin debounce de `draftSymbol`; elimina ese efecto y `quoteForDraft` → menos llamadas a la edge). `LedgerView.js` sin form inline: header con botón "Registrar operación", cards, tablas y listado intactos; el estado vacío también abre el modal. Feedback posterior (mismo día): el modal creció a **`max-w-3xl`/`p-6`**, la **Nota ahora ocupa todo el ancho** (`col-span-2 sm:col-span-4`, `rows={4}`) y el botón **Registrar pasó a ser normal abajo a la derecha** (footer con hint a la izquierda; ya no es `w-full`). Suite **333/333** (+3), lint 0, coverage lib 96.5% / hooks 97.9%, build OK. Frontend-only (sin `db push`).
 - **Qué se hizo (sesión previa)** — **Ledger: comisión $/% + nota visible + obligatorios marcados HECHO** (feedback de testing del ledger; detalle en `DONE.md`):
@@ -80,10 +85,10 @@ confirmar en la sesión):
 3. **Tests + docs + deploy**: `supabase db push` (si hubiera migración) ANTES del
    push a `master`.
 
-**Después** queda, en orden (`TODO.md` → "Backend / deferido"):
-**migrar a las nuevas API keys de Supabase** (`sb_publishable_`/`sb_secret_`)
-antes de fines 2026 (las legacy keys ya no se pueden rotar), y más adelante
-**Mandi** (asistente IA; lee `ledger_operations`).
+**Después** queda (`TODO.md` → "Backend / deferido"): desactivar las legacy
+keys (`anon`/`service_role`) en Settings → API Keys una vez confirmada la app
+en uso (pendiente del usuario; la migración a publishable quedó **HECHA**), y
+más adelante **Mandi** (asistente IA; lee `ledger_operations`).
 
 ## En progreso
 
@@ -94,9 +99,9 @@ antes de fines 2026 (las legacy keys ya no se pueden rotar), y más adelante
   6) QW-H fix botón duplicado + números → **HECHO**.
   **Todo lo de backend se anota al final de `TODO.md`**: watchlist → **HECHO**
   (tabla DB `watchlist`, 2026-08-14), ledger → **HECHO** (tabla DB
-  `ledger_operations`, 2026-08-14 — ver "Última sesión"), ONs/cauciones en la
-  edge `quotes` (ver "⚡ Próxima tarea"), y migrar a las nuevas API keys de
-  Supabase (`sb_publishable_`/`sb_secret_`) antes de fines 2026.
+  `ledger_operations`, 2026-08-14 — ver "Última sesión"), **API keys de
+  Supabase → HECHO (2026-08-14, publishable; ver "Última sesión")**, y
+  ONs/cauciones en la edge `quotes` (ver "⚡ Próxima tarea").
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 - **Deploy**: orden obligatorio **`supabase db push` ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz. La migración `0015_watchlist.sql` **y la `0016_ledger.sql`** ya están aplicadas en prod (y en local).

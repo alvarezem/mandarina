@@ -7,6 +7,11 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-15
+- **Qué se hizo** — **GEO SEO + AEO HECHO** (landing pública + JSON-LD + robots/sitemap/llms; detalle en `DONE.md`):
+  1. `components/Landing.js` (nuevo): página pública pre-auth (hero + "Por qué Mandarina" + FAQ con las 3 preguntas de llmaudit + card de `Auth` embebido) → `App.js` renderiza `<Landing>` sin sesión; `Auth.js` ganó prop `embedded` (sin wrapper/blobs/ThemeToggle/branding).
+  2. `index.html`: title/description + OG/Twitter/canonical + **JSON-LD `FAQPage`** (preguntas en ES + EN, crawlable sin JS).
+  3. `public/robots.txt` (grupos AI crawlers + Sitemap), `public/sitemap.xml` y `public/llms.txt` (nuevos).
+  4. Verificado post-deploy: `/` 200 con JSON-LD/OG/canonical; robots/sitemap/llms servidos. Suite **337/337** (+4), lint 0, build OK. Commit `561a5d2`. **Pendiente del usuario**: re-correr llmaudit en el navegador (el re-audit es un form live contra Gemini, sin API) para verificar el score.
 - **Qué se hizo** — **Fix móvil del módulo Operaciones + ONs/cauciones EN HOLD** (detalle en `DONE.md`):
   1. **Fix móvil**: el panel de resumen del ledger (`LedgerView.js:207`) forzaba `grid-cols-3` → en `<640px` los montos (`$1.234.567,89` + badge `▲x%`) desbordaban sus recuadros. **Fix 1 línea**: `grid grid-cols-1 gap-3 sm:grid-cols-3` (apila en móvil, 3 cols en `sm+`). Suite **333/333** + lint 0 + build OK. Frontend-only (sin `db push`). Commits `96db305`.
   2. **ONs/cauciones → EN HOLD** (decisión del usuario: "no agreguemos cosas para mostrar datos vacíos"). Verificado: de los 5 tickers (`PN360, TLCTO, TTC90, VSCRO, YM340`) solo **TLCTO/VSCRO** resuelven en BYMA Open Data (`settlementType:'2'`, la edge los parsea sin cambios); **PN360/TTC90/YM340 no existen** en el feed gratis (cotización st 1/2/3/6/7 y histórico → vacíos) y las cauciones con símbolos estándar (`A7D`, `A30D`, `60D`…) tampoco. Reactivar cuando el usuario confirme tickers que BYMA free publique. Ver `TODO.md`.
@@ -102,6 +107,11 @@ free publique** (o si se suma otra fuente de precios). Detalle en `TODO.md`
   `ledger_operations`, 2026-08-14 — ver "Última sesión"), **API keys de
   Supabase → HECHO (2026-08-14, publishable; ver "Última sesión")**, y
   ONs/cauciones en la edge `quotes` (ver "⏸️ En hold — ONs/cauciones").
+  Frontend: **GEO SEO + AEO → HECHO (2026-08-15, ver "Última sesión")** — queda
+  pendiente que el usuario re-corra llmaudit en el navegador para verificar el
+  score. Próximos candidatos del roadmap: **Mandi** (asistente IA, requiere
+  decidir proveedor/costo), **PWA/App Store** ($99/año Apple, choca con el "100%
+  gratis") y chores (consolidar DONE/HANDOFF/TODO).
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 - **Deploy**: orden obligatorio **`supabase db push` ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz. La migración `0015_watchlist.sql` **y la `0016_ledger.sql`** ya están aplicadas en prod (y en local).

@@ -39,7 +39,7 @@ function FieldError({ id, message }) {
   )
 }
 
-export default function Auth({ dark, onToggleTheme }) {
+export default function Auth({ dark, onToggleTheme, embedded = false }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -153,24 +153,34 @@ export default function Auth({ dark, onToggleTheme }) {
     }`
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 px-4 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40">
-      <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-emerald-500/15 blur-3xl dark:bg-emerald-500/10" />
+    <div
+      className={`relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 px-4 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40 ${
+        embedded ? '' : 'min-h-screen'
+      }`}
+    >
+      {!embedded && (
+        <>
+          <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-emerald-500/15 blur-3xl dark:bg-emerald-500/10" />
 
-      <div className="group absolute right-4 top-4 z-10">
-        <div className="pointer-events-none absolute -inset-6 -z-10 rounded-full bg-brand-500/25 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100 dark:bg-brand-500/15" />
-        <ThemeToggle dark={dark} onToggle={onToggleTheme} />
-      </div>
+          <div className="group absolute right-4 top-4 z-10">
+            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-full bg-brand-500/25 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100 dark:bg-brand-500/15" />
+            <ThemeToggle dark={dark} onToggle={onToggleTheme} />
+          </div>
+        </>
+      )}
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="mb-8 text-center animate-fade-in-up">
-          <Logo className="mx-auto mb-4 h-14 w-14" />
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-            Mandarina
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            A tu plata, sacale todo el jugo
-          </p>
-        </div>
+        {!embedded && (
+          <div className="mb-8 text-center animate-fade-in-up">
+            <Logo className="mx-auto mb-4 h-14 w-14" />
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+              Mandarina
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              A tu plata, sacale todo el jugo
+            </p>
+          </div>
+        )}
 
         <div className="rounded-2xl border border-slate-200/70 bg-slate-50/95 p-8 shadow-lg shadow-slate-200/50 backdrop-blur animate-fade-in-up dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/30">
           {signupSuccess ? (

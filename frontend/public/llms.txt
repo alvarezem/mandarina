@@ -1,0 +1,28 @@
+# Mandarina
+
+> Aplicación gratuita para analizar el consumo de tus tarjetas de crédito: subís tus resúmenes (CSV, XLSX, PDF) y obtenés un dashboard con gastos categorizados, ingresos, plan de inversión con metas y cotizaciones en vivo.
+
+## Mandarina
+
+- Analizá el consumo de tus tarjetas de crédito subiendo tus resúmenes (CSV, XLSX, PDF).
+- Categorización automática de gastos por categoría y comercio, vista de ingresos recurrentes y evolución del consumo en un dashboard.
+- Plan de inversión con metas porcentuales, cotizaciones en vivo de BYMA (acciones, CEDEARs y bonos) con histórico de precios, y un registro de operaciones (ledger) con costo promedio y rentabilidad.
+- 100% gratis, sin publicidad; cada cuenta solo ve sus propios datos.
+
+## FAQ
+
+### ¿Qué es Mandarina y para quién es?
+
+Mandarina es una app gratuita que analiza los resúmenes de tus tarjetas de crédito: subís tus archivos (CSV, XLSX o PDF) y obtenés un dashboard con gastos categorizados, vista de ingresos, plan de inversión con metas y cotizaciones en vivo. Está pensada para cualquier persona que quiera entender a dónde va su plata y tomar decisiones con datos, sin ser experta en finanzas.
+
+### ¿Por qué elegir Mandarina?
+
+Porque automatiza la clasificación de tus gastos, es gratis, sin publicidad y con tus datos protegidos. Además del análisis de consumo, incluye un plan de inversión con metas porcentuales, cotizaciones en vivo de BYMA y un registro de operaciones para saber cuánto ganaste o perdiste con cada posición.
+
+### ¿Qué puedo esperar al usarla?
+
+Subís un resumen y Mandarina lo procesa: totales, gastos por categoría y comercio, ingresos recurrentes (por ejemplo tu sueldo) y la evolución del consumo en el tiempo. Después podés armar tu plan de inversión, seguir cotizaciones en vivo y registrar compras y ventas para ver tu rentabilidad.
+
+## Optional
+
+- Sitio: https://mandarina-fi.vercel.app/

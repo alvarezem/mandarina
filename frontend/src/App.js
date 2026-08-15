@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import supabase from './lib/supabaseClient'
 import { useTheme } from './hooks/useTheme'
-import Auth from './components/Auth'
+import Landing from './components/Landing'
 import NewPasswordScreen from './components/NewPasswordScreen'
 import ResumenesView from './components/ResumenesView'
 import InvestmentsView from './components/InvestmentsView'
@@ -193,7 +193,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
     return <NewPasswordScreen dark={dark} onToggleTheme={() => setDark((d) => !d)} />
   }
 
-  if (!session) return <Auth dark={dark} onToggleTheme={() => setDark((d) => !d)} />
+  if (!session) return <Landing dark={dark} onToggleTheme={() => setDark((d) => !d)} />
 
   const navigate = (key) => {
     setView(key)

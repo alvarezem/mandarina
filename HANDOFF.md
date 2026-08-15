@@ -7,6 +7,11 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-15
+- **Qué se hizo** — **GEO SEO + AEO iteración 2 HECHO** (re-audit llmaudit 16/100; detalle en `DONE.md`):
+  1. Re-audit dio **16/100** (OpenAI 5, Gemini 14, Claude 28): los modelos leen el sitio pero falta clasificación de categoría, comparativas, reseñas y autoridad de dominio. El reporte pidió **"Personal Finance Services Overview"** primero, luego alternatives y "what is mandarina fi and who is it for".
+  2. Decisiones del usuario: páginas **estáticas** (solo para algoritmos, sin invertir en estética), testimonio real redactado, **dominio custom descartado**, **contenido educativo EN HOLD**.
+  3. Implementado: `public/overview.html` → **`/overview`** y `public/alternatives.html` → **`/alternatives`** (HTML estático crawlable, resumen EN en overview, tabla honesta de comparativas); JSON-LD ampliado (`WebSite` + `FinancialService` `areaServed: Argentina` + `alternateName: "Mandarina Fi"`); `Landing.js` con "Cómo funciona" + "¿Cuándo conviene Mandarina?" + "Quién la usa"; `sitemap.xml`/`llms.txt` actualizados + `vercel.json` `cleanUrls: true`.
+  4. Verificado: `/overview` y `/alternatives` → 200; `/` con FinancialService. Suite **338/338** (+1), lint 0, build OK. Commit `4b5374d`. **Pendiente del usuario**: re-correr llmaudit en el navegador para comparar con el 16/100.
 - **Qué se hizo** — **GEO SEO + AEO HECHO** (landing pública + JSON-LD + robots/sitemap/llms; detalle en `DONE.md`):
   1. `components/Landing.js` (nuevo): página pública pre-auth (hero + "Por qué Mandarina" + FAQ con las 3 preguntas de llmaudit + card de `Auth` embebido) → `App.js` renderiza `<Landing>` sin sesión; `Auth.js` ganó prop `embedded` (sin wrapper/blobs/ThemeToggle/branding).
   2. `index.html`: title/description + OG/Twitter/canonical + **JSON-LD `FAQPage`** (preguntas en ES + EN, crawlable sin JS).

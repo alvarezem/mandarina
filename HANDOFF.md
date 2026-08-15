@@ -7,6 +7,11 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-15
+- **Qué se hizo** — **GEO SEO + AEO CERRADO** (detalle en `DONE.md`):
+  1. Re-audits llmaudit: **22 → 16 → 15** = ruido de modelos sobre el mismo diagnóstico; el reporte volvió a pedir páginas que **ya estaban publicadas** (what is / alternatives / testimonios) → on-page agotado.
+  2. Gap real según los 3 providers: **autoridad off-page** (subdominio Vercel, cero citas/reviews/directorios). Fuera de alcance por decisión del usuario: dominio custom (100% gratis) y contenido educativo (EN HOLD).
+  3. Item cerrado en TODO/DONE; las acciones off-page que de verdad moverían el score quedaron en **`offpage.md`** (repo público, AlternativeTo, Product Hunt, directorios, comunidades).
+  4. **Siguiente paso cuando quieras**: crear los perfiles externos → avisar para agregar `sameAs` al JSON-LD y re-correr llmaudit en 4-8 semanas.
 - **Qué se hizo** — **GEO SEO + AEO iteración 2 HECHO** (re-audit llmaudit 16/100; detalle en `DONE.md`):
   1. Re-audit dio **16/100** (OpenAI 5, Gemini 14, Claude 28): los modelos leen el sitio pero falta clasificación de categoría, comparativas, reseñas y autoridad de dominio. El reporte pidió **"Personal Finance Services Overview"** primero, luego alternatives y "what is mandarina fi and who is it for".
   2. Decisiones del usuario: páginas **estáticas** (solo para algoritmos, sin invertir en estética), testimonio real redactado, **dominio custom descartado**, **contenido educativo EN HOLD**.
@@ -112,9 +117,9 @@ free publique** (o si se suma otra fuente de precios). Detalle en `TODO.md`
   `ledger_operations`, 2026-08-14 — ver "Última sesión"), **API keys de
   Supabase → HECHO (2026-08-14, publishable; ver "Última sesión")**, y
   ONs/cauciones en la edge `quotes` (ver "⏸️ En hold — ONs/cauciones").
-  Frontend: **GEO SEO + AEO → HECHO (2026-08-15, ver "Última sesión")** — queda
-  pendiente que el usuario re-corra llmaudit en el navegador para verificar el
-  score. Próximos candidatos del roadmap: **Mandi** (asistente IA, requiere
+  Frontend: **GEO SEO + AEO → CERRADO (2026-08-15, ver "Última sesión")** — on-page
+  agotado (scores 22/16/15 = ruido); el gap es autoridad off-page → acciones en
+  `offpage.md` (pendiente del usuario). Próximos candidatos del roadmap: **Mandi** (asistente IA, requiere
   decidir proveedor/costo), **PWA/App Store** ($99/año Apple, choca con el "100%
   gratis") y chores (consolidar DONE/HANDOFF/TODO).
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están

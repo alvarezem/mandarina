@@ -45,6 +45,10 @@ export default function Landing({
           </p>
         </section>
 
+        <div className="mb-14 flex justify-center">
+          <Auth dark={dark} onToggleTheme={onToggleTheme} embedded lang={lang} />
+        </div>
+
         <section className="mb-14 grid gap-4 sm:grid-cols-3">
           {features.map((f) => (
             <div
@@ -140,10 +144,6 @@ export default function Landing({
             ))}
           </div>
         </section>
-
-        <div className="flex justify-center">
-          <Auth dark={dark} onToggleTheme={onToggleTheme} embedded lang={lang} />
-        </div>
       </div>
     </div>
   )

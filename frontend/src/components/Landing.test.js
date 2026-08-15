@@ -48,7 +48,7 @@ describe('Landing', () => {
   it('renderiza en inglés cuando lang es en', () => {
     render(<Landing dark={false} onToggleTheme={vi.fn()} lang="en" />)
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Get the most out of your money' }),
+      screen.getByRole('heading', { level: 1, name: 'Get the most juice out of your money' }),
     ).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Frequently asked questions' })).toHaveTextContent(
       'What is Mandarina and who is it for?',

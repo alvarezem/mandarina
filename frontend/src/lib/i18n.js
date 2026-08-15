@@ -108,7 +108,7 @@ export const translations = {
     'auth.passwordError.chars': 'La contraseña debe incluir letras y números',
   },
   en: {
-    'landing.hero.title': 'Get the most out of your money',
+    'landing.hero.title': 'Get the most juice out of your money',
     'landing.hero.subtitle':
       'Mandarina analyzes your credit card statements and shows you your categorized spending, your income and how your consumption evolves. Then it helps you plan investments with live quotes.',
     'landing.features': [

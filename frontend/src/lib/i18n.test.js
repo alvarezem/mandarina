@@ -9,7 +9,7 @@ describe('i18n', () => {
 
   it('traduce claves existentes en es y en', () => {
     expect(t('es', 'landing.hero.title')).toBe('A tu plata, sacale todo el jugo')
-    expect(t('en', 'landing.hero.title')).toBe('Get the most out of your money')
+    expect(t('en', 'landing.hero.title')).toBe('Get the most juice out of your money')
     expect(t('en', 'auth.submit.login')).toBe('Sign in')
   })
 

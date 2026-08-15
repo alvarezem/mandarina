@@ -1,64 +1,50 @@
 # Mandarina
 
-Aplicación personal para analizar el consumo de tarjetas de crédito. Subí tus resúmenes (CSV, XLSX o PDF) y obtené un dashboard con tus gastos, categorizado y con totales en pesos y dólares.
+Analizá el consumo de tus tarjetas de crédito y planificá inversiones. Gratis y en español.
 
-> El asistente IA del futuro se llama **Mandi**.
+[Ver app](https://mandarina-fi.vercel.app/) · [Roadmap](TODO.md) · [Historial](DONE.md)
+
+## What is Mandarina?
+
+Mandarina is a free, privacy-first personal finance app for Argentina. Upload your credit card statements and it turns them into a clear dashboard: categorized spending, recurring income, an investment plan with live BYMA quotes, and an operations ledger that shows how much you actually gained or lost per position.
+
+## Qué es Mandarina
+
+Mandarina es una app gratuita de finanzas personales para Argentina. Subís los resúmenes de tus tarjetas de crédito (CSV, XLSX o PDF) y Mandarina los procesa: clasifica cada gasto por categoría y comercio, detecta tus ingresos recurrentes (por ejemplo el sueldo) y te muestra la evolución de tu consumo en el tiempo. Además incluye un plan de inversión con metas porcentuales, cotizaciones en vivo de BYMA (acciones, CEDEARs y bonos) con histórico de precios, y un registro de operaciones (ledger) con costo promedio y rentabilidad para saber cuánto ganaste o perdiste con cada posición. Es 100% gratuita, sin publicidad, y cada cuenta solo ve sus propios datos.
 
 ## Funcionalidades
 
-- **Autenticación** — login/signup con email y contraseña (Supabase Auth). Cada usuario solo ve sus propios datos (RLS).
-- **Subida de resúmenes** — acepta archivos PDF, CSV y XLSX. Se guardan en un bucket privado por usuario.
-- **Procesamiento automático** — una Edge Function de Supabase parsea el archivo:
-  - **CSV/XLSX**: auto-detección de separador y mapeo flexible de columnas (fecha, descripción, importe).
-  - **PDF** (resúmenes BBVA Visa/Mastercard): extracción posicional con `unpdf`, lee las tablas de detalle y distingue la columna PESOS de DÓLARES.
-  - Montos normalizados, fechas a ISO, soporte multi-moneda (ARS/USD).
-- **Categorización** — los comercios se clasifican automáticamente por reglas (Compras, Suscripciones, Impuestos, Pagos, Transferencias, Servicios, Delivery, Inversiones, Ingresos).
-- **Análisis de consumo** — por resumen se genera un JSON con totales, mayor gasto/ingreso, gasto por categoría y comercio, evolución diaria y balance acumulado.
-- **Dashboard estilo Notion** — cards de métricas, gráficos (línea, doughnut, barras) con Chart.js y tabla de transacciones.
-- **Inversiones** — plan de inversión (meta % vs actual, importar XLSX, precios live vía BYMA) y cotizaciones en vivo (MEP/CCL, asignación, histórico por activo).
+- **Subida de resúmenes** — acepta **PDF** (extracción posicional de resúmenes BBVA con `unpdf`), **CSV** y **XLSX** (auto-detección de separador y mapeo flexible de columnas). Soporte multi-moneda ARS/USD.
+- **Categorización automática** — los comercios se clasifican por reglas: Compras, Suscripciones, Impuestos, Pagos, Transferencias, Servicios, Delivery, Inversiones, Ingresos.
+- **Dashboard de consumo** — totales en pesos y dólares, evolución diaria, gasto por categoría y comercio, y detección de ingresos recurrentes.
+- **Plan de inversión** — metas porcentuales, importación de XLSX y presupuesto con precios live.
+- **Cotizaciones en vivo** — BYMA (acciones, CEDEARs, bonos), MEP/CCL, histórico por activo y watchlist.
+- **Ledger de operaciones** — compras/ventas/ajustes con costo promedio, comisiones $ o %, y rentabilidad por posición.
+
+## Privacidad y costo
+
+- **100% gratis**, sin publicidad ni planes pagos.
+- Cada cuenta solo ve sus propios datos (Row Level Security en PostgreSQL; archivos en un bucket privado por usuario).
+- Autenticación con email y contraseña (Supabase Auth).
+
+## Captura
+
+<!-- Agregar acá una screenshot del dashboard (ej. dashboard.png). -->
 
 ## Stack
 
-- **Frontend**: React 19 + Vite 8 + Vitest 4 (migrado desde CRA en `improvements.md` Fase 1). Tailwind v4, Chart.js + react-chartjs-2. Código en JS (JSX en `.js`).
+- **Frontend**: React 19 + Vite 8 + Vitest 4, Tailwind v4, Chart.js + react-chartjs-2. JS con JSX en `.js`.
 - **Backend**: Supabase (Auth, PostgreSQL, Storage, Edge Functions en Deno/TS).
 - **Parseo**: `@std/csv`, SheetJS (`xlsx`), `unpdf` (PDF posicional BBVA).
-- **Despliegue**: frontend estático en Vercel (autodeploy desde rama `master` → `mandarina-fi.vercel.app`); sin dominio custom hoy.
+- **Despliegue**: frontend estático en Vercel, autodeploy desde `master` → `mandarina-fi.vercel.app`.
 
-## Estructura
-
-```
-frontend/
-  index.html           # entry (raíz, no public/)
-  vite.config.js       # Vite + Vitest (incluye plugin transform-jsx-in-js)
-  public/              # favicon, logos, manifest, robots (Vite los copia a dist/)
-  src/
-    index.js           # entry
-    App.js             # shell, auth, navegación
-    components/        # Auth, Dashboard, UploadSummaries, InvestmentPlan,
-                       #   MarketQuotes, Sidebar, Toast, Dropdown, Charts, Tour...
-    lib/               # supabaseClient, plan, analysis, history, planSort,
-                       #   sanitizeFileName (lógica pura con tests)
-    hooks/             # useAsync, useCountUp, usePortfolioQuotes, useTheme
-    test/              # setup.js: mock compartido de supabase + factories
-    setupTests.js      # mock global de supabase + react-chartjs-2 + polyfills
-    *.test.js          # tests Vitest junto al código
-backend/
-  supabase/
-    migrations/        # SQL 0001..0014 (esquema + RLS + storage)
-    functions/         # Edge Functions Deno: parse-summary, import-plan, quotes
-    templates/         # emails con marca
-    config.toml        # config local de Supabase
-examples/              # muestras reales de usuario (gitignored)
-```
-
-## Comandos
+## Development
 
 ```bash
 # Frontend
 cd frontend && npm install
 npm start            # dev server :3000 (tailwind watch + vite)
 npm test             # suite de tests (Vitest, un solo run)
-npm run test:watch   # Vitest en modo watch
 npm run coverage     # suite + report de coverage (meta ≥80% en src/lib y src/hooks)
 npm run build        # build:css + build de producción (salida en dist/)
 npm run lint         # ESLint estricto (flat config, 0 issues)
@@ -80,14 +66,14 @@ supabase functions deploy parse-summary|import-plan|quotes
 > **Orden de deploy obligatorio**: `supabase db push` ANTES de `functions deploy`
 > (sin la migración 0014, las funciones de parse devuelven error PGRST202).
 
-## Configuración
+### Configuración
 
 - Variables de entorno del frontend: prefijo `VITE_` (`VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY`) — ver `frontend/.env.example`. En producción se
   setean en el dashboard de Vercel.
 - Backend: 100% Edge Functions + migraciones; no usa `.env` propio.
 
-## Calidad / CI
+### Calidad / CI
 
 - **Pre-commit** (husky + lint-staged): eslint + prettier por archivo staged del
   frontend, y `deno fmt --check` + `deno lint` si hay `.ts` del backend staged.
@@ -95,6 +81,7 @@ supabase functions deploy parse-summary|import-plan|quotes
   (fmt+lint+test) sobre push/PR a master. Dependabot semanal (npm + Actions).
 - **Commits**: Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`…).
 
-## Estado
+## Roadmap
 
 Activo y en evolución. Ver `TODO.md` para el roadmap y `DONE.md` para el historial.
+El asistente IA del futuro se llama **Mandi**.

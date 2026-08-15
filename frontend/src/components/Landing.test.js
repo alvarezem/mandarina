@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Landing from './Landing'
+import { LangProvider } from './LangProvider'
 
 describe('Landing', () => {
   it('muestra el hero con la propuesta de valor y el header de marca', () => {
@@ -46,7 +47,11 @@ describe('Landing', () => {
   })
 
   it('renderiza en inglés cuando lang es en', () => {
-    render(<Landing dark={false} onToggleTheme={vi.fn()} lang="en" />)
+    render(
+      <LangProvider lang="en" setLang={vi.fn()}>
+        <Landing dark={false} onToggleTheme={vi.fn()} />
+      </LangProvider>,
+    )
     expect(
       screen.getByRole('heading', { level: 1, name: 'Get the most juice out of your money' }),
     ).toBeInTheDocument()

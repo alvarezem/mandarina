@@ -1,4 +1,7 @@
-export default function LangToggle({ lang, onSelect }) {
+import { useLang } from './LangProvider'
+
+export default function LangToggle() {
+  const { lang, setLang } = useLang()
   const options = [
     { code: 'es', label: 'ES', aria: 'Español' },
     { code: 'en', label: 'EN', aria: 'English' },
@@ -9,7 +12,7 @@ export default function LangToggle({ lang, onSelect }) {
         <button
           key={o.code}
           type="button"
-          onClick={() => onSelect(o.code)}
+          onClick={() => setLang(o.code)}
           aria-pressed={lang === o.code}
           aria-label={o.aria}
           title={o.aria}

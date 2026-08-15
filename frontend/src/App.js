@@ -11,6 +11,7 @@ import Sidebar, { Logo } from './components/Sidebar'
 import MobileDrawer from './components/MobileDrawer'
 import ToastProvider, { useToast } from './components/Toast'
 import OnboardingTour from './components/OnboardingTour'
+import { LangProvider } from './components/LangProvider'
 
 const VIEW_TITLES = { resumenes: 'Resúmenes', inversiones: 'Inversiones' }
 
@@ -201,17 +202,18 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
   }
 
   if (session && recovery) {
-    return <NewPasswordScreen dark={dark} onToggleTheme={() => setDark((d) => !d)} />
+    return (
+      <LangProvider lang={lang} setLang={handleSelectLang}>
+        <NewPasswordScreen dark={dark} onToggleTheme={() => setDark((d) => !d)} />
+      </LangProvider>
+    )
   }
 
   if (!session)
     return (
-      <Landing
-        dark={dark}
-        onToggleTheme={() => setDark((d) => !d)}
-        lang={lang}
-        onSelectLang={handleSelectLang}
-      />
+      <LangProvider lang={lang} setLang={handleSelectLang}>
+        <Landing dark={dark} onToggleTheme={() => setDark((d) => !d)} />
+      </LangProvider>
     )
 
   const navigate = (key) => {
@@ -238,42 +240,16 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
   }
 
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40 dark:text-slate-100">
-      <header className="z-30 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-100/70 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 sm:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2 lg:hidden">
-          <button
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Abrir menú"
-            title="Abrir menú"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.8}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-              />
-            </svg>
-          </button>
-          <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200 lg:hidden">
-            {VIEW_TITLES[view]}
-          </span>
-        </div>
-        <div className="-ml-4 hidden items-center gap-1 lg:flex sm:-ml-6">
-          <div className="flex w-16 shrink-0 items-center justify-center">
+    <LangProvider lang={lang} setLang={handleSelectLang}>
+      <div className="flex h-screen flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40 dark:text-slate-100">
+        <header className="z-30 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-100/70 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 sm:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-2 lg:hidden">
             <button
               type="button"
-              onClick={toggleRail}
-              aria-label={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
-              title={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Abrir menú"
+              title="Abrir menú"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
             >
               <svg
                 className="h-5 w-5"
@@ -289,94 +265,124 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
                 />
               </svg>
             </button>
+            <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200 lg:hidden">
+              {VIEW_TITLES[view]}
+            </span>
           </div>
-          <button
-            type="button"
-            onClick={goHome}
-            aria-label="Ir al inicio"
-            title="Mandarina"
-            className="flex items-center gap-2 rounded-lg px-1 transition hover:opacity-85"
-          >
-            <Logo className="h-8 w-8" />
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Mandarina</span>
-          </button>
-          <span className="hidden border-l border-slate-200 pl-3 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500 xl:block">
-            a tu plata, sacale todo el jugo
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setTourOpen(true)}
-            aria-label="Ver guía"
-            title="Ver guía de Mandarina"
-            data-tour="help"
-            className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-brand-800 dark:hover:bg-brand-950/40 dark:hover:text-brand-400"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.8}
-              stroke="currentColor"
+          <div className="-ml-4 hidden items-center gap-1 lg:flex sm:-ml-6">
+            <div className="flex w-16 shrink-0 items-center justify-center">
+              <button
+                type="button"
+                onClick={toggleRail}
+                aria-label={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
+                title={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                  />
+                </svg>
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={goHome}
+              aria-label="Ir al inicio"
+              title="Mandarina"
+              className="flex items-center gap-2 rounded-lg px-1 transition hover:opacity-85"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
-              />
-            </svg>
-          </button>
-          <ThemeToggle dark={dark} onToggle={() => setDark((d) => !d)} />
-          <span className="hidden max-w-48 truncate text-sm text-slate-500 dark:text-slate-400 sm:block">
-            {session.user.email}
-          </span>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="hidden rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 lg:inline-flex"
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </header>
-
-      <div className="flex min-h-0 flex-1">
-        <Sidebar view={view} onNavigate={navigate} expanded={railExpanded} />
-
-        <main
-          ref={mainRef}
-          className={`flex-1 p-4 sm:p-6 lg:p-8 lg:pb-8 ${tourOpen ? 'overflow-hidden' : 'overflow-y-auto'}`}
-        >
-          <div key={view}>
-            {view === 'inversiones' ? (
-              <InvestmentsView session={session} />
-            ) : (
-              <ResumenesView
-                session={session}
-                summaryId={selectedId}
-                dark={dark}
-                refreshKey={refreshKey}
-                resetKey={resetKey}
-                onSelect={selectSummary}
-                onDataChanged={() => setRefreshKey((k) => k + 1)}
-              />
-            )}
+              <Logo className="h-8 w-8" />
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                Mandarina
+              </span>
+            </button>
+            <span className="hidden border-l border-slate-200 pl-3 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500 xl:block">
+              a tu plata, sacale todo el jugo
+            </span>
           </div>
-        </main>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setTourOpen(true)}
+              aria-label="Ver guía"
+              title="Ver guía de Mandarina"
+              data-tour="help"
+              className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-brand-800 dark:hover:bg-brand-950/40 dark:hover:text-brand-400"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+                />
+              </svg>
+            </button>
+            <ThemeToggle dark={dark} onToggle={() => setDark((d) => !d)} />
+            <span className="hidden max-w-48 truncate text-sm text-slate-500 dark:text-slate-400 sm:block">
+              {session.user.email}
+            </span>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="hidden rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 lg:inline-flex"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        </header>
+
+        <div className="flex min-h-0 flex-1">
+          <Sidebar view={view} onNavigate={navigate} expanded={railExpanded} />
+
+          <main
+            ref={mainRef}
+            className={`flex-1 p-4 sm:p-6 lg:p-8 lg:pb-8 ${tourOpen ? 'overflow-hidden' : 'overflow-y-auto'}`}
+          >
+            <div key={view}>
+              {view === 'inversiones' ? (
+                <InvestmentsView session={session} />
+              ) : (
+                <ResumenesView
+                  session={session}
+                  summaryId={selectedId}
+                  dark={dark}
+                  refreshKey={refreshKey}
+                  resetKey={resetKey}
+                  onSelect={selectSummary}
+                  onDataChanged={() => setRefreshKey((k) => k + 1)}
+                />
+              )}
+            </div>
+          </main>
+        </div>
+
+        <MobileDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          view={view}
+          onNavigate={handleNavigate}
+          userEmail={session.user.email}
+          onSignOut={handleSignOut}
+        />
+
+        <OnboardingTour open={tourOpen} onClose={closeTour} />
       </div>
-
-      <MobileDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        view={view}
-        onNavigate={handleNavigate}
-        userEmail={session.user.email}
-        onSignOut={handleSignOut}
-      />
-
-      <OnboardingTour open={tourOpen} onClose={closeTour} />
-    </div>
+    </LangProvider>
   )
 }
 

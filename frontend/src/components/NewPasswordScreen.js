@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import supabase from '../lib/supabaseClient'
-import { authErrorToSpanish } from '../lib/authErrors'
-import { strengthOf, STRENGTH_LABEL, STRENGTH_BAR, validatePassword } from '../lib/password'
+import { authErrorToMessage } from '../lib/authErrors'
+import { strengthOf, STRENGTH_BAR, validatePassword } from '../lib/password'
+import { t } from '../lib/i18n'
 import ThemeToggle from './ThemeToggle'
 import { Logo } from './Sidebar'
 import { useToast } from './Toast'
+import { useLang } from './LangProvider'
 
 function FieldError({ id, message }) {
   if (!message) return null
@@ -16,6 +18,7 @@ function FieldError({ id, message }) {
 }
 
 export default function NewPasswordScreen({ dark, onToggleTheme }) {
+  const { lang } = useLang()
   const pushToast = useToast()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -30,9 +33,9 @@ export default function NewPasswordScreen({ dark, onToggleTheme }) {
     e.preventDefault()
     setError(null)
     const errors = {}
-    const passwordError = validatePassword(password)
+    const passwordError = validatePassword(password, lang)
     if (passwordError) errors.password = passwordError
-    if (confirm !== password) errors.confirm = 'Las contraseñas no coinciden'
+    if (confirm !== password) errors.confirm = t(lang, 'auth.passwordsMismatch')
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
@@ -40,13 +43,13 @@ export default function NewPasswordScreen({ dark, onToggleTheme }) {
     try {
       const { error } = await supabase.auth.updateUser({ password })
       if (error) {
-        setError(authErrorToSpanish(error))
+        setError(authErrorToMessage(error, lang))
         return
       }
       await supabase.auth.signOut()
-      pushToast({ type: 'success', icon: 'wave', message: 'Contraseña actualizada' })
+      pushToast({ type: 'success', icon: 'wave', message: t(lang, 'password.updated') })
     } catch {
-      setError('No se pudo actualizar la contraseña. Intentá de nuevo.')
+      setError(t(lang, 'password.updateError'))
     } finally {
       setSubmitting(false)
     }
@@ -63,8 +66,8 @@ export default function NewPasswordScreen({ dark, onToggleTheme }) {
     <button
       type="button"
       onClick={() => setShowPassword((s) => !s)}
-      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-      title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+      aria-label={showPassword ? t(lang, 'auth.hidePassword') : t(lang, 'auth.showPassword')}
+      title={showPassword ? t(lang, 'auth.hidePassword') : t(lang, 'auth.showPassword')}
       className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
     >
       <svg
@@ -105,10 +108,10 @@ export default function NewPasswordScreen({ dark, onToggleTheme }) {
         <div className="mb-8 text-center animate-fade-in-up">
           <Logo className="mx-auto mb-4 h-14 w-14" />
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-            Nueva contraseña
+            {t(lang, 'password.title')}
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Elegí una contraseña nueva para tu cuenta
+            {t(lang, 'password.subtitle')}
           </p>
         </div>
 
@@ -118,7 +121,7 @@ export default function NewPasswordScreen({ dark, onToggleTheme }) {
               className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
               htmlFor="new-password"
             >
-              Contraseña
+              {t(lang, 'auth.password')}
             </label>
             <div className="relative">
               <input
@@ -152,7 +155,7 @@ export default function NewPasswordScreen({ dark, onToggleTheme }) {
               </div>
               {password && (
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {STRENGTH_LABEL[strength]}
+                  {t(lang, 'auth.strength')[strength]}
                 </span>
               )}
             </div>
@@ -161,7 +164,7 @@ export default function NewPasswordScreen({ dark, onToggleTheme }) {
               className="mb-1 mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300"
               htmlFor="confirm-password"
             >
-              Confirmar contraseña
+              {t(lang, 'auth.confirm')}
             </label>
             <div className="relative">
               <input
@@ -187,7 +190,7 @@ export default function NewPasswordScreen({ dark, onToggleTheme }) {
               disabled={submitting}
               className="mt-6 w-full rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition hover:from-brand-600 hover:to-brand-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-70"
             >
-              {submitting ? 'Guardando…' : 'Guardar contraseña'}
+              {submitting ? t(lang, 'password.saving') : t(lang, 'password.save')}
             </button>
           </form>
 

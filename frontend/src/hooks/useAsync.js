@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useLang } from '../components/LangProvider'
+import { t } from '../lib/i18n'
 
 export function useAsync(fn, deps = []) {
+  const { lang } = useLang()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -15,7 +18,7 @@ export function useAsync(fn, deps = []) {
         const result = await fn()
         if (active) setData(result)
       } catch (e) {
-        if (active) setError(e?.message || 'Ocurrió un error')
+        if (active) setError(e?.message || t(lang, 'common.errorFallback'))
       } finally {
         if (active) setLoading(false)
       }

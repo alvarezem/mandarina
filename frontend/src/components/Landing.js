@@ -2,14 +2,11 @@ import Auth from './Auth'
 import ThemeToggle from './ThemeToggle'
 import LangToggle from './LangToggle'
 import { Logo } from './Sidebar'
-import { DEFAULT_LANG, t } from '../lib/i18n'
+import { t } from '../lib/i18n'
+import { useLang } from './LangProvider'
 
-export default function Landing({
-  dark,
-  onToggleTheme,
-  lang = DEFAULT_LANG,
-  onSelectLang = () => {},
-}) {
+export default function Landing({ dark, onToggleTheme }) {
+  const { lang } = useLang()
   const features = t(lang, 'landing.features')
   const steps = t(lang, 'landing.steps')
   const when = t(lang, 'landing.when.items')
@@ -21,7 +18,7 @@ export default function Landing({
       <div className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-brand-500/15 blur-3xl dark:bg-brand-500/10" />
 
       <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
-        <LangToggle lang={lang} onSelect={onSelectLang} />
+        <LangToggle />
         <div className="group">
           <div className="pointer-events-none absolute -inset-6 -z-10 rounded-full bg-brand-500/25 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100 dark:bg-brand-500/15" />
           <ThemeToggle dark={dark} onToggle={onToggleTheme} />
@@ -46,7 +43,7 @@ export default function Landing({
         </section>
 
         <div className="mb-14 flex justify-center">
-          <Auth dark={dark} onToggleTheme={onToggleTheme} embedded lang={lang} />
+          <Auth dark={dark} onToggleTheme={onToggleTheme} embedded />
         </div>
 
         <section className="mb-14 grid gap-4 sm:grid-cols-3">

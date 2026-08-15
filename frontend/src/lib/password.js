@@ -11,7 +11,6 @@ export function strengthOf(password) {
   return Math.min(4, score)
 }
 
-export const STRENGTH_LABEL = ['', 'Débil', 'Media', 'Buena', 'Fuerte']
 export const STRENGTH_BAR = ['', 'bg-red-500', 'bg-amber-500', 'bg-lime-500', 'bg-emerald-500']
 
 export function validatePassword(password, lang = 'es') {

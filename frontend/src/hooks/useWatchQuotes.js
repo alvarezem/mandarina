@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { useToast } from '../components/Toast'
+import { useLang } from '../components/LangProvider'
+import { t } from '../lib/i18n'
 
 // Cotizaciones de la watchlist: invoca la edge `quotes` con { symbols } y
 // devuelve solo el mapa de quotes. Sin rates ni buildPlan (la watchlist no
 // calcula cartera, solo sigue precios).
 export function useWatchQuotes({ symbols }) {
+  const { lang } = useLang()
   const [quotes, setQuotes] = useState({})
   const [rates, setRates] = useState({ MEP: null, CCL: null })
   const [quotesError, setQuotesError] = useState(false)
@@ -44,11 +47,11 @@ export function useWatchQuotes({ symbols }) {
         setQuotesError(false)
         setQuotes(data.quotes || {})
         setRates((r) => ({ ...r, ...(data.rates || {}) }))
-        pushToast({ type: 'success', message: 'Precios actualizados' })
+        pushToast({ type: 'success', message: t(lang, 'quotes.updated') })
       })
       .catch(() => {
         setQuotesError(true)
-        pushToast({ type: 'error', message: 'No se pudieron actualizar los precios' })
+        pushToast({ type: 'error', message: t(lang, 'quotes.error') })
       })
   }
 

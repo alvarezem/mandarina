@@ -28,10 +28,11 @@ export function normalizeHistory(data) {
 }
 
 // Formatea la etiqueta del eje x según el rango (corto -> día/mes, largo -> mes/año).
-export function formatPointDate(ms, range) {
+export function formatPointDate(ms, range, lang = 'es') {
+  const locale = lang === 'en' ? 'en-US' : 'es-AR'
   const d = new Date(ms)
   if (range === '1A') {
-    return d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' })
+    return d.toLocaleDateString(locale, { month: 'short', year: '2-digit' })
   }
-  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+  return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
 }

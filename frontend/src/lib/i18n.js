@@ -106,6 +106,56 @@ export const translations = {
     'auth.strength': ['', 'Débil', 'Media', 'Buena', 'Fuerte'],
     'auth.passwordError.short': 'La contraseña debe tener al menos 8 caracteres',
     'auth.passwordError.chars': 'La contraseña debe incluir letras y números',
+    'common.errorFallback': 'Ocurrió un error',
+    'quotes.updated': 'Precios actualizados',
+    'quotes.error': 'No se pudieron actualizar los precios',
+    'password.title': 'Nueva contraseña',
+    'password.subtitle': 'Elegí una contraseña nueva para tu cuenta',
+    'password.save': 'Guardar contraseña',
+    'password.saving': 'Guardando…',
+    'password.updated': 'Contraseña actualizada',
+    'password.updateError': 'No se pudo actualizar la contraseña. Intentá de nuevo.',
+    'resumen.count.one': '1 resumen',
+    'resumen.count.other': '{n} resúmenes',
+    'pagos.excluidos.one': 'Se excluye 1 pago de tarjeta',
+    'pagos.excluidos.other': 'Se excluyen {n} pagos de tarjeta',
+    'category.Combustible': 'Combustible',
+    'category.Compras': 'Compras',
+    'category.Delivery': 'Delivery',
+    'category.Educación': 'Educación',
+    'category.Entretenimiento': 'Entretenimiento',
+    'category.Farmacias': 'Farmacias',
+    'category.Gastronomía': 'Gastronomía',
+    'category.Gimnasio': 'Gimnasio',
+    'category.Impuestos': 'Impuestos',
+    'category.Ingresos': 'Ingresos',
+    'category.Inversiones': 'Inversiones',
+    'category.Otros': 'Otros',
+    'category.Pagos': 'Pagos',
+    'category.Salud': 'Salud',
+    'category.Seguros': 'Seguros',
+    'category.Servicios': 'Servicios',
+    'category.Supermercados': 'Supermercados',
+    'category.Suscripciones': 'Suscripciones',
+    'category.Transferencias': 'Transferencias',
+    'category.Transporte': 'Transporte',
+    'asset.accion': 'Acción',
+    'asset.cedear': 'CEDEAR',
+    'asset.bono': 'Bono',
+    'asset.dolar': 'Dólar',
+    'asset.fci': 'FCI',
+    'asset.efectivo': 'Efectivo',
+    'asset.otro': 'Otro',
+    'side.compra': 'Compra',
+    'side.venta': 'Venta',
+    'side.ajuste': 'Ajuste',
+    'summaryType.VISA': 'VISA',
+    'summaryType.MASTERCARD': 'MASTERCARD',
+    'summaryType.AMEX': 'AMEX',
+    'summaryType.Banco': 'Banco',
+    'summaryType.Billetera virtual': 'Billetera virtual',
+    'summaryType.Broker': 'Broker',
+    'summaryType.Otro': 'Otro',
   },
   en: {
     'landing.hero.title': 'Get the most juice out of your money',
@@ -208,6 +258,56 @@ export const translations = {
     'auth.strength': ['', 'Weak', 'Fair', 'Good', 'Strong'],
     'auth.passwordError.short': 'Password must be at least 8 characters',
     'auth.passwordError.chars': 'Password must include letters and numbers',
+    'common.errorFallback': 'Something went wrong',
+    'quotes.updated': 'Prices updated',
+    'quotes.error': 'Could not update prices',
+    'password.title': 'New password',
+    'password.subtitle': 'Choose a new password for your account',
+    'password.save': 'Save password',
+    'password.saving': 'Saving…',
+    'password.updated': 'Password updated',
+    'password.updateError': 'Could not update your password. Try again.',
+    'resumen.count.one': '1 summary',
+    'resumen.count.other': '{n} summaries',
+    'pagos.excluidos.one': '1 credit card payment excluded',
+    'pagos.excluidos.other': '{n} credit card payments excluded',
+    'category.Combustible': 'Fuel',
+    'category.Compras': 'Shopping',
+    'category.Delivery': 'Delivery',
+    'category.Educación': 'Education',
+    'category.Entretenimiento': 'Entertainment',
+    'category.Farmacias': 'Pharmacies',
+    'category.Gastronomía': 'Dining',
+    'category.Gimnasio': 'Gym',
+    'category.Impuestos': 'Taxes',
+    'category.Ingresos': 'Income',
+    'category.Inversiones': 'Investments',
+    'category.Otros': 'Other',
+    'category.Pagos': 'Payments',
+    'category.Salud': 'Health',
+    'category.Seguros': 'Insurance',
+    'category.Servicios': 'Services',
+    'category.Supermercados': 'Supermarkets',
+    'category.Suscripciones': 'Subscriptions',
+    'category.Transferencias': 'Transfers',
+    'category.Transporte': 'Transport',
+    'asset.accion': 'Stock',
+    'asset.cedear': 'CEDEAR',
+    'asset.bono': 'Bond',
+    'asset.dolar': 'USD',
+    'asset.fci': 'FCI',
+    'asset.efectivo': 'Cash',
+    'asset.otro': 'Other',
+    'side.compra': 'Buy',
+    'side.venta': 'Sell',
+    'side.ajuste': 'Adjustment',
+    'summaryType.VISA': 'VISA',
+    'summaryType.MASTERCARD': 'MASTERCARD',
+    'summaryType.AMEX': 'AMEX',
+    'summaryType.Banco': 'Bank',
+    'summaryType.Billetera virtual': 'E-wallet',
+    'summaryType.Broker': 'Broker',
+    'summaryType.Otro': 'Other',
   },
 }
 
@@ -219,6 +319,29 @@ export function t(lang, key, vars) {
   if (vars === undefined || typeof value !== 'string') return value
   return Object.entries(vars).reduce((acc, [k, v]) => acc.replace(`{${k}}`, String(v)), value)
 }
+
+// Pluralización simple: la clave vive como `<key>.one` / `<key>.other` y se
+// elige según `n`. `{n}` queda disponible como variable de interpolación.
+export function tn(lang, key, n, vars = {}) {
+  return t(lang, `${key}.${n === 1 ? 'one' : 'other'}`, { n, ...vars })
+}
+
+// Labels curados de la app que se persisten en DB con valor crudo (categorías,
+// tipos de activo, side del ledger, tipo de resumen). La UI los muestra
+// traducidos; si el valor no está en el dict (categoría custom, etc.) se
+// devuelve tal cual.
+function dataLabel(lang, prefix, raw) {
+  if (raw == null || raw === '') return raw
+  const key = `${prefix}.${raw}`
+  const dict = translations[lang] || translations[DEFAULT_LANG]
+  if (dict[key] === undefined && translations[DEFAULT_LANG][key] === undefined) return raw
+  return t(lang, key)
+}
+
+export const categoryLabel = (lang, raw) => dataLabel(lang, 'category', raw)
+export const assetTypeLabel = (lang, raw) => dataLabel(lang, 'asset', raw)
+export const sideLabel = (lang, raw) => dataLabel(lang, 'side', raw)
+export const summaryTypeLabel = (lang, raw) => dataLabel(lang, 'summaryType', raw)
 
 export function detectLang() {
   const nav = typeof navigator !== 'undefined' ? navigator.language || '' : ''

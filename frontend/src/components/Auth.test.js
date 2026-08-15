@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Auth from './Auth'
 import supabase from '../lib/supabaseClient'
+import { LangProvider } from './LangProvider'
 
 describe('Auth', () => {
   beforeEach(() => {
@@ -233,7 +234,11 @@ describe('Auth', () => {
   })
 
   it('renderiza en inglés cuando lang es en', () => {
-    render(<Auth lang="en" />)
+    render(
+      <LangProvider lang="en" setLang={vi.fn()}>
+        <Auth />
+      </LangProvider>,
+    )
     expect(screen.getByRole('button', { name: /Sign in/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Continue with Google/i })).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()

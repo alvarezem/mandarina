@@ -17,8 +17,9 @@ export function fmtCompact(n, currency = 'ARS') {
   }).format(n)
 }
 
-export function fmtPct(n) {
-  return `${(Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 })}%`
+export function fmtPct(n, lang = 'es') {
+  const locale = lang === 'en' ? 'en-US' : 'es-AR'
+  return `${(Number(n) || 0).toLocaleString(locale, { maximumFractionDigits: 1 })}%`
 }
 
 export function fileOf(t) {

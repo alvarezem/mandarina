@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { buildPlan } from '../lib/plan'
 import { useToast } from '../components/Toast'
+import { useLang } from '../components/LangProvider'
+import { t } from '../lib/i18n'
 
 export function usePortfolioQuotes({ items, display, rateMode, onMarketClosed = () => {} }) {
+  const { lang } = useLang()
   const [quotes, setQuotes] = useState({})
   const [rates, setRates] = useState({ MEP: null, CCL: null })
   const [quotesError, setQuotesError] = useState(false)
@@ -74,11 +77,11 @@ export function usePortfolioQuotes({ items, display, rateMode, onMarketClosed = 
         setQuotes(data.quotes || {})
         setRates((r) => ({ ...r, ...(data.rates || {}) }))
         onMarketClosed(data.marketClosed === true)
-        pushToast({ type: 'success', message: 'Precios actualizados' })
+        pushToast({ type: 'success', message: t(lang, 'quotes.updated') })
       })
       .catch(() => {
         setQuotesError(true)
-        pushToast({ type: 'error', message: 'No se pudieron actualizar los precios' })
+        pushToast({ type: 'error', message: t(lang, 'quotes.error') })
       })
   }
 

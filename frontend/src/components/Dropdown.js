@@ -17,6 +17,7 @@ export default function Dropdown({
   className = '',
   closeOnSelect = false,
   searchable = false,
+  searchPlaceholder = 'Buscar categoría…',
 }) {
   const [open, setOpen] = useState(false)
   const [rect, setRect] = useState(null)
@@ -145,7 +146,7 @@ export default function Dropdown({
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar categoría…"
+                  placeholder={searchPlaceholder}
                   className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-3 text-xs text-slate-700 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
                 />
               </div>

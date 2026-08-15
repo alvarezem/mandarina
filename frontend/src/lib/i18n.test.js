@@ -1,4 +1,16 @@
-import { applyLangToHtml, detectLang, LANG_KEY, readLang, t, writeLang } from './i18n'
+import {
+  applyLangToHtml,
+  assetTypeLabel,
+  categoryLabel,
+  detectLang,
+  LANG_KEY,
+  readLang,
+  sideLabel,
+  summaryTypeLabel,
+  t,
+  tn,
+  writeLang,
+} from './i18n'
 
 describe('i18n', () => {
   beforeEach(() => {
@@ -50,5 +62,30 @@ describe('i18n', () => {
     document.documentElement.lang = 'es'
     applyLangToHtml('en')
     expect(document.documentElement.lang).toBe('en')
+  })
+
+  it('pluraliza con variantes one/other según n', () => {
+    expect(tn('es', 'resumen.count', 1)).toBe('1 resumen')
+    expect(tn('es', 'resumen.count', 3)).toBe('3 resúmenes')
+    expect(tn('en', 'resumen.count', 1)).toBe('1 summary')
+    expect(tn('en', 'resumen.count', 5)).toBe('5 summaries')
+  })
+
+  it('tn interpola {n} y variables extra', () => {
+    expect(tn('es', 'pagos.excluidos', 2)).toBe('Se excluyen 2 pagos de tarjeta')
+  })
+
+  it('mapea labels curados de la app (categorías, activos, side, tipo de resumen)', () => {
+    expect(categoryLabel('es', 'Supermercados')).toBe('Supermercados')
+    expect(categoryLabel('en', 'Supermercados')).toBe('Supermarkets')
+    expect(assetTypeLabel('en', 'accion')).toBe('Stock')
+    expect(sideLabel('en', 'compra')).toBe('Buy')
+    expect(summaryTypeLabel('en', 'Banco')).toBe('Bank')
+  })
+
+  it('deja crudos los valores que no están en el dict (datos del usuario)', () => {
+    expect(categoryLabel('en', 'MI CATEGORÍA')).toBe('MI CATEGORÍA')
+    expect(categoryLabel('en', null)).toBeNull()
+    expect(categoryLabel('en', '')).toBe('')
   })
 })

@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { authErrorToMessage } from '../lib/authErrors'
 import { strengthOf, STRENGTH_BAR, validatePassword } from '../lib/password'
-import { DEFAULT_LANG, t } from '../lib/i18n'
+import { t } from '../lib/i18n'
 import ThemeToggle from './ThemeToggle'
 import { Logo } from './Sidebar'
+import { useLang } from './LangProvider'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -40,7 +41,8 @@ function FieldError({ id, message }) {
   )
 }
 
-export default function Auth({ dark, onToggleTheme, embedded = false, lang = DEFAULT_LANG }) {
+export default function Auth({ dark, onToggleTheme, embedded = false }) {
+  const { lang } = useLang()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')

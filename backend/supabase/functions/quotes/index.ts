@@ -1,10 +1,10 @@
 // Cotizaciones en vivo para el Plan de inversión.
 // BYMA Open Data (open.bymadata.com.ar) para activos + DolarAPI para dólar MEP/CCL.
 
-import { createClient } from '@supabase/supabase-js'
 import { bymaHistory, bymaLastClose, bymaQuote } from './byma.ts'
 import { mapWithConcurrency } from './pool.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { createUserClient } from '../_shared/supabase.ts'
 
 const DOLARAPI_CASAS = { MEP: 'bolsa', CCL: 'contadoconliqui' }
 const FETCH_TIMEOUT_MS = 8_000
@@ -180,12 +180,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Body JSON inválido' }, 400, cors)
   }
 
-  const authHeader = req.headers.get('Authorization')
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    { global: { headers: { Authorization: authHeader ?? '' } } },
-  )
+  const supabase = createUserClient(req.headers.get('Authorization'))
 
   const { data: userData, error: authError } = await supabase.auth.getUser()
   if (authError || !userData?.user) {

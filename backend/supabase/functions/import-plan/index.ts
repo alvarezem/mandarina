@@ -3,8 +3,8 @@
 // previos y REEMPLAZA todo el plan del usuario (de forma atómica vía RPC).
 
 import * as XLSX from 'xlsx'
-import { createClient } from '@supabase/supabase-js'
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { createUserClient } from '../_shared/supabase.ts'
 import { extractPlan } from './planner.ts'
 
 // ~5MB binario (base64 ≈ +33%). Un plan de inversión real pesa KBs.
@@ -31,12 +31,7 @@ Deno.serve(async (req) => {
     return json({ error: 'El archivo es demasiado grande' }, 413, cors)
   }
 
-  const authHeader = req.headers.get('Authorization')
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    { global: { headers: { Authorization: authHeader ?? '' } } },
-  )
+  const supabase = createUserClient(req.headers.get('Authorization'))
 
   const { data: userData, error: authError } = await supabase.auth.getUser()
   if (authError || !userData?.user) {

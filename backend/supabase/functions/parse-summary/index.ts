@@ -1,10 +1,10 @@
 import { parse as parseCsv } from '@std/csv'
 import * as XLSX from 'xlsx'
-import { createClient } from '@supabase/supabase-js'
 import { extractTextItems, getDocumentProxy } from 'unpdf'
 import { categorize } from '../_shared/categorize.ts'
 import { detectPeriod, detectSummaryType } from './detection.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { createUserClient } from '../_shared/supabase.ts'
 import {
   buildAnalysis,
   detectSeparator,
@@ -46,12 +46,7 @@ if (import.meta.main) {
       return json({ error: 'summary_id inválido' }, 400, cors)
     }
 
-    const authHeader = req.headers.get('Authorization')
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader ?? '' } } },
-    )
+    const supabase = createUserClient(req.headers.get('Authorization'))
 
     return handleParse(supabase as unknown as ParseClient, summaryId, cors)
   })

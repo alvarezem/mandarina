@@ -24,10 +24,10 @@ describe('Landing', () => {
   it('muestra cómo funciona, cuándo conviene y el testimonio', () => {
     render(<Landing dark={false} onToggleTheme={vi.fn()} />)
     expect(screen.getByRole('region', { name: 'Cómo funciona' })).toHaveTextContent('Paso 1')
-    expect(screen.getByRole('region', { name: 'Cuándo conviene Mandarina' })).toHaveTextContent(
+    expect(screen.getByRole('region', { name: '¿Cuándo conviene Mandarina?' })).toHaveTextContent(
       'planilla de Excel',
     )
-    const testimonial = screen.getByRole('region', { name: 'Testimonios' })
+    const testimonial = screen.getByRole('region', { name: 'Quién la usa' })
     expect(testimonial).toHaveTextContent('planilla de Excel')
     expect(testimonial).toHaveTextContent('Usuario y creador de Mandarina')
   })
@@ -43,5 +43,16 @@ describe('Landing', () => {
     const button = screen.getByRole('button', { name: 'Cambiar a tema oscuro' })
     await userEvent.click(button)
     expect(onToggleTheme).toHaveBeenCalled()
+  })
+
+  it('renderiza en inglés cuando lang es en', () => {
+    render(<Landing dark={false} onToggleTheme={vi.fn()} lang="en" />)
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Get the most out of your money' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Frequently asked questions' })).toHaveTextContent(
+      'What is Mandarina and who is it for?',
+    )
+    expect(screen.getByRole('button', { name: /Sign in/i })).toBeInTheDocument()
   })
 })

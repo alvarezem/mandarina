@@ -21,6 +21,7 @@ describe('App', () => {
   beforeEach(() => {
     localStorage.clear()
     localStorage.setItem('mandarina:tour:u1', '1')
+    Object.defineProperty(navigator, 'language', { value: 'es-AR', configurable: true })
     authListener = vi.fn()
     supabase.auth.onAuthStateChange.mockImplementation((cb) => {
       authListener = cb

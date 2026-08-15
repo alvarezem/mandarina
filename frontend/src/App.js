@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import supabase from './lib/supabaseClient'
+import { applyLangToHtml, readLang, writeLang } from './lib/i18n'
 import { useTheme } from './hooks/useTheme'
 import Landing from './components/Landing'
 import NewPasswordScreen from './components/NewPasswordScreen'
@@ -132,6 +133,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
   const [selectedId, setSelectedId] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [resetKey, setResetKey] = useState(0)
+  const [lang, setLang] = useState(readLang)
   const [railExpanded, setRailExpanded] = useState(() => {
     const stored =
       localStorage.getItem('mandarina-rail-expanded') ??
@@ -179,6 +181,15 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
     })
   }
 
+  const handleSelectLang = (next) => {
+    writeLang(next)
+    setLang(next)
+  }
+
+  useEffect(() => {
+    applyLangToHtml(lang)
+  }, [lang])
+
   const handleSignOut = async () => {
     try {
       setDrawerOpen(false)
@@ -193,7 +204,15 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
     return <NewPasswordScreen dark={dark} onToggleTheme={() => setDark((d) => !d)} />
   }
 
-  if (!session) return <Landing dark={dark} onToggleTheme={() => setDark((d) => !d)} />
+  if (!session)
+    return (
+      <Landing
+        dark={dark}
+        onToggleTheme={() => setDark((d) => !d)}
+        lang={lang}
+        onSelectLang={handleSelectLang}
+      />
+    )
 
   const navigate = (key) => {
     setView(key)

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import supabase from '../lib/supabaseClient'
-import { authErrorToSpanish } from '../lib/authErrors'
-import { strengthOf, STRENGTH_LABEL, STRENGTH_BAR, validatePassword } from '../lib/password'
+import { authErrorToMessage } from '../lib/authErrors'
+import { strengthOf, STRENGTH_BAR, validatePassword } from '../lib/password'
+import { DEFAULT_LANG, t } from '../lib/i18n'
 import ThemeToggle from './ThemeToggle'
 import { Logo } from './Sidebar'
 
@@ -39,7 +40,7 @@ function FieldError({ id, message }) {
   )
 }
 
-export default function Auth({ dark, onToggleTheme, embedded = false }) {
+export default function Auth({ dark, onToggleTheme, embedded = false, lang = DEFAULT_LANG }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -66,13 +67,13 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
 
   const validate = () => {
     const errors = {}
-    if (!EMAIL_RE.test(email)) errors.email = 'Ingresá un email válido'
+    if (!EMAIL_RE.test(email)) errors.email = t(lang, 'auth.invalidEmail')
     if (isSignUp) {
-      const passwordError = validatePassword(password)
+      const passwordError = validatePassword(password, lang)
       if (passwordError) errors.password = passwordError
-      if (confirm !== password) errors.confirm = 'Las contraseñas no coinciden'
+      if (confirm !== password) errors.confirm = t(lang, 'auth.passwordsMismatch')
     } else if (!password) {
-      errors.password = 'Ingresá tu contraseña'
+      errors.password = t(lang, 'auth.passwordRequired')
     }
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
@@ -92,7 +93,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
           setEmailTaken(true)
           return
         }
-        setError(authErrorToSpanish(error))
+        setError(authErrorToMessage(error, lang))
         return
       }
       if (isSignUp && data.user && !data.session) {
@@ -103,7 +104,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
         }
       }
     } catch {
-      setError('No se pudo conectar con el servidor. Intentá de nuevo.')
+      setError(t(lang, 'auth.connectionError'))
     } finally {
       setSubmitting(false)
     }
@@ -118,12 +119,12 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
         redirectTo: window.location.origin,
       })
       if (error) {
-        setError(authErrorToSpanish(error))
+        setError(authErrorToMessage(error, lang))
         return
       }
       setResetSent(true)
     } catch {
-      setError('No se pudo enviar el email. Intentá de nuevo.')
+      setError(t(lang, 'auth.emailSendError'))
     } finally {
       setSubmitting(false)
     }
@@ -137,9 +138,9 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
         provider: 'google',
         options: { redirectTo: window.location.origin },
       })
-      if (error) setError(authErrorToSpanish(error))
+      if (error) setError(authErrorToMessage(error, lang))
     } catch {
-      setError('No se pudo conectar con Google. Intentá de nuevo.')
+      setError(t(lang, 'auth.googleError'))
     } finally {
       setSubmitting(false)
     }
@@ -197,12 +198,10 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                 </svg>
               </div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                Casi listo
+                {t(lang, 'auth.almostDone')}
               </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Te enviamos un email a{' '}
-                <span className="font-medium text-slate-700 dark:text-slate-200">{email}</span> para
-                confirmar tu cuenta. Revisá tu bandeja de entrada.
+                {t(lang, 'auth.confirmEmail', { email })}
               </p>
               <button
                 type="button"
@@ -214,7 +213,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                 }}
                 className="mt-6 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                Volver a iniciar sesión
+                {t(lang, 'auth.backToLogin')}
               </button>
             </div>
           ) : emailTaken ? (
@@ -235,12 +234,10 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                 </svg>
               </div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                Ya existe una cuenta
+                {t(lang, 'auth.accountExists.title')}
               </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Ya existe una cuenta con el email{' '}
-                <span className="font-medium text-slate-700 dark:text-slate-200">{email}</span>. Si
-                es tuya, podés iniciar sesión o recuperar tu contraseña.
+                {t(lang, 'auth.accountExists.text', { email })}
               </p>
               <button
                 type="button"
@@ -248,7 +245,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                 disabled={submitting}
                 className="mt-6 w-full rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition hover:from-brand-600 hover:to-brand-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-70"
               >
-                {submitting ? 'Enviando…' : 'Recuperar contraseña'}
+                {submitting ? t(lang, 'auth.sending') : t(lang, 'auth.recoverButton')}
               </button>
               <button
                 type="button"
@@ -260,28 +257,27 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                 }}
                 className="mt-3 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                Volver a iniciar sesión
+                {t(lang, 'auth.backToLogin')}
               </button>
               {resetSent && (
                 <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 animate-fade-in dark:bg-emerald-950/50 dark:text-emerald-400">
-                  Te enviamos un link de recuperación a <span className="font-medium">{email}</span>
-                  . Revisá tu bandeja de entrada.
+                  {t(lang, 'auth.resetSent', { email })}
                 </p>
               )}
             </div>
           ) : forgotMode ? (
             <form onSubmit={handleResetPassword} className="animate-fade-in-up" noValidate>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                Recuperar contraseña
+                {t(lang, 'auth.forgot.title')}
               </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Ingresá tu email y te enviamos un link para crear una nueva contraseña.
+                {t(lang, 'auth.forgot.text')}
               </p>
               <label
                 className="mb-1 mt-5 block text-sm font-medium text-slate-700 dark:text-slate-300"
                 htmlFor="reset-email"
               >
-                Email
+                {t(lang, 'auth.email')}
               </label>
               <input
                 id="reset-email"
@@ -291,7 +287,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                   setEmail(e.target.value)
                   setError(null)
                 }}
-                placeholder="tu@email.com"
+                placeholder={t(lang, 'auth.emailPlaceholder')}
                 autoComplete="email"
                 className={fieldClass(false)}
               />
@@ -300,7 +296,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                 disabled={submitting || !EMAIL_RE.test(email)}
                 className="mt-6 w-full rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition hover:from-brand-600 hover:to-brand-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-70"
               >
-                {submitting ? 'Enviando…' : 'Enviar link de recuperación'}
+                {submitting ? t(lang, 'auth.sending') : t(lang, 'auth.sendReset')}
               </button>
               <button
                 type="button"
@@ -311,12 +307,11 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                 }}
                 className="mt-3 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                Volver
+                {t(lang, 'auth.back')}
               </button>
               {resetSent && (
                 <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 animate-fade-in dark:bg-emerald-950/50 dark:text-emerald-400">
-                  Te enviamos un link a <span className="font-medium">{email}</span>. Revisá tu
-                  bandeja de entrada.
+                  {t(lang, 'auth.resetSentShort', { email })}
                 </p>
               )}
             </form>
@@ -333,12 +328,12 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                 ) : (
                   <GoogleIcon className="h-5 w-5" />
                 )}
-                Continuar con Google
+                {t(lang, 'auth.google')}
               </button>
 
               <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
                 <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
-                o
+                {t(lang, 'auth.or')}
                 <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
               </div>
 
@@ -348,7 +343,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                     className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
                     htmlFor="email"
                   >
-                    Email
+                    {t(lang, 'auth.email')}
                   </label>
                   <input
                     id="email"
@@ -358,7 +353,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                       setEmail(e.target.value)
                       if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: undefined }))
                     }}
-                    placeholder="tu@email.com"
+                    placeholder={t(lang, 'auth.emailPlaceholder')}
                     autoComplete="email"
                     aria-invalid={Boolean(fieldErrors.email)}
                     aria-describedby={fieldErrors.email ? 'email-error' : undefined}
@@ -370,7 +365,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                     className="mb-1 mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300"
                     htmlFor="password"
                   >
-                    Contraseña
+                    {t(lang, 'auth.password')}
                   </label>
                   <div className="relative">
                     <input
@@ -391,8 +386,12 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                     <button
                       type="button"
                       onClick={() => setShowPassword((s) => !s)}
-                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                      title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      aria-label={
+                        showPassword ? t(lang, 'auth.hidePassword') : t(lang, 'auth.showPassword')
+                      }
+                      title={
+                        showPassword ? t(lang, 'auth.hidePassword') : t(lang, 'auth.showPassword')
+                      }
                       className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
                     >
                       {showPassword ? (
@@ -443,7 +442,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                         }}
                         className="text-sm font-medium text-brand-600 transition hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                       >
-                        ¿Olvidaste tu contraseña?
+                        {t(lang, 'auth.forgot')}
                       </button>
                     </div>
                   )}
@@ -465,7 +464,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                         </div>
                         {password && (
                           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            {STRENGTH_LABEL[strength]}
+                            {t(lang, 'auth.strength')[strength]}
                           </span>
                         )}
                       </div>
@@ -474,7 +473,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                         className="mb-1 mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300"
                         htmlFor="confirm"
                       >
-                        Confirmar contraseña
+                        {t(lang, 'auth.confirm')}
                       </label>
                       <input
                         id="confirm"
@@ -503,12 +502,14 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
                     {submitting ? (
                       <span className="flex items-center justify-center gap-2">
                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
-                        {isSignUp ? 'Creando cuenta…' : 'Ingresando…'}
+                        {isSignUp
+                          ? t(lang, 'auth.submit.creating')
+                          : t(lang, 'auth.submit.signingIn')}
                       </span>
                     ) : isSignUp ? (
-                      'Crear cuenta'
+                      t(lang, 'auth.submit.signup')
                     ) : (
-                      'Iniciar sesión'
+                      t(lang, 'auth.submit.login')
                     )}
                   </button>
                 </div>
@@ -522,7 +523,7 @@ export default function Auth({ dark, onToggleTheme, embedded = false }) {
               onClick={toggleMode}
               className="mt-3 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
-              {isSignUp ? 'Ya tengo cuenta' : 'Crear cuenta'}
+              {isSignUp ? t(lang, 'auth.toggle.login') : t(lang, 'auth.toggle.signup')}
             </button>
           )}
 

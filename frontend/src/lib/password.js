@@ -1,3 +1,5 @@
+import { t } from './i18n'
+
 export function strengthOf(password) {
   if (!password) return 0
   let score = 0
@@ -12,9 +14,8 @@ export function strengthOf(password) {
 export const STRENGTH_LABEL = ['', 'Débil', 'Media', 'Buena', 'Fuerte']
 export const STRENGTH_BAR = ['', 'bg-red-500', 'bg-amber-500', 'bg-lime-500', 'bg-emerald-500']
 
-export function validatePassword(password) {
-  if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres'
-  if (!/[A-Za-z]/.test(password) || !/\d/.test(password))
-    return 'La contraseña debe incluir letras y números'
+export function validatePassword(password, lang = 'es') {
+  if (password.length < 8) return t(lang, 'auth.passwordError.short')
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return t(lang, 'auth.passwordError.chars')
   return null
 }

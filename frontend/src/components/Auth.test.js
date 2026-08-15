@@ -231,4 +231,11 @@ describe('Auth', () => {
     expect(glow).toHaveClass('opacity-0')
     expect(glow).toHaveClass('group-hover:opacity-100')
   })
+
+  it('renderiza en inglés cuando lang es en', () => {
+    render(<Auth lang="en" />)
+    expect(screen.getByRole('button', { name: /Sign in/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Continue with Google/i })).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
+  })
 })

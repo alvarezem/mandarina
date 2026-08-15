@@ -6,8 +6,11 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 
 ## Última sesión
 
-- **Fecha**: 2026-08-14
-- **Qué se hizo** — **Migración a las nuevas API keys de Supabase (publishable) HECHO** (detalle en `DONE.md`):
+- **Fecha**: 2026-08-15
+- **Qué se hizo** — **Fix móvil del módulo Operaciones + ONs/cauciones EN HOLD** (detalle en `DONE.md`):
+  1. **Fix móvil**: el panel de resumen del ledger (`LedgerView.js:207`) forzaba `grid-cols-3` → en `<640px` los montos (`$1.234.567,89` + badge `▲x%`) desbordaban sus recuadros. **Fix 1 línea**: `grid grid-cols-1 gap-3 sm:grid-cols-3` (apila en móvil, 3 cols en `sm+`). Suite **333/333** + lint 0 + build OK. Frontend-only (sin `db push`). Commits `…` (ver `git log`).
+  2. **ONs/cauciones → EN HOLD** (decisión del usuario: "no agreguemos cosas para mostrar datos vacíos"). Verificado: de los 5 tickers (`PN360, TLCTO, TTC90, VSCRO, YM340`) solo **TLCTO/VSCRO** resuelven en BYMA Open Data (`settlementType:'2'`, la edge los parsea sin cambios); **PN360/TTC90/YM340 no existen** en el feed gratis (cotización st 1/2/3/6/7 y histórico → vacíos) y las cauciones con símbolos estándar (`A7D`, `A30D`, `60D`…) tampoco. Reactivar cuando el usuario confirme tickers que BYMA free publique. Ver `TODO.md`.
+- **Qué se hizo (sesión previa, 2026-08-14)** — **Migración a las nuevas API keys de Supabase (publishable) HECHO** (detalle en `DONE.md`):
   1. **Dashboard**: creada la publishable `default` (`sb_publishable_…`) en Settings → API Keys. La **secret** (`sb_secret_…`) **no se usa** en el proyecto (las Edge Functions autentican con el JWT del usuario, nunca `service_role`) — queda guardada en el dashboard.
   2. **Frontend**: `frontend/.env` con `VITE_SUPABASE_ANON_KEY` = valor publishable (mismo nombre de var, nuevo valor; `VITE_SUPABASE_URL` intacto). **Vercel actualizado** vía CLI (Production + Preview, `vercel env rm` + `vercel env add`).
   3. **Backend**: nuevo `_shared/supabase.ts` (`createUserClient`) — lee la publishable de `SUPABASE_PUBLISHABLE_KEYS` (JSON auto-inyectado por la plataforma, key `default`, **sin fallback a la legacy**); `parse-summary`/`import-plan`/`quotes` pasan a usarlo. **Deploy de las 3 functions** (`supabase functions deploy`, sin migración DB → sin `db push`).
@@ -69,30 +72,27 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 - **Fase 6 y 7** (cerradas, anteriores): ver `improvements.md` secciones FASE 6/7
   y Decisiones abajo.
 
-## ⚡ Próxima tarea — ONs/cauciones en la edge `quotes` (Backend / deferido)
+## ⏸️ En hold — ONs/cauciones en la edge `quotes` (Backend / diferido)
 
-**Decisión tomada (2026-08-14)**: el ledger quedó **HECHO** (tabla DB
-`ledger_operations`, ver "Última sesión" y `DONE.md`). Próximo en orden de la
-cola (`TODO.md` → "Backend / deferido"): **ONs/cauciones en la edge `quotes`**.
-Contexto: BYMA Open Data ya resuelve ONs (símbolo `+`, ej. `AA37`) y cauciones;
-hoy `ASSET_TYPES` del Plan/Cotizaciones no las contemplan. Plan inicial (a
-confirmar en la sesión):
+**Decisión tomada (2026-08-15)**: el item **ONs/cauciones** pasó a **EN HOLD** por
+decisión del usuario ("no agreguemos cosas para mostrar datos vacíos"). Contexto
+verificado: BYMA Open Data **sí** devuelve ONs con `settlementType:'2'` (de los 5
+tickers del usuario, **TLCTO/VSCRO** resuelven y la edge `quotes` los parsea sin
+cambios — `trade`/`previousClosingPrice`/`denominationCcy:"ARS"`), pero
+**PN360/TTC90/YM340 no existen** en el feed gratis (ni cotización con st 1/2/3/6/7
+ni histórico → `empty`/`no_data`) y las cauciones con símbolos estándar (`A7D`,
+`A30D`, `60D`, `0A1D`…) tampoco → ampliar `ASSET_TYPES` con ON/Caución hoy solo
+mostraría datos vacíos. **Reactivar cuando el usuario confirme tickers que BYMA
+free publique** (o si se suma otra fuente de precios). Detalle en `TODO.md`
+(item ⏸️) y `DONE.md`.
 
-1. **Backend**: ampliar `ASSET_TYPES` (ON `+`, cauciones) y verificar/ajustar la
-   edge `quotes` para esos instrumentos (probablemente sin cambios, BYMA ya los
-   devuelve — verificar `settlementType` y caché).
-2. **Frontend**: labels/tipos en el Plan y Cotizaciones para ONs/cauciones.
-3. **Tests + docs + deploy**: `supabase db push` (si hubiera migración) ANTES del
-   push a `master`.
-
-**Después** queda (`TODO.md` → "Backend / deferido"): desactivar las legacy
-keys (`anon`/`service_role`) en Settings → API Keys una vez confirmada la app
-en uso (pendiente del usuario; la migración a publishable quedó **HECHA**), y
-más adelante **Mandi** (asistente IA; lee `ledger_operations`).
+**Después** queda (`TODO.md` → "Backend / deferido"): más adelante **Mandi**
+(asistente IA; lee `ledger_operations`). La desactivación de las legacy keys
+(`anon`/`service_role`) ya **la hizo el usuario** (2026-08-15) → item cerrado.
 
 ## En progreso
 
-- **Backend / diferido** — ver sección "⚡ Próxima tarea" arriba y `TODO.md`.
+- **Backend / diferido** — ver sección "⏸️ En hold — ONs/cauciones" arriba y `TODO.md`.
   **Orden de la cola (decisión del usuario 2026-08-13)**: 1) QW-C Ingresos → **HECHO**
   2) QW-D layout/toggle → **HECHO** 3) QW-E cards 4 simétricas → **HECHO**
   4) QW-F cambio de contraseña → **HECHO** 5) QW-G drawer móvil → **HECHO**
@@ -101,7 +101,7 @@ más adelante **Mandi** (asistente IA; lee `ledger_operations`).
   (tabla DB `watchlist`, 2026-08-14), ledger → **HECHO** (tabla DB
   `ledger_operations`, 2026-08-14 — ver "Última sesión"), **API keys de
   Supabase → HECHO (2026-08-14, publishable; ver "Última sesión")**, y
-  ONs/cauciones en la edge `quotes` (ver "⚡ Próxima tarea").
+  ONs/cauciones en la edge `quotes` (ver "⏸️ En hold — ONs/cauciones").
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 - **Deploy**: orden obligatorio **`supabase db push` ANTES de `functions deploy parse-summary|import-plan`** (sin migrar, todo parse 500ea con PGRST202). Anotado también en el header de `0014_reliability.sql` y en el README raíz. La migración `0015_watchlist.sql` **y la `0016_ledger.sql`** ya están aplicadas en prod (y en local).

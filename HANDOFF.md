@@ -7,6 +7,10 @@ corto y accionable; el detalle vive en TODO/DONE/improvements.
 ## Última sesión
 
 - **Fecha**: 2026-08-15
+- **Qué se hizo** — **Selector de idioma ES/EN — Fase 1 HECHA** (landing + Auth; detalle en `DONE.md`):
+  1. **Decisiones del usuario**: alcance Fase 1 = landing + Auth (dashboard → Fase 2), toggle **segmentado ES|EN** en el top-right, idioma inicial **detectando el navegador**, persistencia en `localStorage:mandarina:lang` + `document.documentElement.lang` en runtime.
+  2. **Implementado**: `lib/i18n.js` (dict `{es,en}` ~70 claves + `t(lang,key,vars?)` con fallback ES), `components/LangToggle.js` (aria-pressed), `Landing.js`/`Auth.js` traducidos (constantes al dict, labels, botones, estados, errores, fuerza de contraseña), `authErrors.js` → `authErrorToMessage(error, lang)` (mantiene `authErrorToSpanish`), `App.js` con `useState(readLang)` + `applyLangToHtml`.
+  3. Suite **350/350** (+12), lint 0, build OK. Commit `6ed1758` + push → autodeploy Vercel (frontend-only). Fase 2 (dashboard completo) anotada en TODO.
 - **Qué se hizo** — **GEO SEO + AEO CERRADO** (detalle en `DONE.md`):
   1. Re-audits llmaudit: **22 → 16 → 15** = ruido de modelos sobre el mismo diagnóstico; el reporte volvió a pedir páginas que **ya estaban publicadas** (what is / alternatives / testimonios) → on-page agotado.
   2. Gap real según los 3 providers: **autoridad off-page** (subdominio Vercel, cero citas/reviews/directorios). Fuera de alcance por decisión del usuario: dominio custom (100% gratis) y contenido educativo (EN HOLD).
@@ -119,7 +123,8 @@ free publique** (o si se suma otra fuente de precios). Detalle en `TODO.md`
   ONs/cauciones en la edge `quotes` (ver "⏸️ En hold — ONs/cauciones").
   Frontend: **GEO SEO + AEO → CERRADO (2026-08-15, ver "Última sesión")** — on-page
   agotado (scores 22/16/15 = ruido); el gap es autoridad off-page → acciones en
-  `offpage.md` (pendiente del usuario). Próximos candidatos del roadmap: **Mandi** (asistente IA, requiere
+  `offpage.md` (pendiente del usuario). **Selector de idioma → Fase 1 HECHA
+  (2026-08-15, ver "Última sesión")**; Fase 2 (dashboard completo) en `TODO.md`. Próximos candidatos del roadmap: **Mandi** (asistente IA, requiere
   decidir proveedor/costo), **PWA/App Store** ($99/año Apple, choca con el "100%
   gratis") y chores (consolidar DONE/HANDOFF/TODO).
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están

@@ -86,12 +86,20 @@ lógico; el baseline de formato y los refactors de lint van en commits separados
 2. **`TODO.md`** — roadmap y pendientes vivos.
 3. **`DONE.md`** — historial completo de lo completado.
 4. **`DECISIONS.md`** — log de decisiones técnicas (ADR ligeros) a no re-litigar. **LEER ANTES de revertir o "mejorar" algo que parezca discutible.**
-5. **`improvements.md`** — plan de saneamiento/refactor en 8 fases. **LEER ANTES de tocar toolchain, seguridad, o estructura.** Contiene la justificación de cada decisión (Vite, Vitest, rotación de service role, CI, etc.).
-6. **`README.md`** — descripción general y stack.
+5. **`README.md`** — descripción general y stack.
 
 > Fuentes únicas de verdad: **historial → `DONE.md`**, **handoff corto →
 > `HANDOFF.md`**, **roadmap/status → `TODO.md`**, **decisiones → `DECISIONS.md`**.
 > `monetization.md` (raíz) lista ideas de tier pago sin decidir rumbo.
+
+> `post-improvements.md` (raíz) es el reporte vivo de hallazgos post-Fase 8 (sin
+> resolver). El plan de saneamiento en 8 fases (`improvements.md`) se **cerró y
+> borró**: las justificaciones de sus decisiones D1-D13 viven en
+> `DECISIONS.md`/`DONE.md` (el detalle D1-D13 quedó en git history).
+
+> `batches/` (raíz) es el plan de implementación de `post-improvements.md`:
+> 9 batches autocontenidos (implementación + tests + docs), índice en
+> `batches/README.md`. Orden de ejecución: 1 → 3 → 2 → 4 → 6 → 5 → 7 → 8 → 9.
 
 > `fase8.md` (raíz) es el plan de ejecución de la Fase 8; `faseN.md` anteriores
 > ya se archivaron al cerrar sus fases. `compromised.md` se borró en Fase 8: la

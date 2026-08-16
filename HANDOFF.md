@@ -6,11 +6,25 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-16)
 
+- **Batch 1 de `post-improvements.md` — Presupuesto y compra del plan HECHO**.
+  Cerró `batches/batch-01-presupuesto.md` ([x] en `batches/README.md`). Cambios:
+  `buyQty` → 0 si no alcanza (decisión en `DECISIONS.md`), `portfolioChangePct`
+  guard `<= -100 → null`, `buildPlan` buy=0 para sin-precio, `distribute` con
+  `skipped` (no debita presupuesto), `applyBuy` atómico (ledger primero + rollback
+  si falla el update, price de mercado de `quotes`, currency del instrumento),
+  fix del total 100% USD sin rate, aviso `inv.dist.skipped` + toast `err.buyQty`
+  en la UI. Suite **369/369** + lint 0 + coverage lib ≥80%. Frontend-only.
+  **Sigue: Batch 3 (ledger USD)** — depende de B1 que ya reescribió `applyBuy`.
 - **Consolidación de docs + ideas de monetización** — se creó `DECISIONS.md`
   (log de decisiones, movido de HANDOFF), `HANDOFF.md` quedó corto (este archivo),
   `TODO.md` se deduplicó (items HECHO a una línea; los 3 GEO colapsados en 1) y
   se creó `monetization.md` (6 ideas de tier pago con tradeoffs, sin decidir).
   `AGENTS.md` actualizado con el nuevo índice de memoria.
+- **Segunda pasada de auditoría (2026-08-16)** — se amplió `post-improvements.md`
+  con la sección "Hallazgos adicionales (2026-08-16)": 19 hallazgos nuevos + 8
+  menores (distribute/buyQty/applyBuy como bloque, ledger ARS-only, re-parse sin
+  recovery, paginación del dashboard, moneda de BYMA muerta, etc.). Sin código
+  tocado: sigue siendo reporte/roadmap.
 - **Nota GEO**: el usuario recibió un **mail de llmaudit con score 61/100** (vs
   22/16/15 del cierre del item) → el on-page que estaba "agotado" ahora rinde;
   ver el item en `TODO.md`. Pendiente del usuario: crear los perfiles externos de
@@ -21,7 +35,10 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## En progreso
 
-- **Nada activo hoy.** Los items de backend/frontend del roadmap viven en
+- **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5
+  → 7 → 8 → 9 (índice y detalle en `batches/`). B1 cerrado; **siguiente: B3
+  (ledger USD)** — requiere `supabase db push` si agrega migración (ver el batch).
+- **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están

@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import supabase from './lib/supabaseClient'
-import { applyLangToHtml, readLang, writeLang } from './lib/i18n'
+import { applyLangToHtml, readLang, t, writeLang } from './lib/i18n'
 import { useTheme } from './hooks/useTheme'
 import Landing from './components/Landing'
 import NewPasswordScreen from './components/NewPasswordScreen'
 import ResumenesView from './components/ResumenesView'
 import InvestmentsView from './components/InvestmentsView'
 import ThemeToggle from './components/ThemeToggle'
+import LangToggle from './components/LangToggle'
 import Sidebar, { Logo } from './components/Sidebar'
 import MobileDrawer from './components/MobileDrawer'
 import ToastProvider, { useToast } from './components/Toast'
 import OnboardingTour from './components/OnboardingTour'
 import { LangProvider } from './components/LangProvider'
 
-const VIEW_TITLES = { resumenes: 'Resúmenes', inversiones: 'Inversiones' }
+const VIEW_TITLES = { resumenes: 'nav.view.resumenes', inversiones: 'nav.view.inversiones' }
 
 const TOUR_VERSION = 1
 const tourSeenKey = (userId) => `mandarina:tour:${userId}`
@@ -25,7 +26,7 @@ const isFirstLogin = (user) => {
   return !Number.isFinite(created) || !Number.isFinite(last) || last - created < 60_000
 }
 
-async function pushTopPositions(pushToast) {
+async function pushTopPositions(pushToast, lang) {
   try {
     const { data: plan, error } = await supabase
       .from('portfolio_plan')
@@ -53,13 +54,13 @@ async function pushTopPositions(pushToast) {
       })
       .filter(Boolean)
     if (parts.length === 0) return
-    const msg = `Tus posiciones: ${parts.map((p) => p.text).join(' · ')}`
+    const prefix = `${t(lang, 'shell.positions')} `
     pushToast({
       type: 'info',
       icon: 'trend',
-      message: msg,
+      message: `${prefix}${parts.map((p) => p.text).join(' · ')}`,
       segments: [
-        { text: 'Tus posiciones: ' },
+        { text: prefix },
         ...parts.map((p, i) => ({ text: `${i === 0 ? '' : ' · '}${p.text}`, tone: p.tone })),
       ],
     })
@@ -168,12 +169,13 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
     pushToast({
       type: 'success',
       icon: greeting === 'first' ? 'wave' : 'none',
-      message: greeting === 'first' ? '¡Bienvenido/a a Mandarina!' : '¡Volviste! 😂',
+      message:
+        greeting === 'first' ? t(lang, 'shell.greeting.first') : t(lang, 'shell.greeting.return'),
     })
-    if (session) pushTopPositions(pushToast)
+    if (session) pushTopPositions(pushToast, lang)
     setGreeting(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [greeting])
+  }, [greeting, lang])
 
   const toggleRail = () => {
     setRailExpanded((prev) => {
@@ -195,9 +197,9 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
     try {
       setDrawerOpen(false)
       await supabase.auth.signOut()
-      pushToast({ type: 'success', icon: 'wave', message: '¡Nos vemos!' })
+      pushToast({ type: 'success', icon: 'wave', message: t(lang, 'shell.signOutOk') })
     } catch {
-      pushToast({ type: 'error', message: 'No se pudo cerrar la sesión' })
+      pushToast({ type: 'error', message: t(lang, 'shell.signOutError') })
     }
   }
 
@@ -247,8 +249,8 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              aria-label="Abrir menú"
-              title="Abrir menú"
+              aria-label={t(lang, 'shell.openMenu')}
+              title={t(lang, 'shell.openMenu')}
               className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
             >
               <svg
@@ -266,7 +268,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
               </svg>
             </button>
             <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200 lg:hidden">
-              {VIEW_TITLES[view]}
+              {t(lang, VIEW_TITLES[view])}
             </span>
           </div>
           <div className="-ml-4 hidden items-center gap-1 lg:flex sm:-ml-6">
@@ -274,8 +276,10 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
               <button
                 type="button"
                 onClick={toggleRail}
-                aria-label={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
-                title={railExpanded ? 'Colapsar barra' : 'Expandir barra'}
+                aria-label={
+                  railExpanded ? t(lang, 'shell.collapseRail') : t(lang, 'shell.expandRail')
+                }
+                title={railExpanded ? t(lang, 'shell.collapseRail') : t(lang, 'shell.expandRail')}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
               >
                 <svg
@@ -296,7 +300,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
             <button
               type="button"
               onClick={goHome}
-              aria-label="Ir al inicio"
+              aria-label={t(lang, 'shell.homeAria')}
               title="Mandarina"
               className="flex items-center gap-2 rounded-lg px-1 transition hover:opacity-85"
             >
@@ -306,15 +310,15 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
               </span>
             </button>
             <span className="hidden border-l border-slate-200 pl-3 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500 xl:block">
-              a tu plata, sacale todo el jugo
+              {t(lang, 'shell.tagline')}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setTourOpen(true)}
-              aria-label="Ver guía"
-              title="Ver guía de Mandarina"
+              aria-label={t(lang, 'shell.guideAria')}
+              title={t(lang, 'shell.guideTitle')}
               data-tour="help"
               className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-brand-800 dark:hover:bg-brand-950/40 dark:hover:text-brand-400"
             >
@@ -333,6 +337,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
               </svg>
             </button>
             <ThemeToggle dark={dark} onToggle={() => setDark((d) => !d)} />
+            <LangToggle />
             <span className="hidden max-w-48 truncate text-sm text-slate-500 dark:text-slate-400 sm:block">
               {session.user.email}
             </span>
@@ -341,7 +346,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
               onClick={handleSignOut}
               className="hidden rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 lg:inline-flex"
             >
-              Cerrar sesión
+              {t(lang, 'shell.signOut')}
             </button>
           </div>
         </header>

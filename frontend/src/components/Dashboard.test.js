@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import Dashboard from './Dashboard'
 import ToastProvider from './Toast'
 import supabase from '../lib/supabaseClient'
+import { LangProvider } from './LangProvider'
 
 function mockTx(data, { overrides = [], customCategories = [] } = {}) {
   supabase.mockTable('transactions', data)
@@ -130,6 +131,21 @@ describe('Dashboard', () => {
     expect(screen.getByText('Mayor gasto ARS')).toBeInTheDocument()
     expect(screen.getByText('Gastos USD')).toBeInTheDocument()
     expect(screen.getByText('Mayor gasto USD')).toBeInTheDocument()
+  })
+
+  it('en inglés ordena las cards con los dólares primero', async () => {
+    render(
+      <LangProvider lang="en" setLang={() => {}}>
+        <ToastProvider>
+          <Dashboard summaryId={null} session={{ user: { id: 'user-1' } }} />
+        </ToastProvider>
+      </LangProvider>,
+    )
+    await screen.findByText('Debits')
+
+    const cards = screen.getByTestId('summary-cards')
+    const first = cards.querySelectorAll(':scope > div')[0]
+    expect(within(first).getByText('USD expenses')).toBeInTheDocument()
   })
 
   it('muestra USD en 0 y — cuando no hay gastos en dólares', async () => {

@@ -1,15 +1,19 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Sidebar, { NAV_ITEMS, Logo } from './Sidebar'
+import { t } from '../lib/i18n'
+import { LangProvider } from './LangProvider'
 
 const renderSidebar = (props = {}) =>
   render(<Sidebar view="resumenes" onNavigate={vi.fn()} {...props} />)
+
+const labelOf = (item) => t('es', item.label)
 
 describe('Sidebar', () => {
   it('muestra los 2 items de navegación y marca el activo', () => {
     renderSidebar()
     for (const item of NAV_ITEMS) {
-      expect(screen.getByRole('button', { name: item.label })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: labelOf(item) })).toBeInTheDocument()
     }
     expect(screen.getByRole('button', { name: 'Resúmenes' })).toHaveAttribute(
       'aria-current',
@@ -20,8 +24,8 @@ describe('Sidebar', () => {
   it('colapsa a iconos sin labels cuando expanded está apagado', () => {
     renderSidebar({ expanded: false })
     for (const item of NAV_ITEMS) {
-      const btn = screen.getByRole('button', { name: item.label })
-      expect(btn).toHaveAttribute('title', item.label)
+      const btn = screen.getByRole('button', { name: labelOf(item) })
+      expect(btn).toHaveAttribute('title', labelOf(item))
     }
     const nav = screen.getByRole('navigation', { name: 'Navegación' })
     expect(nav.className).toContain('w-16')
@@ -39,6 +43,17 @@ describe('Sidebar', () => {
     renderSidebar({ onNavigate })
     await userEvent.click(screen.getByRole('button', { name: 'Inversiones' }))
     expect(onNavigate).toHaveBeenCalledWith('inversiones')
+  })
+
+  it('traduce los labels al inglés', () => {
+    render(
+      <LangProvider lang="en" setLang={() => {}}>
+        <Sidebar view="resumenes" onNavigate={vi.fn()} />
+      </LangProvider>,
+    )
+    expect(screen.getByRole('button', { name: 'Summaries' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Investments' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Navigation' })).toBeInTheDocument()
   })
 })
 

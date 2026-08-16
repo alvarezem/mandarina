@@ -122,10 +122,12 @@ export default function SummaryCards({ analysis, gridKey, variant = 'egresos', c
 
   const cards =
     variant === 'ingresos' ? cardsFromIncome(analysis, lang) : cardsFromAnalysis(analysis, lang)
+  // En inglés el énfasis va a los dólares: las cards USD primero (sin conversión).
+  const orderedCards = lang === 'en' ? [cards[2], cards[3], cards[0], cards[1]] : cards
 
   return (
     <div className={gridClass} key={gridKey} data-testid="summary-cards">
-      {cards.map((card, i) => (
+      {orderedCards.map((card, i) => (
         <Card key={`${card.label}-${i}`} {...card} />
       ))}
     </div>

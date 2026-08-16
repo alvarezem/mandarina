@@ -1,7 +1,10 @@
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
+
 export const NAV_ITEMS = [
   {
     key: 'resumenes',
-    label: 'Resúmenes',
+    label: 'nav.item.resumenes',
     icon: (
       <svg
         className="h-5 w-5"
@@ -20,7 +23,7 @@ export const NAV_ITEMS = [
   },
   {
     key: 'inversiones',
-    label: 'Inversiones',
+    label: 'nav.item.inversiones',
     icon: (
       <svg
         className="h-5 w-5"
@@ -52,23 +55,26 @@ export function Logo({ className = '' }) {
 }
 
 export default function Sidebar({ view, onNavigate, expanded }) {
+  const { lang } = useLang()
+  const labelFor = (item) => t(lang, item.label)
   return (
     <nav
-      aria-label="Navegación"
+      aria-label={t(lang, 'nav.aria')}
       className={`hidden shrink-0 flex-col items-center gap-1.5 border-r border-slate-200 bg-slate-50 py-3 transition-all duration-300 lg:flex dark:border-slate-800 dark:bg-slate-900 ${
         expanded ? 'w-52 items-stretch px-3' : 'w-16'
       }`}
     >
       {NAV_ITEMS.map((item) => {
         const active = view === item.key
+        const label = labelFor(item)
         return (
           <button
             key={item.key}
             type="button"
             onClick={() => onNavigate(item.key)}
-            aria-label={item.label}
+            aria-label={label}
             aria-current={active ? 'page' : undefined}
-            title={item.label}
+            title={label}
             data-tour={item.key}
             className={`relative flex h-10 items-center gap-3 rounded-xl transition active:scale-[0.98] ${
               expanded ? 'w-full px-3 justify-start' : 'w-10 justify-center'
@@ -79,7 +85,7 @@ export default function Sidebar({ view, onNavigate, expanded }) {
             }`}
           >
             {item.icon}
-            {expanded && <span className="truncate text-sm font-medium">{item.label}</span>}
+            {expanded && <span className="truncate text-sm font-medium">{label}</span>}
           </button>
         )
       })}

@@ -1,51 +1,37 @@
 import { useEffect, useRef, useState } from 'react'
 import { Logo } from './Sidebar'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
-const TOUR_STEPS = [
-  {
-    title: 'Bienvenido/a a Mandarina 🍊',
-    body: 'Mandarina concentra tus finanzas en un solo lugar: seguí tus gastos con resúmenes de tarjeta y armá un plan de inversión. Esta guía te muestra todo en menos de un minuto.',
-    target: null,
-  },
-  {
-    title: 'Egresos',
-    body: 'Mandarina separa tus resúmenes en dos vistas: Egresos y Ingresos. En Egresos, los gastos se categorizan automáticamente (podés reasignarlos con un clic y la categoría se recuerda por comercio) y filtrás por período, tipo y comercio. En Ingresos, mirás acreditaciones, sueldos y devoluciones.',
-    target: 'egresos',
-  },
-  {
-    title: 'Resúmenes',
-    body: 'Subí tus resúmenes en PDF, CSV o XLSX desde la pestaña Resúmenes. Se procesan solos: solo tenés que revisar el período y el tipo de tarjeta antes de guardarlos.',
-    target: 'resumenes',
-  },
-  {
-    title: 'Inversiones · Plan de inversión',
-    body: 'Definí tu cartera: importá un archivo XLSX, agregá activos, cargá precios de BYMA y un presupuesto de compra. Alterná entre pesos (ARS) y dólares (USD) cuando quieras.',
-    target: 'inversiones',
-  },
-  {
-    title: 'Inversiones · Cotizaciones en vivo',
-    body: 'Seguí el valor de tu patrimonio y las cotizaciones en vivo: gráficos por activo, sesión del día y la evolución de tus posiciones, todo actualizado.',
-    target: 'inversiones',
-  },
-  {
-    title: '¡Eso es todo!',
-    body: (
-      <>
-        Cuando lo necesites, volvé a abrir esta guía desde el ícono ? del encabezado. Ahora sí, a
-        sacarle todo el jugo. <Logo className="inline h-5 w-5 align-[-3px]" />
-      </>
-    ),
-    icon: <Logo className="h-9 w-9" />,
-    target: 'help',
-  },
-]
+const TARGETS = [null, 'egresos', 'resumenes', 'inversiones', 'inversiones', 'help']
+
+const FINAL_ICON = <Logo className="h-9 w-9" />
+
+const FINAL_BODY = (
+  <>
+    Cuando lo necesites, volvé a abrir esta guía desde el ícono ? del encabezado. Ahora sí, a
+    sacarle todo el jugo. <Logo className="inline h-5 w-5 align-[-3px]" />
+  </>
+)
 
 const PAD = 10
 
 export default function OnboardingTour({ open, onClose }) {
+  const { lang } = useLang()
   const [step, setStep] = useState(0)
   const [target, setTarget] = useState(null)
   const cardRef = useRef(null)
+
+  const dictSteps = t(lang, 'tour.steps')
+  const steps = dictSteps.map((s, i) => {
+    const last = i === dictSteps.length - 1
+    return {
+      title: s.title,
+      body: last ? FINAL_BODY : s.body,
+      target: TARGETS[i],
+      icon: last ? FINAL_ICON : undefined,
+    }
+  })
 
   // Ajustes en render (patrón de React): reinicia el paso al reabrir y deriva
   // el target nulo sin setState síncrono en effects.
@@ -54,7 +40,7 @@ export default function OnboardingTour({ open, onClose }) {
     setPrevOpen(open)
     setStep(0)
   }
-  const targetKey = TOUR_STEPS[step]?.target
+  const targetKey = TARGETS[step]
   const shownTarget = targetKey ? target : null
 
   useEffect(() => {
@@ -69,7 +55,7 @@ export default function OnboardingTour({ open, onClose }) {
 
   useEffect(() => {
     if (!open) return
-    const key = TOUR_STEPS[step]?.target
+    const key = TARGETS[step]
     if (!key) return
     const compute = () => {
       const els = document.querySelectorAll(`[data-tour="${key}"]`)
@@ -92,8 +78,8 @@ export default function OnboardingTour({ open, onClose }) {
 
   if (!open) return null
 
-  const stepData = TOUR_STEPS[step]
-  const isLast = step === TOUR_STEPS.length - 1
+  const stepData = steps[step]
+  const isLast = step === steps.length - 1
   const holeR = shownTarget ? Math.max(shownTarget.w, shownTarget.h) / 2 + PAD + 8 : 0
   const mask = shownTarget
     ? `radial-gradient(circle at ${shownTarget.x}px ${shownTarget.y}px, transparent ${holeR}px, black ${holeR + 40}px)`
@@ -130,7 +116,7 @@ export default function OnboardingTour({ open, onClose }) {
         ref={cardRef}
         role="dialog"
         aria-modal="true"
-        aria-label={`Guía de Mandarina · paso ${step + 1} de ${TOUR_STEPS.length}`}
+        aria-label={t(lang, 'tour.aria', { step: step + 1, total: steps.length })}
         tabIndex={-1}
         className="relative z-10 w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-xl outline-none dark:border-slate-700 dark:bg-slate-900"
       >
@@ -154,7 +140,7 @@ export default function OnboardingTour({ open, onClose }) {
           </div>
           <div className="flex items-center gap-1">
             <div className="mr-1 flex items-center gap-1.5" aria-hidden="true">
-              {TOUR_STEPS.map((_, i) => (
+              {steps.map((_, i) => (
                 <span
                   key={i}
                   className={`h-2 rounded-full transition-all ${
@@ -166,8 +152,8 @@ export default function OnboardingTour({ open, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              aria-label="Omitir guía"
-              title="Omitir"
+              aria-label={t(lang, 'tour.skipAria')}
+              title={t(lang, 'tour.skip')}
               className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
             >
               <svg
@@ -199,7 +185,7 @@ export default function OnboardingTour({ open, onClose }) {
             disabled={step === 0}
             className="rounded-lg px-4 py-2.5 text-base font-medium text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            ← Anterior
+            {t(lang, 'tour.prev')}
           </button>
           <div className="flex items-center gap-4">
             <button
@@ -207,14 +193,14 @@ export default function OnboardingTour({ open, onClose }) {
               onClick={onClose}
               className="rounded-lg px-3 py-2 text-base font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             >
-              Omitir
+              {t(lang, 'tour.skip')}
             </button>
             <button
               type="button"
               onClick={() => (isLast ? onClose() : setStep((s) => s + 1))}
               className="rounded-lg bg-brand-600 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-brand-500 active:scale-[0.98] dark:bg-brand-500 dark:hover:bg-brand-400 sm:px-6 sm:py-3"
             >
-              {isLast ? 'Finalizar' : 'Siguiente →'}
+              {isLast ? t(lang, 'tour.finish') : t(lang, 'tour.next')}
             </button>
           </div>
         </div>

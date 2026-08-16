@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import InvestmentsView from './InvestmentsView'
+import LangToggle from './LangToggle'
+import { LangProvider } from './LangProvider'
 
 vi.mock('./InvestmentPlan', () => ({
   default: ({ display, setDisplay, rateMode, sort, onSort }) => (
@@ -41,6 +44,18 @@ vi.mock('./LedgerView', () => ({
 
 const wrap = (ui) => render(ui)
 
+function LangHarness({ children }) {
+  const [lang, setLang] = useState('es')
+  return (
+    <LangProvider lang={lang} setLang={setLang}>
+      <div className="mb-2 flex justify-end">
+        <LangToggle />
+      </div>
+      {children}
+    </LangProvider>
+  )
+}
+
 describe('InvestmentsView', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -55,6 +70,26 @@ describe('InvestmentsView', () => {
       'true',
     )
     expect(screen.getByTestId('mock-plan')).toHaveTextContent('Plan ARS CCL')
+  })
+
+  it('arranca en USD cuando el idioma es inglés', () => {
+    wrap(
+      <LangProvider lang="en" setLang={() => {}}>
+        <InvestmentsView session={{ user: { id: 'u1' } }} />
+      </LangProvider>,
+    )
+    expect(screen.getByTestId('mock-plan')).toHaveTextContent('Plan USD CCL')
+  })
+
+  it('sincroniza la moneda al cambiar el idioma', async () => {
+    wrap(
+      <LangHarness>
+        <InvestmentsView session={{ user: { id: 'u1' } }} />
+      </LangHarness>,
+    )
+    expect(screen.getByTestId('mock-plan')).toHaveTextContent('Plan ARS CCL')
+    await userEvent.click(screen.getByRole('button', { name: 'English' }))
+    expect(screen.getByTestId('mock-plan')).toHaveTextContent('Plan USD CCL')
   })
 
   it('cambia a cotizaciones en vivo con el mismo estado compartido', async () => {

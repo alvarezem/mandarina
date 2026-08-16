@@ -13,11 +13,19 @@ const TABS = ['plan', 'quotes', 'ops']
 export default function InvestmentsView({ session }) {
   const { lang } = useLang()
   const [tab, setTab] = useState('plan')
-  const [display, setDisplay] = useState('ARS')
+  const [display, setDisplay] = useState(lang === 'en' ? 'USD' : 'ARS')
   const [rateMode, setRateMode] = useState('CCL')
   const [sort, setSort] = useState(() => loadPlanSort(session?.user?.id))
   const [marketClosed, setMarketClosed] = useState(false)
   const [noticeDismissed, setNoticeDismissed] = useState(false)
+
+  // Ajuste en render (patrón de React): al cambiar el idioma, el default de
+  // moneda sigue al idioma (EN → USD, ES → ARS) sin setState en effects.
+  const [prevLang, setPrevLang] = useState(lang)
+  if (lang !== prevLang) {
+    setPrevLang(lang)
+    setDisplay(lang === 'en' ? 'USD' : 'ARS')
+  }
 
   const onSort = (key) =>
     setSort((s) => {

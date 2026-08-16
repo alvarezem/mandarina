@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Dashboard from './Dashboard'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
-const MODES = [
-  { key: 'egresos', label: 'Egresos' },
-  { key: 'ingresos', label: 'Ingresos' },
-]
+const MODES = [{ key: 'egresos' }, { key: 'ingresos' }]
 
 export default function SummaryDetailModal({ file, session, dark, refreshKey, onClose }) {
+  const { lang } = useLang()
   const [mode, setMode] = useState('egresos')
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function SummaryDetailModal({ file, session, dark, refreshKey, on
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={`Detalle de ${file.file_name}`}
+            aria-label={t(lang, 'summaryDetail.aria', { name: file.file_name })}
             className="relative my-4 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -38,12 +38,14 @@ export default function SummaryDetailModal({ file, session, dark, refreshKey, on
                 <h2 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                   {file.file_name}
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Detalle del resumen</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t(lang, 'summaryDetail.subtitle')}
+                </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Cerrar detalle"
+                aria-label={t(lang, 'summaryDetail.close')}
                 className="shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               >
                 <svg
@@ -60,23 +62,23 @@ export default function SummaryDetailModal({ file, session, dark, refreshKey, on
 
             <div
               role="tablist"
-              aria-label="Modo del detalle"
+              aria-label={t(lang, 'summaryDetail.modeAria')}
               className="mb-4 inline-flex w-full overflow-hidden rounded-xl border border-slate-200 bg-white/70 p-1 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 sm:w-auto"
             >
-              {MODES.map((t) => (
+              {MODES.map((tab) => (
                 <button
-                  key={t.key}
+                  key={tab.key}
                   type="button"
                   role="tab"
-                  aria-selected={mode === t.key}
-                  onClick={() => setMode(t.key)}
+                  aria-selected={mode === tab.key}
+                  onClick={() => setMode(tab.key)}
                   className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition sm:flex-none ${
-                    mode === t.key
+                    mode === tab.key
                       ? 'bg-brand-600 text-white dark:bg-brand-500'
                       : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                   }`}
                 >
-                  {t.label}
+                  {t(lang, `summary.tabs.${tab.key}`)}
                 </button>
               ))}
             </div>

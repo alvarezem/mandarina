@@ -2,12 +2,10 @@ import { useState } from 'react'
 import Dashboard from './Dashboard'
 import UploadSummaries from './UploadSummaries'
 import SummaryDetailModal from './SummaryDetailModal'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
-const TABS = [
-  { key: 'ingresos', label: 'Ingresos' },
-  { key: 'egresos', label: 'Egresos' },
-  { key: 'resumenes', label: 'Resúmenes' },
-]
+const TABS = [{ key: 'ingresos' }, { key: 'egresos' }, { key: 'resumenes' }]
 
 export default function ResumenesView({
   session,
@@ -18,6 +16,7 @@ export default function ResumenesView({
   onSelect,
   onDataChanged,
 }) {
+  const { lang } = useLang()
   const [tab, setTab] = useState('egresos')
   const [detail, setDetail] = useState(null)
 
@@ -25,24 +24,24 @@ export default function ResumenesView({
     <div className="animate-fade-in-up">
       <div
         role="tablist"
-        aria-label="Secciones de resúmenes"
+        aria-label={t(lang, 'summary.aria.tabs')}
         className="mb-4 inline-flex w-full overflow-hidden rounded-xl border border-slate-200 bg-white/70 p-1 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 sm:w-auto"
       >
-        {TABS.map((t) => (
+        {TABS.map((tab) => (
           <button
-            key={t.key}
+            key={tab.key}
             type="button"
             role="tab"
-            aria-selected={tab === t.key}
-            data-tour={t.key}
-            onClick={() => setTab(t.key)}
+            aria-selected={tab === tab.key}
+            data-tour={tab.key}
+            onClick={() => setTab(tab.key)}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition sm:flex-none ${
-              tab === t.key
+              tab === tab.key
                 ? 'bg-brand-600 text-white dark:bg-brand-500'
                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
             }`}
           >
-            {t.label}
+            {t(lang, `summary.tabs.${tab.key}`)}
           </button>
         ))}
       </div>
@@ -63,10 +62,10 @@ export default function ResumenesView({
         <div className="mx-auto max-w-2xl">
           <div className="mb-4 text-center sm:text-left">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-              Resúmenes
+              {t(lang, 'summary.title')}
             </h1>
             <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-              Tus números, sin cáscara
+              {t(lang, 'summary.subtitle')}
             </p>
           </div>
           <UploadSummaries

@@ -1,21 +1,19 @@
 import Dropdown from './Dropdown'
 import Check, { itemBase, itemActive, itemInactive } from './Check'
+import { useLang } from './LangProvider'
+import { t, tn, categoryLabel } from '../lib/i18n'
 
 const PERIODS = [
-  { key: 'thisMonth', label: 'Este mes' },
-  { key: 'lastMonth', label: 'Mes pasado' },
-  { key: 'last3m', label: 'Últimos 3 meses' },
-  { key: 'last12m', label: 'Últimos 12 meses' },
-  { key: 'thisYear', label: 'Este año' },
-  { key: 'todo', label: 'Todo' },
-  { key: 'custom', label: 'Personalizado' },
+  { key: 'thisMonth' },
+  { key: 'lastMonth' },
+  { key: 'last3m' },
+  { key: 'last12m' },
+  { key: 'thisYear' },
+  { key: 'todo' },
+  { key: 'custom' },
 ]
 
-const CURRENCIES = [
-  { key: 'all', label: 'Ambas' },
-  { key: 'ARS', label: 'ARS' },
-  { key: 'USD', label: 'USD' },
-]
+const CURRENCIES = [{ key: 'all' }, { key: 'ARS' }, { key: 'USD' }]
 
 export default function FiltersBar({
   period,
@@ -39,17 +37,19 @@ export default function FiltersBar({
   onClearFilters,
   hideSummary = false,
 }) {
-  const periodSummary = PERIODS.find((p) => p.key === period)?.label ?? 'Todo'
+  const { lang } = useLang()
+  const periodSummary = t(lang, `period.${period}`)
   const categorySummary =
     categories.length === 0
-      ? 'Todas'
+      ? t(lang, 'filters.all')
       : categories.length === 1
-        ? categories[0]
-        : `${categories.length} seleccionadas`
+        ? categoryLabel(lang, categories[0])
+        : tn(lang, 'filters.selected', categories.length)
+  const currencySummary = currency === 'all' ? t(lang, 'filters.allCurrencies') : currency
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Dropdown label="Período" summary={periodSummary}>
+      <Dropdown label={t(lang, 'filters.period')} summary={periodSummary}>
         {PERIODS.map((p) => (
           <button
             key={p.key}
@@ -57,7 +57,7 @@ export default function FiltersBar({
             onClick={() => onPeriod(p.key)}
             className={`${itemBase} ${period === p.key ? itemActive : itemInactive}`}
           >
-            {p.label}
+            {t(lang, `period.${p.key}`)}
           </button>
         ))}
         {period === 'custom' && (
@@ -80,8 +80,10 @@ export default function FiltersBar({
 
       {!hideSummary && (
         <Dropdown
-          label="Resumen"
-          summary={summaryOptions.find((s) => s.id === summaryId)?.name ?? 'Todos los resúmenes'}
+          label={t(lang, 'filters.summary')}
+          summary={
+            summaryOptions.find((s) => s.id === summaryId)?.name ?? t(lang, 'filters.allSummaries')
+          }
         >
           <button
             type="button"
@@ -89,10 +91,10 @@ export default function FiltersBar({
             className={`${itemBase} ${summaryId === null ? itemActive : itemInactive}`}
           >
             <Check on={summaryId === null} />
-            Todos los resúmenes
+            {t(lang, 'filters.allSummaries')}
           </button>
           {summaryOptions.length === 0 ? (
-            <p className="px-3 py-1.5 text-xs text-slate-400">(sin resúmenes)</p>
+            <p className="px-3 py-1.5 text-xs text-slate-400">{t(lang, 'filters.noSummaries')}</p>
           ) : (
             summaryOptions.map((s) => (
               <button
@@ -109,10 +111,12 @@ export default function FiltersBar({
         </Dropdown>
       )}
 
-      <Dropdown label="Categorías" summary={categorySummary}>
+      <Dropdown label={t(lang, 'filters.categories')} summary={categorySummary}>
         <div className="mb-1 flex items-center justify-between border-b border-slate-100 px-2 pb-1.5 dark:border-slate-800">
           <span className="text-[11px] text-slate-400">
-            {categories.length > 0 ? `${categories.length} seleccionadas` : 'Todas'}
+            {categories.length > 0
+              ? tn(lang, 'filters.selected', categories.length)
+              : t(lang, 'filters.all')}
           </span>
           {categories.length > 0 && (
             <button
@@ -120,12 +124,12 @@ export default function FiltersBar({
               onClick={onClearCategories}
               className="text-[11px] font-medium text-brand-600 hover:underline dark:text-brand-400"
             >
-              Limpiar
+              {t(lang, 'filters.clear')}
             </button>
           )}
         </div>
         {categoryOptions.length === 0 ? (
-          <p className="px-3 py-1.5 text-xs text-slate-400">(sin categorías)</p>
+          <p className="px-3 py-1.5 text-xs text-slate-400">{t(lang, 'filters.noCategories')}</p>
         ) : (
           categoryOptions.map((cat) => {
             const on = categories.includes(cat)
@@ -137,17 +141,14 @@ export default function FiltersBar({
                 className={`${itemBase} ${on ? itemActive : itemInactive}`}
               >
                 <Check on={on} />
-                {cat}
+                {categoryLabel(lang, cat)}
               </button>
             )
           })
         )}
       </Dropdown>
 
-      <Dropdown
-        label="Moneda"
-        summary={CURRENCIES.find((c) => c.key === currency)?.label ?? 'Ambas'}
-      >
+      <Dropdown label={t(lang, 'filters.currency')} summary={currencySummary}>
         {CURRENCIES.map((c) => (
           <button
             key={c.key}
@@ -156,7 +157,7 @@ export default function FiltersBar({
             className={`${itemBase} ${currency === c.key ? itemActive : itemInactive}`}
           >
             <Check on={currency === c.key} />
-            {c.label}
+            {c.key === 'all' ? t(lang, 'filters.allCurrencies') : c.key}
           </button>
         ))}
       </Dropdown>
@@ -179,7 +180,7 @@ export default function FiltersBar({
           type="text"
           value={query}
           onChange={(e) => onQuery(e.target.value)}
-          placeholder="Buscar comercio…"
+          placeholder={t(lang, 'filters.search')}
           className="w-44 rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-700 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500"
         />
       </div>
@@ -199,7 +200,7 @@ export default function FiltersBar({
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
-          Limpiar filtros
+          {t(lang, 'filters.clearFilters')}
         </button>
       )}
     </div>

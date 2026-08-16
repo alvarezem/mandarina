@@ -4,6 +4,8 @@ import { useAsync } from '../hooks/useAsync'
 import { useToast } from './Toast'
 import { sanitizeStoragePath, uniqueStoragePath } from '../lib/sanitizeFileName'
 import SummaryItem from './SummaryItem'
+import { useLang } from './LangProvider'
+import { t, tn } from '../lib/i18n'
 
 const NOW_YEAR = new Date().getFullYear()
 
@@ -14,6 +16,7 @@ export default function UploadSummaries({
   onDataChanged,
   onOpenDetail,
 }) {
+  const { lang } = useLang()
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
@@ -40,12 +43,12 @@ export default function UploadSummaries({
         .order('created_at', { ascending: false })
       if (error) {
         console.error('UploadSummaries: error al cargar resúmenes', error)
-        throw new Error('No se pudieron cargar los resúmenes')
+        throw new Error(t(lang, 'upload.err.load'))
       }
       return data ?? []
     } catch (e) {
       console.error('UploadSummaries: error al cargar resúmenes', e)
-      throw new Error('No se pudieron cargar los resúmenes')
+      throw new Error(t(lang, 'upload.err.load'))
     }
   }, [session?.user?.id])
   const files = data ?? []
@@ -54,8 +57,8 @@ export default function UploadSummaries({
     try {
       await supabase.functions.invoke('parse-summary', { body: { summary_id: summaryId } })
     } catch {
-      setError('No se pudo iniciar el procesamiento del archivo')
-      pushToast({ type: 'error', message: 'No se pudo iniciar el procesamiento del archivo' })
+      setError(t(lang, 'upload.err.parse'))
+      pushToast({ type: 'error', message: t(lang, 'upload.err.parse') })
     }
     await reloadSummaries()
   }
@@ -63,12 +66,12 @@ export default function UploadSummaries({
   const friendlyUploadError = (error) => {
     const msg = String(error?.message ?? '')
     if (/invalid.?key|invalid characters/i.test(msg)) {
-      return 'El nombre del archivo tiene caracteres no permitidos'
+      return t(lang, 'upload.err.invalidName')
     }
     if (/already.?exists|already_exists/i.test(msg)) {
-      return 'Ya existe un resumen con ese nombre en tu cuenta'
+      return t(lang, 'upload.err.exists')
     }
-    return msg || 'No se pudo subir el archivo'
+    return msg || t(lang, 'upload.err.upload')
   }
 
   const handleUpload = async (file) => {
@@ -103,22 +106,25 @@ export default function UploadSummaries({
 
       if (insertError) {
         console.error('UploadSummaries: error al registrar resumen', insertError)
-        const friendly = 'No se pudo registrar el resumen'
+        const friendly = t(lang, 'upload.err.insert')
         setError(friendly)
         pushToast({ type: 'error', message: friendly })
         return
       }
 
       const successMsg = renamed
-        ? `Resumen ${file.name} subido como ${path.split('/').pop()} (ya existía un archivo con ese nombre)`
-        : `Resumen ${file.name} subido`
+        ? t(lang, 'upload.ok.uploadedRenamed', {
+            name: file.name,
+            path: path.split('/').pop(),
+          })
+        : t(lang, 'upload.ok.uploaded', { name: file.name })
       pushToast({ type: 'success', message: successMsg })
       await reloadSummaries()
       await parse(summary.id)
       onDataChanged?.()
     } catch (e) {
       console.error('UploadSummaries: error al subir el archivo', e)
-      const friendly = 'No se pudo subir el archivo'
+      const friendly = t(lang, 'upload.err.upload')
       setError(friendly)
       pushToast({ type: 'error', message: friendly })
     } finally {
@@ -126,7 +132,7 @@ export default function UploadSummaries({
     }
   }
 
-  const countLabel = files.length === 1 ? '1 resumen' : `${files.length} resúmenes`
+  const countLabel = tn(lang, 'resumen.count', files.length)
 
   const startRename = (file) => {
     setEditingId(file.id)
@@ -158,16 +164,19 @@ export default function UploadSummaries({
       const { error } = await supabase.from('card_summaries').delete().eq('id', file.id)
       if (error) {
         console.error('UploadSummaries: error al eliminar resumen', error)
-        pushToast({ type: 'error', message: 'No se pudo eliminar el resumen' })
+        pushToast({ type: 'error', message: t(lang, 'upload.err.delete') })
         return
       }
       if (selectedId === file.id) onSelect?.(null)
       onDataChanged?.()
       await reloadSummaries()
-      pushToast({ type: 'success', message: `Resumen ${file.file_name} eliminado` })
+      pushToast({
+        type: 'success',
+        message: t(lang, 'upload.ok.deleted', { name: file.file_name }),
+      })
     } catch (e) {
       console.error('UploadSummaries: error al eliminar resumen', e)
-      pushToast({ type: 'error', message: 'No se pudo eliminar el resumen' })
+      pushToast({ type: 'error', message: t(lang, 'upload.err.delete') })
     }
   }
 
@@ -188,14 +197,14 @@ export default function UploadSummaries({
         .eq('id', id)
       if (error) {
         console.error('UploadSummaries: error al renombrar resumen', error)
-        pushToast({ type: 'error', message: 'No se pudo renombrar el resumen' })
+        pushToast({ type: 'error', message: t(lang, 'upload.err.rename') })
         return
       }
       setFiles((list) => (list ?? []).map((f) => (f.id === id ? { ...f, file_name: name } : f)))
-      pushToast({ type: 'success', message: 'Nombre actualizado' })
+      pushToast({ type: 'success', message: t(lang, 'upload.ok.renamed') })
     } catch (e) {
       console.error('UploadSummaries: error al renombrar resumen', e)
-      pushToast({ type: 'error', message: 'No se pudo renombrar el resumen' })
+      pushToast({ type: 'error', message: t(lang, 'upload.err.rename') })
     }
   }
 
@@ -237,14 +246,14 @@ export default function UploadSummaries({
       const { error } = await supabase.from('card_summaries').update(payload).eq('id', id)
       if (error) {
         console.error('UploadSummaries: error al clasificar resumen', error)
-        pushToast({ type: 'error', message: 'No se pudo actualizar la clasificación' })
+        pushToast({ type: 'error', message: t(lang, 'upload.err.meta') })
         return
       }
       setFiles((list) => (list ?? []).map((f) => (f.id === id ? { ...f, ...payload } : f)))
-      pushToast({ type: 'success', message: 'Clasificación actualizada' })
+      pushToast({ type: 'success', message: t(lang, 'upload.ok.classified') })
     } catch (e) {
       console.error('UploadSummaries: error al clasificar resumen', e)
-      pushToast({ type: 'error', message: 'No se pudo actualizar la clasificación' })
+      pushToast({ type: 'error', message: t(lang, 'upload.err.meta') })
     }
   }
 
@@ -280,9 +289,11 @@ export default function UploadSummaries({
             </svg>
           )}
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            {uploading ? 'Subiendo…' : 'Subir resumen'}
+            {uploading ? t(lang, 'upload.uploading') : t(lang, 'upload.dropZone')}
           </span>
-          <span className="text-xs text-slate-400 dark:text-slate-500">PDF, CSV o XLSX</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">
+            {t(lang, 'upload.formats')}
+          </span>
         </button>
         <input
           ref={inputRef}
@@ -305,7 +316,7 @@ export default function UploadSummaries({
       <div>
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Resúmenes
+            {t(lang, 'upload.listTitle')}
           </h2>
           <span className="text-xs text-slate-400 dark:text-slate-500">
             {files.length > 0 ? countLabel : ''}
@@ -326,7 +337,7 @@ export default function UploadSummaries({
           </div>
         ) : files.length === 0 ? (
           <p className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
-            No subiste resúmenes todavía.
+            {t(lang, 'upload.empty')}
           </p>
         ) : (
           <ul className="flex flex-col gap-1.5">
@@ -342,7 +353,7 @@ export default function UploadSummaries({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
-                    Todos los resúmenes
+                    {t(lang, 'upload.all')}
                   </span>
                   <span className="inline-flex shrink-0 items-center rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
                     {files.length}

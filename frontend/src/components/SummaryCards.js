@@ -1,5 +1,7 @@
 import useCountUp from '../hooks/useCountUp'
 import { fmt } from '../lib/format'
+import { useLang } from './LangProvider'
+import { t, tn } from '../lib/i18n'
 
 function CountUp({ value, format }) {
   const v = useCountUp(value, { duration: 1100 })
@@ -29,32 +31,34 @@ function CardSkeleton() {
   )
 }
 
-function cardsFromAnalysis(analysis) {
+function cardsFromAnalysis(analysis, lang) {
+  const movements = (count) =>
+    tn(lang, 'cards.movements', count, {
+      n: Math.round(count).toLocaleString(lang === 'en' ? 'en-US' : 'es-AR'),
+    })
   return [
     {
-      label: 'Débitos',
+      label: t(lang, 'cards.debits'),
       value: analysis.totals.debits,
       format: fmt,
       valueClass: 'text-red-600 dark:text-red-400',
-      sub: `${Math.round(analysis.totals.txCount).toLocaleString('es-AR')} movimientos`,
+      sub: movements(analysis.totals.txCount),
     },
     {
-      label: 'Mayor gasto ARS',
+      label: t(lang, 'cards.maxExpenseArs'),
       value: analysis.maxExpense ? analysis.maxExpense.amount : '—',
       format: analysis.maxExpense ? fmt : null,
       sub: analysis.maxExpense?.merchant,
       valueClass: 'text-red-600 dark:text-red-400',
     },
     {
-      label: 'Gastos USD',
+      label: t(lang, 'cards.expensesUsd'),
       value: analysis.usd ? analysis.usd.totals.debits : 0,
       format: (n) => fmt(n, 'USD'),
-      sub: analysis.usd
-        ? `${Math.round(analysis.usd.totals.txCount).toLocaleString('es-AR')} movimientos`
-        : undefined,
+      sub: analysis.usd ? movements(analysis.usd.totals.txCount) : undefined,
     },
     {
-      label: 'Mayor gasto USD',
+      label: t(lang, 'cards.maxExpenseUsd'),
       value: analysis.usd?.maxExpense ? analysis.usd.maxExpense.amount : '—',
       format: analysis.usd?.maxExpense ? (n) => fmt(n, 'USD') : null,
       sub: analysis.usd?.maxExpense?.merchant,
@@ -63,32 +67,34 @@ function cardsFromAnalysis(analysis) {
   ]
 }
 
-function cardsFromIncome(analysis) {
+function cardsFromIncome(analysis, lang) {
+  const movements = (count) =>
+    tn(lang, 'cards.movements', count, {
+      n: Math.round(count).toLocaleString(lang === 'en' ? 'en-US' : 'es-AR'),
+    })
   return [
     {
-      label: 'Ingresos',
+      label: t(lang, 'cards.income'),
       value: analysis.totals.credits,
       format: fmt,
       valueClass: 'text-emerald-600 dark:text-emerald-400',
-      sub: `${Math.round(analysis.totals.txCount).toLocaleString('es-AR')} movimientos`,
+      sub: movements(analysis.totals.txCount),
     },
     {
-      label: 'Mayor ingreso ARS',
+      label: t(lang, 'cards.maxIncomeArs'),
       value: analysis.maxIncome ? analysis.maxIncome.amount : '—',
       format: analysis.maxIncome ? fmt : null,
       sub: analysis.maxIncome?.merchant,
       valueClass: 'text-emerald-600 dark:text-emerald-400',
     },
     {
-      label: 'Ingresos USD',
+      label: t(lang, 'cards.incomeUsd'),
       value: analysis.usd ? analysis.usd.totals.credits : 0,
       format: (n) => fmt(n, 'USD'),
-      sub: analysis.usd
-        ? `${Math.round(analysis.usd.totals.txCount).toLocaleString('es-AR')} movimientos`
-        : undefined,
+      sub: analysis.usd ? movements(analysis.usd.totals.txCount) : undefined,
     },
     {
-      label: 'Mayor ingreso USD',
+      label: t(lang, 'cards.maxIncomeUsd'),
       value: analysis.usd?.maxIncome ? analysis.usd.maxIncome.amount : '—',
       format: analysis.usd?.maxIncome ? (n) => fmt(n, 'USD') : null,
       sub: analysis.usd?.maxIncome?.merchant,
@@ -98,6 +104,7 @@ function cardsFromIncome(analysis) {
 }
 
 export default function SummaryCards({ analysis, gridKey, variant = 'egresos', compact = false }) {
+  const { lang } = useLang()
   const gridClass = compact
     ? 'grid grid-cols-2 gap-3'
     : 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'
@@ -113,7 +120,8 @@ export default function SummaryCards({ analysis, gridKey, variant = 'egresos', c
     )
   }
 
-  const cards = variant === 'ingresos' ? cardsFromIncome(analysis) : cardsFromAnalysis(analysis)
+  const cards =
+    variant === 'ingresos' ? cardsFromIncome(analysis, lang) : cardsFromAnalysis(analysis, lang)
 
   return (
     <div className={gridClass} key={gridKey} data-testid="summary-cards">

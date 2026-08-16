@@ -9,6 +9,8 @@ import TransactionsTable from './TransactionsTable'
 import SummaryCards from './SummaryCards'
 import IncomeSources from './IncomeSources'
 import { useToast } from './Toast'
+import { useLang } from './LangProvider'
+import { t, tn, categoryLabel } from '../lib/i18n'
 
 const CATEGORY_OPTIONS = [
   'Combustible',
@@ -90,6 +92,7 @@ export default function Dashboard({
   hideSummaryFilter = false,
   compact = false,
 }) {
+  const { lang } = useLang()
   const pushToast = useToast()
   const isIngresos = mode === 'ingresos'
   const [overrides, setOverrides] = useState([])
@@ -123,12 +126,12 @@ export default function Dashboard({
         .order('date', { ascending: false })
       if (error) {
         console.error('Dashboard: error al cargar transacciones', error)
-        throw new Error('No se pudieron cargar los gastos')
+        throw new Error(t(lang, 'dashboard.err.load'))
       }
       return data ?? []
     } catch (e) {
       console.error('Dashboard: error al cargar transacciones', e)
-      throw new Error('No se pudieron cargar los gastos')
+      throw new Error(t(lang, 'dashboard.err.load'))
     }
   }, [userId, refreshKey])
   const allTx = useMemo(() => txData ?? [], [txData])
@@ -321,7 +324,7 @@ export default function Dashboard({
       const { error } = await supabase.from('transactions').update({ category }).eq('id', tx.id)
       if (error) {
         console.error('Dashboard: error al actualizar categoría', error)
-        pushToast({ type: 'error', message: 'No se pudo actualizar la categoría' })
+        pushToast({ type: 'error', message: t(lang, 'dashboard.err.updateCategory') })
         return
       }
       setAllTx((prev) => (prev ?? []).map((t) => (t.id === tx.id ? { ...t, category } : t)))
@@ -346,15 +349,21 @@ export default function Dashboard({
             setAllTx((prev) =>
               (prev ?? []).map((t) => (t.merchant === tx.merchant ? { ...t, category } : t)),
             )
-          pushToast({ type: 'success', message: `Guardado: ${tx.merchant} → ${category}` })
+          pushToast({
+            type: 'success',
+            message: t(lang, 'dashboard.ok.remembered', {
+              merchant: tx.merchant,
+              category: categoryLabel(lang, category),
+            }),
+          })
           return
         }
       }
 
-      pushToast({ type: 'success', message: 'Categoría actualizada' })
+      pushToast({ type: 'success', message: t(lang, 'dashboard.ok.category') })
     } catch (e) {
       console.error('Dashboard: error al actualizar categoría', e)
-      pushToast({ type: 'error', message: 'No se pudo actualizar la categoría' })
+      pushToast({ type: 'error', message: t(lang, 'dashboard.err.updateCategory') })
     }
   }
 
@@ -367,14 +376,14 @@ export default function Dashboard({
         .upsert({ user_id: userId, name: trimmed }, { onConflict: 'user_id,name' })
       if (error) {
         console.error('Dashboard: error al crear categoría', error)
-        pushToast({ type: 'error', message: 'No se pudo crear la categoría' })
+        pushToast({ type: 'error', message: t(lang, 'dashboard.err.createCategory') })
         return
       }
       setCustomCategories((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]))
-      pushToast({ type: 'success', message: `Categoría creada: ${trimmed}` })
+      pushToast({ type: 'success', message: t(lang, 'dashboard.ok.created', { name: trimmed }) })
     } catch (e) {
       console.error('Dashboard: error al crear categoría', e)
-      pushToast({ type: 'error', message: 'No se pudo crear la categoría' })
+      pushToast({ type: 'error', message: t(lang, 'dashboard.err.createCategory') })
     }
   }
 
@@ -385,8 +394,8 @@ export default function Dashboard({
   if (allTx.length === 0) {
     return (
       <EmptyState
-        title="Subí un resumen para empezar."
-        hint="Usá la barra lateral para subir tu primer PDF, CSV o XLSX."
+        title={t(lang, 'dashboard.empty.first.title')}
+        hint={t(lang, 'dashboard.empty.first.hint')}
       />
     )
   }
@@ -418,24 +427,17 @@ export default function Dashboard({
         />
         {paymentsCount > 0 && !isIngresos && (
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            {includePayments ? (
-              <span>
-                Incluyendo {paymentsCount} {paymentsCount === 1 ? 'pago' : 'pagos'} de tarjeta en
-                los totales (categoría &lsquo;Pagos&rsquo;).
-              </span>
-            ) : (
-              <span>
-                Se excluye{paymentsCount === 1 ? '' : 'n'} {paymentsCount}{' '}
-                {paymentsCount === 1 ? 'pago' : 'pagos'} de tarjeta de los totales (categoría
-                &lsquo;Pagos&rsquo;: son pagos de la tarjeta, no gastos).
-              </span>
-            )}
+            <span>
+              {includePayments
+                ? tn(lang, 'pagos.incluidos', paymentsCount)
+                : tn(lang, 'pagos.excluidos', paymentsCount)}
+            </span>
             <button
               type="button"
               onClick={togglePayments}
               className="inline-flex items-center rounded-full border border-slate-300 px-2.5 py-0.5 font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
-              {includePayments ? 'Excluir pagos' : 'Incluir pagos'}
+              {includePayments ? t(lang, 'pagos.excluir') : t(lang, 'pagos.incluir')}
             </button>
           </div>
         )}
@@ -444,12 +446,14 @@ export default function Dashboard({
       {filtered.length === 0 ? (
         <EmptyState
           title={
-            isIngresos ? 'Sin ingresos para este período.' : 'Sin transacciones para este período.'
+            isIngresos
+              ? t(lang, 'dashboard.empty.noIncome.title')
+              : t(lang, 'dashboard.empty.noTx.title')
           }
           hint={
             isIngresos
-              ? 'No se registraron créditos en este rango de fechas.'
-              : 'Probá con otro rango de fechas o quitá los filtros.'
+              ? t(lang, 'dashboard.empty.noIncome.hint')
+              : t(lang, 'dashboard.empty.noTx.hint')
           }
         />
       ) : (
@@ -492,7 +496,9 @@ export default function Dashboard({
             style={{ animationDelay: '460ms' }}
           >
             <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Detalle</h3>
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {t(lang, 'dashboard.detail')}
+              </h3>
             </div>
             <TransactionsTable
               summaryId={summaryId}

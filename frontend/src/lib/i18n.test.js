@@ -72,7 +72,7 @@ describe('i18n', () => {
   })
 
   it('tn interpola {n} y variables extra', () => {
-    expect(tn('es', 'pagos.excluidos', 2)).toBe('Se excluyen 2 pagos de tarjeta')
+    expect(tn('es', 'pagos.excluidos', 2)).toBe('Se excluyen 2 pagos de tarjeta de los totales')
   })
 
   it('mapea labels curados de la app (categorías, activos, side, tipo de resumen)', () => {

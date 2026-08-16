@@ -1,30 +1,19 @@
-import { MONTHS } from '../lib/constants'
+import { monthAbbr } from '../lib/format'
 import MetaForm from './MetaForm'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
-const STATUS = {
-  pending: {
-    label: 'Pendiente',
-    className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  },
-  parsing: {
-    label: 'Procesando…',
-    className: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
-  },
-  done: {
-    label: 'Procesado',
-    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
-  },
-  error: {
-    label: 'Error',
-    className: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300',
-  },
+const STATUS_CLASS = {
+  pending: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+  parsing: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
+  done: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
+  error: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300',
 }
 
-function metaLabel(file) {
+function metaLabel(lang, file) {
   const parts = []
   if (file.summary_type) parts.push(file.summary_type)
-  if (file.period_month)
-    parts.push(`${MONTHS[file.period_month - 1] ?? file.period_month} ${file.period_year}`)
+  if (file.period_month) parts.push(`${monthAbbr(lang, file.period_month)} ${file.period_year}`)
   return parts.join(' · ')
 }
 
@@ -50,7 +39,9 @@ export default function SummaryItem({
   cancelMetaEdit,
   startMetaEdit,
 }) {
-  const status = STATUS[file.status] ?? STATUS.pending
+  const { lang } = useLang()
+  const statusKey = STATUS_CLASS[file.status] ? file.status : 'pending'
+  const statusClass = STATUS_CLASS[statusKey]
   const locked = editingId !== null || metaEditingId !== null
   return (
     <div
@@ -70,12 +61,12 @@ export default function SummaryItem({
               if (e.key === 'Escape') cancelRename()
             }}
             autoFocus
-            aria-label="Nombre del resumen"
+            aria-label={t(lang, 'summary.renameName')}
             className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           />
           <button
             type="submit"
-            aria-label="Guardar nombre"
+            aria-label={t(lang, 'summary.saveName')}
             className="shrink-0 rounded-md p-1.5 text-emerald-600 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
           >
             <svg
@@ -92,7 +83,7 @@ export default function SummaryItem({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={cancelRename}
-            aria-label="Cancelar"
+            aria-label={t(lang, 'summary.cancel')}
             className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <svg
@@ -124,21 +115,21 @@ export default function SummaryItem({
             {confirmingId === file.id ? (
               <span className="flex shrink-0 items-center gap-1.5">
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  ¿Borrar?
+                  {t(lang, 'summary.deleteConfirm')}
                 </span>
                 <button
                   type="button"
                   onClick={() => removeSummary(file)}
                   className="rounded-md bg-red-500 px-2 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
                 >
-                  Sí
+                  {t(lang, 'summary.yes')}
                 </button>
                 <button
                   type="button"
                   onClick={cancelDelete}
                   className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  Cancelar
+                  {t(lang, 'summary.cancel')}
                 </button>
               </span>
             ) : (
@@ -147,8 +138,8 @@ export default function SummaryItem({
                   type="button"
                   onClick={() => startDeleteConfirm(file)}
                   disabled={locked}
-                  aria-label={`Eliminar ${file.file_name}`}
-                  title="Eliminar"
+                  aria-label={t(lang, 'summary.deleteAria', { name: file.file_name })}
+                  title={t(lang, 'summary.delete')}
                   className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                 >
                   <svg
@@ -169,8 +160,8 @@ export default function SummaryItem({
                   type="button"
                   onClick={() => startRename(file)}
                   disabled={locked}
-                  aria-label={`Renombrar ${file.file_name}`}
-                  title="Renombrar"
+                  aria-label={t(lang, 'summary.renameAria', { name: file.file_name })}
+                  title={t(lang, 'summary.rename')}
                   className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                 >
                   <svg
@@ -190,12 +181,12 @@ export default function SummaryItem({
               </>
             )}
             <span
-              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${status.className}`}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${statusClass}`}
             >
               {file.status === 'parsing' && (
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
               )}
-              {status.label}
+              {t(lang, `summary.status.${statusKey}`)}
             </span>
           </div>
           {file.status === 'error' && file.error && (
@@ -214,8 +205,8 @@ export default function SummaryItem({
                 type="button"
                 onClick={() => startMetaEdit(file)}
                 disabled={locked}
-                aria-label={`Clasificar ${file.file_name}`}
-                title="Clasificar"
+                aria-label={t(lang, 'summary.classifyAria', { name: file.file_name })}
+                title={t(lang, 'summary.classify')}
                 className="shrink-0 rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-brand-400"
               >
                 <svg
@@ -235,12 +226,12 @@ export default function SummaryItem({
               </button>
               <span
                 className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                  metaLabel(file)
+                  metaLabel(lang, file)
                     ? 'bg-brand-100 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300'
                     : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                 }`}
               >
-                {metaLabel(file) || 'Sin clasificar'}
+                {metaLabel(lang, file) || t(lang, 'summary.noMeta')}
               </span>
             </div>
           )}

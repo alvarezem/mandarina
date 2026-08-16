@@ -73,13 +73,23 @@ usa `sideLabel` (capitalizado `Compra`/`Venta`/`Ajuste` → se ajustaron 2
 aserciones en `LedgerView.test.js`); el toast de éxito del modal de operaciones
 interpola el `side` crudo para no romper aserciones.
 
-## Sub-fase 4 — Shell y cierre
+## Sub-fase 4 — Shell y cierre **(HECHA — commit `1229890`)**
 
-`App.js` (VIEW_TITLES, toasts de saludo, aria/titles), `Sidebar`,
-`MobileDrawer`, `OnboardingTour`, `ThemeToggle`, `MetaForm` (tipo de resumen).
-`LangToggle` en el header. Tests EN puntuales en los componentes grandes
-(patrón `Landing.test.js`). Verificación final + docs (TODO/DONE/HANDOFF) +
+`App.js` (VIEW_TITLES, aria/titles del header, toasts de saludo/logout/"Tus
+posiciones", tagline), `Sidebar`, `MobileDrawer`, `OnboardingTour`,
+`ThemeToggle`, `MetaForm` (tipo de resumen con `summaryTypeLabel`).
+`LangToggle` en el header (junto al ThemeToggle) y en el footer del drawer
+móvil. Tests EN puntuales. Verificación final + docs (TODO/DONE/HANDOFF) +
 deploy (autodeploy Vercel, frontend-only, sin `db push`).
+
+Feedback del usuario en testing (cambios fuera del plan original de la
+sub-fase): **USD primero en inglés** — `InvestmentsView` arranca en `USD`
+cuando `lang === 'en'` (con sync al cambiar idioma vía patrón de ajuste en
+render, sin effects) y `SummaryCards` reordena las 4 cards con los dólares
+primero (`[Gastos USD, Mayor gasto USD, Débitos, Mayor gasto ARS]`; espejo en
+Ingresos). **Rutas `/en` `/es` descartadas por decisión del usuario**: se
+mantiene solo el toggle con persistencia en localStorage (simplicidad; las
+páginas SEO/redirects de Auth quedan intactos).
 
 ## Verificación por sub-fase
 

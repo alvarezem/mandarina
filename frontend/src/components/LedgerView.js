@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import { fmt } from '../lib/format'
-import { commissionAmount, profitability, summarize } from '../lib/ledger'
+import { commissionAmount, profitability, summarize, toBase } from '../lib/ledger'
 import { useAsync } from '../hooks/useAsync'
 import { useWatchQuotes } from '../hooks/useWatchQuotes'
 import { useToast } from './Toast'
@@ -61,15 +61,18 @@ export default function LedgerView({
   const toDisplay = (price) => (display === 'USD' && rate ? price / rate : price)
 
   const symbolRows = summary.map((s) => {
-    const rawPrice = quotes[s.symbol]?.price
-    const price = rawPrice != null ? toDisplay(rawPrice) : null
-    return { ...s, price, ...profitability(s, price) }
+    const ownPrice = quotes[s.symbol]?.price ?? null
+    return { ...s, ownPrice, ...profitability(s, ownPrice) }
   })
 
-  const priced = symbolRows.filter((s) => s.price != null && s.quantity > 0)
-  const totalInvested = symbolRows.reduce((a, s) => a + s.invested, 0)
-  const totalCost = priced.reduce((a, s) => a + s.avgCost * s.quantity, 0)
-  const totalValue = priced.reduce((a, s) => a + s.price * s.quantity, 0)
+  const held = symbolRows.filter((s) => s.quantity > 0)
+  const priced = held.filter((s) => s.ownPrice != null)
+  const totalInvested = held.reduce((a, s) => a + toBase(s.invested, s.currency, rate), 0)
+  const totalCost = held.reduce((a, s) => a + toBase(s.avgCost * s.quantity, s.currency, rate), 0)
+  const totalValue = priced.reduce(
+    (a, s) => a + toBase(s.ownPrice * s.quantity, s.currency, rate),
+    0,
+  )
   const totalPnl = totalValue - totalCost
   const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
 
@@ -274,10 +277,10 @@ export default function LedgerView({
                       {s.quantity}
                     </td>
                     <td className="py-2 pr-3 text-right tabular-nums text-slate-700 dark:text-slate-200">
-                      {s.avgCost > 0 ? fmt(toDisplay(s.avgCost), display) : '—'}
+                      {s.avgCost > 0 ? fmt(s.avgCost, s.currency) : '—'}
                     </td>
                     <td className="py-2 pr-3 text-right tabular-nums text-slate-700 dark:text-slate-200">
-                      {s.price != null ? fmt(s.price, display) : '—'}
+                      {s.ownPrice != null ? fmt(s.ownPrice, s.currency) : '—'}
                     </td>
                     <td
                       className={`py-2 pr-3 text-right font-medium tabular-nums ${
@@ -286,7 +289,7 @@ export default function LedgerView({
                           : 'text-red-600 dark:text-red-400'
                       }`}
                     >
-                      {s.price != null && s.quantity > 0 ? (
+                      {s.ownPrice != null && s.quantity > 0 ? (
                         <>
                           {s.pnl >= 0 ? '▲' : '▼'} {Math.abs(s.pnlPct).toFixed(2)}%
                         </>
@@ -355,17 +358,17 @@ export default function LedgerView({
                       {o.quantity}
                     </td>
                     <td className="py-2 pr-3 text-right tabular-nums text-slate-700 dark:text-slate-200">
-                      {fmt(toDisplay(o.price), display)}
+                      {fmt(o.price, o.currency || 'ARS')}
                     </td>
                     <td className="py-2 pr-3 text-right tabular-nums text-slate-500 dark:text-slate-400">
                       {o.commission > 0
                         ? o.commission_is_pct
                           ? `${o.commission}%`
-                          : fmt(toDisplay(o.commission), display)
+                          : fmt(o.commission, o.currency || 'ARS')
                         : '—'}
                     </td>
                     <td className="py-2 pr-3 text-right font-medium tabular-nums text-slate-800 dark:text-slate-100">
-                      {fmt(toDisplay(signedAmount(o)), display)}
+                      {fmt(signedAmount(o), o.currency || 'ARS')}
                     </td>
                     <td className="py-2 text-right">
                       {confirmingId === o.id ? (
@@ -425,6 +428,7 @@ export default function LedgerView({
         open={showForm}
         onClose={() => setShowForm(false)}
         session={session}
+        existingOps={ops}
         onRegistered={() => {
           setShowForm(false)
           reload()

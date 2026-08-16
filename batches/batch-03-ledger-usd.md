@@ -1,7 +1,7 @@
 # Batch 3 — Ledger: moneda y ventas
 
 **Dominio:** frontend (ledger + registro de operaciones). **Índice:** #3.
-**Estado:** [ ] pendiente
+**Estado:** [x] hecho (2026-08-16)
 
 > Depende de **B1** (reescribe `applyBuy`, que también registra en el ledger).
 
@@ -50,6 +50,6 @@
 
 ## Checklist de cierre
 
-- [ ] `npm test` verde
-- [ ] `npm run lint` sin issues
-- [ ] Índice `batches/README.md` marcado [x]
+- [x] `npm test` verde
+- [x] `npm run lint` sin issues
+- [x] Índice `batches/README.md` marcado [x]

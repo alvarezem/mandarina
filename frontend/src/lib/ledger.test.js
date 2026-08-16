@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { commissionAmount, costBasis, ledgerQuantity, profitability, summarize } from './ledger'
+import {
+  commissionAmount,
+  costBasis,
+  ledgerQuantity,
+  profitability,
+  summarize,
+  toBase,
+} from './ledger'
 
 function op(overrides = {}) {
   return {
@@ -103,15 +110,25 @@ describe('costBasis', () => {
     expect(h.avgCost).toBeCloseTo(25, 6)
   })
 
-  it('no baja de cero la cantidad si se vende de más', () => {
+  it('no baja de cero la cantidad si se vende de más y lo señala', () => {
     const ops = [op({ side: 'compra', quantity: 5, price: 10 }), op({ side: 'venta', quantity: 9 })]
     const h = costBasis(ops)
     expect(h.quantity).toBe(0)
+    expect(h.exceeded).toBe(true)
+  })
+
+  it('no marca exceeded cuando la venta tiene respaldo', () => {
+    const h = costBasis([
+      op({ side: 'compra', quantity: 5, price: 10 }),
+      op({ side: 'venta', quantity: 3 }),
+    ])
+    expect(h.quantity).toBe(2)
+    expect(h.exceeded).toBe(false)
   })
 
   it('devuelve ceros sin operaciones', () => {
-    expect(costBasis([])).toEqual({ quantity: 0, avgCost: 0, invested: 0 })
-    expect(costBasis(null)).toEqual({ quantity: 0, avgCost: 0, invested: 0 })
+    expect(costBasis([])).toEqual({ quantity: 0, avgCost: 0, invested: 0, exceeded: false })
+    expect(costBasis(null)).toEqual({ quantity: 0, avgCost: 0, invested: 0, exceeded: false })
   })
 })
 
@@ -134,17 +151,44 @@ describe('profitability', () => {
   })
 })
 
+describe('toBase', () => {
+  it('convierte USD a ARS con el rate provisto', () => {
+    expect(toBase(100, 'USD', 1200)).toBe(120000)
+    expect(toBase(10.5, 'USD', 1000)).toBe(10500)
+  })
+
+  it('deja ARS tal cual y tolera valores no numéricos', () => {
+    expect(toBase(100, 'ARS', 1200)).toBe(100)
+    expect(toBase(100, undefined, 1200)).toBe(100)
+    expect(toBase(null)).toBe(0)
+  })
+
+  it('devuelve 0 si USD no tiene rate (no convertible)', () => {
+    expect(toBase(100, 'USD', null)).toBe(0)
+    expect(toBase(100, 'USD', undefined)).toBe(0)
+  })
+})
+
 describe('summarize', () => {
-  it('agrupa por símbolo con cantidad, costo e invertido', () => {
+  it('agrupa por símbolo con cantidad, costo, invertido y moneda', () => {
     const ops = [
       op({ symbol: 'GGAL', side: 'compra', quantity: 10, price: 25, date: '2026-07-10' }),
       op({ symbol: 'GGAL', side: 'venta', quantity: 2, price: 40, date: '2026-07-20' }),
-      op({ symbol: 'AAPL', side: 'ajuste', quantity: 3, price: 200, date: '2026-07-05' }),
+      op({
+        symbol: 'AAPL',
+        side: 'ajuste',
+        quantity: 3,
+        price: 200,
+        date: '2026-07-05',
+        currency: 'USD',
+      }),
     ]
     const s = summarize(ops)
     expect(s).toHaveLength(2)
     expect(s[0].symbol).toBe('AAPL')
+    expect(s[0].currency).toBe('USD')
     expect(s[1].symbol).toBe('GGAL')
+    expect(s[1].currency).toBe('ARS')
     expect(s[1].quantity).toBe(8)
     expect(s[1].avgCost).toBe(25)
     expect(s[1].invested).toBe(250)

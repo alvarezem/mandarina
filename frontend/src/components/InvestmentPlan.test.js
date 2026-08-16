@@ -144,6 +144,53 @@ describe('InvestmentPlan', () => {
     )
   })
 
+  it('registra en el ledger la moneda del instrumento (USD)', async () => {
+    mockPlan(
+      [
+        {
+          id: '1',
+          symbol: 'VIST',
+          name: 'VIST',
+          asset_type: 'accion',
+          currency: 'USD',
+          target_weight: 50,
+          quantity: 0,
+          sort_order: 0,
+        },
+        {
+          id: '2',
+          symbol: 'SPY',
+          name: 'SPY',
+          asset_type: 'cedear',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 1,
+        },
+      ],
+      { VIST: 10, SPY: 100000 },
+    )
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} display="USD" rateMode="CCL" />)
+    await screen.findByText('VIST')
+
+    await userEvent.type(
+      screen.getByRole('spinbutton', { name: /Presupuesto para comprar/i }),
+      '100',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Comprar' }))
+    await waitFor(() =>
+      expect(supabase.from('ledger_operations').insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          symbol: 'VIST',
+          side: 'compra',
+          quantity: 8,
+          price: 10,
+          currency: 'USD',
+        }),
+      ),
+    )
+  })
+
   it('registra en el ledger el precio de mercado, no amount/qty', async () => {
     mockPlan(
       [

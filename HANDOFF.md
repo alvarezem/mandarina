@@ -6,15 +6,17 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-16)
 
-- **Batch 1 de `post-improvements.md` — Presupuesto y compra del plan HECHO**.
-  Cerró `batches/batch-01-presupuesto.md` ([x] en `batches/README.md`). Cambios:
-  `buyQty` → 0 si no alcanza (decisión en `DECISIONS.md`), `portfolioChangePct`
-  guard `<= -100 → null`, `buildPlan` buy=0 para sin-precio, `distribute` con
-  `skipped` (no debita presupuesto), `applyBuy` atómico (ledger primero + rollback
-  si falla el update, price de mercado de `quotes`, currency del instrumento),
-  fix del total 100% USD sin rate, aviso `inv.dist.skipped` + toast `err.buyQty`
-  en la UI. Suite **369/369** + lint 0 + coverage lib ≥80%. Frontend-only.
-  **Sigue: Batch 3 (ledger USD)** — depende de B1 que ya reescribió `applyBuy`.
+- **Batch 3 de `post-improvements.md` — Ledger: moneda y ventas HECHO**.
+  Cerró `batches/batch-03-ledger-usd.md` ([x] en `batches/README.md`). Cambios:
+  `ledger.js` sin supuesto ARS + señal `exceeded` en `costBasis` + `currency` en
+  `summarize` + función pura `toBase(value, currency, rate)` (base ARS);
+  `RegisterOperationModal` con selector ARS/USD (insert con la moneda real) y
+  rechazo de venta excedente (prop `existingOps`, toast `inv.op.err.oversell`);
+  `LedgerView` con scope unificado (solo tenidos) y moneda base ARS en los
+  totales, rentabilidad por símbolo en su moneda y celdas por moneda de la fila.
+  Decisión en `DECISIONS.md`. Suite **378/378** + lint 0 + coverage lib ≥80%.
+  Frontend-only (la columna `currency` ya existía en `0016_ledger.sql`).
+  **Sigue: Batch 2 (import-plan backend)**.
 - **Consolidación de docs + ideas de monetización** — se creó `DECISIONS.md`
   (log de decisiones, movido de HANDOFF), `HANDOFF.md` quedó corto (este archivo),
   `TODO.md` se deduplicó (items HECHO a una línea; los 3 GEO colapsados en 1) y
@@ -36,8 +38,9 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 ## En progreso
 
 - **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5
-  → 7 → 8 → 9 (índice y detalle en `batches/`). B1 cerrado; **siguiente: B3
-  (ledger USD)** — requiere `supabase db push` si agrega migración (ver el batch).
+  → 7 → 8 → 9 (índice y detalle en `batches/`). B1 y B3 cerrados; **siguiente:
+  B2 (import-plan: validaciones backend)** — es backend Deno (Edge Function), si
+  toca migraciones requiere `supabase db push` antes del `functions deploy`.
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).

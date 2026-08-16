@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import supabase from '../lib/supabaseClient'
 import { normalizeSymbol, validateSymbol } from '../lib/watchlist'
+import { ledgerQuantity } from '../lib/ledger'
 import { useToast } from './Toast'
 import { useLang } from './LangProvider'
 import { sideLabel, t } from '../lib/i18n'
@@ -18,10 +19,17 @@ const initialForm = () => ({
   price: '',
   commission: '',
   commissionIsPct: false,
+  currency: 'ARS',
   notes: '',
 })
 
-export default function RegisterOperationModal({ open, onClose, session, onRegistered }) {
+export default function RegisterOperationModal({
+  open,
+  onClose,
+  session,
+  onRegistered,
+  existingOps,
+}) {
   const { lang } = useLang()
   const pushToast = useToast()
   const [form, setForm] = useState(initialForm)
@@ -63,6 +71,13 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
       pushToast({ type: 'error', message: t(lang, 'inv.op.err.date') })
       return
     }
+    if (form.side === 'venta') {
+      const held = ledgerQuantity(existingOps.filter((o) => o.symbol === symbol))
+      if (held - quantity < 0) {
+        pushToast({ type: 'error', message: t(lang, 'inv.op.err.oversell', { held }) })
+        return
+      }
+    }
     setSaving(true)
     try {
       const { error } = await supabase.from('ledger_operations').insert({
@@ -73,7 +88,7 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
         price,
         commission,
         commission_is_pct: form.commissionIsPct,
-        currency: 'ARS',
+        currency: form.currency,
         date: form.date,
         notes: form.notes.trim() || null,
       })
@@ -184,6 +199,18 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
                     </option>
                   ))}
                 </select>
+                <select
+                  value={form.currency}
+                  onChange={setField('currency')}
+                  aria-label={t(lang, 'inv.op.currencyAria')}
+                  className={inputClass}
+                >
+                  {['ARS', 'USD'].map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
                 <input
                   value={form.symbol}
                   onChange={setField('symbol')}
@@ -279,7 +306,7 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {t(lang, 'inv.op.hint')}
+                  {t(lang, 'inv.op.hint', { currency: form.currency })}
                 </p>
                 <button
                   type="submit"

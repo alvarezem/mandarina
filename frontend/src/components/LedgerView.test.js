@@ -348,4 +348,116 @@ describe('LedgerView', () => {
 
     expect(await screen.findByTestId('quotes-error-notice')).toBeInTheDocument()
   })
+
+  it('registra una operación en USD con su moneda', async () => {
+    supabase.mockTable('ledger_operations', { rows: [], insert: { id: 'o1' } })
+    wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
+    await userEvent.selectOptions(screen.getByLabelText('Moneda de la operación'), 'USD')
+    await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'AAPL')
+    await userEvent.type(screen.getByLabelText('Cantidad de la operación'), '3')
+    await userEvent.type(screen.getByLabelText('Precio por unidad'), '200')
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar' }))
+
+    expect(supabase.from('ledger_operations').insert).toHaveBeenCalledWith(
+      expect.objectContaining({ symbol: 'AAPL', quantity: 3, price: 200, currency: 'USD' }),
+    )
+    expect(await screen.findByText('AAPL: compra de 3 unidades registrada')).toBeInTheDocument()
+  })
+
+  it('rechaza una venta que excede la posición con toast y no inserta', async () => {
+    supabase.mockTable('ledger_operations', {
+      rows: [
+        {
+          id: 'o1',
+          symbol: 'GGAL',
+          side: 'compra',
+          quantity: 5,
+          price: 10,
+          commission: 0,
+          date: '2026-07-10',
+        },
+      ],
+      insert: { id: 'o2' },
+    })
+    wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
+    await userEvent.selectOptions(screen.getByLabelText('Tipo de operación'), 'venta')
+    await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'GGAL')
+    await userEvent.type(screen.getByLabelText('Cantidad de la operación'), '9')
+    await userEvent.type(screen.getByLabelText('Precio por unidad'), '12')
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar' }))
+
+    expect(
+      await screen.findByText('No se puede vender más de lo que tenés (5 unidades)'),
+    ).toBeInTheDocument()
+    expect(supabase.from('ledger_operations').insert).not.toHaveBeenCalled()
+  })
+
+  it('deja vender hasta la cantidad tenida', async () => {
+    supabase.mockTable('ledger_operations', {
+      rows: [
+        {
+          id: 'o1',
+          symbol: 'GGAL',
+          side: 'compra',
+          quantity: 5,
+          price: 10,
+          commission: 0,
+          date: '2026-07-10',
+        },
+      ],
+      insert: { id: 'o2' },
+    })
+    wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+    await openModal()
+    await userEvent.selectOptions(screen.getByLabelText('Tipo de operación'), 'venta')
+    await userEvent.type(screen.getByLabelText('Símbolo de la operación'), 'GGAL')
+    await userEvent.type(screen.getByLabelText('Cantidad de la operación'), '5')
+    await userEvent.type(screen.getByLabelText('Precio por unidad'), '12')
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar' }))
+
+    expect(supabase.from('ledger_operations').insert).toHaveBeenCalledWith(
+      expect.objectContaining({ side: 'venta', quantity: 5 }),
+    )
+    expect(await screen.findByText('GGAL: venta de 5 unidades registrada')).toBeInTheDocument()
+  })
+
+  it('no cuenta en invertido un símbolo totalmente vendido', async () => {
+    mockRows([
+      {
+        id: 'o1',
+        symbol: 'GGAL',
+        side: 'compra',
+        quantity: 10,
+        price: 25,
+        commission: 0,
+        date: '2026-07-10',
+      },
+      {
+        id: 'o2',
+        symbol: 'AAPL',
+        side: 'compra',
+        quantity: 5,
+        price: 100,
+        commission: 0,
+        date: '2026-07-05',
+      },
+      {
+        id: 'o3',
+        symbol: 'AAPL',
+        side: 'venta',
+        quantity: 5,
+        price: 110,
+        commission: 0,
+        date: '2026-07-20',
+      },
+    ])
+    mockQuotes({ GGAL: { price: 40, changePct: 1 } })
+    wrap(<LedgerView session={{ user: { id: 'u1' } }} />)
+
+    expect(await screen.findByText('$ 400,00')).toBeInTheDocument()
+    expect(screen.getAllByText('$ 250,00').length).toBeGreaterThan(0)
+    expect(screen.queryByText('$ 750,00')).not.toBeInTheDocument()
+  })
 })

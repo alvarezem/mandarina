@@ -1,7 +1,8 @@
-import { ASSET_TYPES } from '../lib/constants'
 import { fmt, fmtPct } from '../lib/format'
 import SortableTh from './SortableTh'
 import AssetForm from './AssetForm'
+import { useLang } from './LangProvider'
+import { assetTypeLabel, t } from '../lib/i18n'
 
 function progressWidth(item) {
   return item.target_weight > 0 ? Math.min(100, (item.actualPct / item.target_weight) * 100) : 0
@@ -21,14 +22,20 @@ export default function PlanTable({
   quotes,
   display,
 }) {
+  const { lang } = useLang()
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[760px] text-left text-sm">
         <thead>
           <tr className="border-b border-slate-200 dark:border-slate-800">
-            <SortableTh label="Activo" sortKey="symbol" sort={sort} onSort={onSort} />
             <SortableTh
-              label="Precio"
+              label={t(lang, 'inv.table.activo')}
+              sortKey="symbol"
+              sort={sort}
+              onSort={onSort}
+            />
+            <SortableTh
+              label={t(lang, 'inv.table.precio')}
               sortKey="price"
               sort={sort}
               onSort={onSort}
@@ -36,30 +43,48 @@ export default function PlanTable({
               className="hidden sm:table-cell"
             />
             <SortableTh
-              label="Meta"
+              label={t(lang, 'inv.table.meta')}
               sortKey="target_weight"
               sort={sort}
               onSort={onSort}
               align="right"
             />
             <SortableTh
-              label="Actual"
+              label={t(lang, 'inv.table.actual')}
               sortKey="actualPct"
               sort={sort}
               onSort={onSort}
               align="right"
             />
-            <SortableTh label="Gap" sortKey="gap" sort={sort} onSort={onSort} align="right" />
             <SortableTh
-              label="Cantidad"
+              label={t(lang, 'inv.table.gap')}
+              sortKey="gap"
+              sort={sort}
+              onSort={onSort}
+              align="right"
+            />
+            <SortableTh
+              label={t(lang, 'inv.table.cantidad')}
               sortKey="quantity"
               sort={sort}
               onSort={onSort}
               align="right"
               className="hidden sm:table-cell"
             />
-            <SortableTh label="Valor" sortKey="value" sort={sort} onSort={onSort} align="right" />
-            <SortableTh label="A comprar" sortKey="buy" sort={sort} onSort={onSort} align="right" />
+            <SortableTh
+              label={t(lang, 'inv.table.valor')}
+              sortKey="value"
+              sort={sort}
+              onSort={onSort}
+              align="right"
+            />
+            <SortableTh
+              label={t(lang, 'inv.table.aComprar')}
+              sortKey="buy"
+              sort={sort}
+              onSort={onSort}
+              align="right"
+            />
             <th className="px-3 py-3" />
           </tr>
         </thead>
@@ -87,7 +112,7 @@ export default function PlanTable({
                       {item.symbol}
                     </span>
                     <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                      {ASSET_TYPES[item.asset_type] ?? item.asset_type}
+                      {assetTypeLabel(lang, item.asset_type)}
                     </span>
                   </div>
                   {item.name && item.name !== item.symbol && (
@@ -121,15 +146,15 @@ export default function PlanTable({
                     </span>
                   ) : (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                      sin precio
+                      {t(lang, 'inv.sinPrecio')}
                     </span>
                   )}
                 </td>
                 <td className="px-3 py-3 text-right font-medium text-slate-700 dark:text-slate-200">
-                  {fmtPct(item.target_weight)}
+                  {fmtPct(item.target_weight, lang)}
                 </td>
                 <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">
-                  {fmtPct(item.actualPct)}
+                  {fmtPct(item.actualPct, lang)}
                 </td>
                 <td
                   className={`px-3 py-3 text-right ${
@@ -140,7 +165,11 @@ export default function PlanTable({
                         : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
-                  {item.over ? `${fmtPct(item.gap)}` : item.gap > 0 ? `+${fmtPct(item.gap)}` : '—'}
+                  {item.over
+                    ? `${fmtPct(item.gap, lang)}`
+                    : item.gap > 0
+                      ? `+${fmtPct(item.gap, lang)}`
+                      : '—'}
                 </td>
                 <td className="hidden px-3 py-3 text-slate-600 dark:text-slate-300 sm:table-cell">
                   {item.quantity}
@@ -162,8 +191,8 @@ export default function PlanTable({
                     <button
                       type="button"
                       onClick={() => onEdit(item)}
-                      aria-label={`Editar ${item.symbol}`}
-                      title="Editar"
+                      aria-label={t(lang, 'inv.table.editAria', { symbol: item.symbol })}
+                      title={t(lang, 'inv.table.editTitle')}
                       className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                     >
                       <svg
@@ -183,8 +212,8 @@ export default function PlanTable({
                     <button
                       type="button"
                       onClick={() => onRemove(item)}
-                      aria-label={`Eliminar ${item.symbol}`}
-                      title="Eliminar"
+                      aria-label={t(lang, 'inv.table.removeAria', { symbol: item.symbol })}
+                      title={t(lang, 'inv.table.removeTitle')}
                       className="rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                     >
                       <svg

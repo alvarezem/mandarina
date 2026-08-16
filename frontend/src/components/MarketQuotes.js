@@ -9,6 +9,8 @@ import QuoteModal from './QuoteModal'
 import QuotesErrorNotice from './QuotesErrorNotice'
 import { usePortfolioQuotes } from '../hooks/usePortfolioQuotes'
 import { DEFAULT_PLAN_SORT, SORT_DEFAULT_DIR, SORT_KEYS } from '../lib/planSort'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
 export default function MarketQuotes({
   session,
@@ -19,6 +21,7 @@ export default function MarketQuotes({
   onSort: onSortProp,
   onMarketClosed = () => {},
 }) {
+  const { lang } = useLang()
   const [localSort, setLocalSort] = useState(DEFAULT_PLAN_SORT)
   const sort = sortProp ?? localSort
   const onSort =
@@ -106,12 +109,12 @@ export default function MarketQuotes({
         .order('sort_order', { ascending: true })
       if (error) {
         console.error('MarketQuotes: error al cargar el plan', error)
-        throw new Error('No se pudo cargar el plan de inversión')
+        throw new Error(t(lang, 'inv.plan.err.load'))
       }
       return data || []
     } catch (e) {
       console.error('MarketQuotes: error al cargar el plan', e)
-      throw new Error('No se pudo cargar el plan de inversión')
+      throw new Error(t(lang, 'inv.plan.err.load'))
     }
   }, [session?.user?.id])
   const items = planData ?? []
@@ -196,10 +199,10 @@ export default function MarketQuotes({
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-            Cotizaciones en vivo
+            {t(lang, 'inv.tab.quotes')}
           </h1>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            Resumen de tus inversiones · precios BYMA (~20 min de demora)
+            {t(lang, 'inv.quotes.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -207,8 +210,8 @@ export default function MarketQuotes({
           <button
             type="button"
             onClick={refreshQuotes}
-            title="Actualizar precios"
-            aria-label="Actualizar precios"
+            title={t(lang, 'inv.refresh')}
+            aria-label={t(lang, 'inv.refresh')}
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <svg
@@ -245,19 +248,19 @@ export default function MarketQuotes({
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center dark:border-slate-700">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Todavía no cargaste tu plan.
+            {t(lang, 'inv.plan.empty.title')}
           </p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Andá a la pestaña «Plan de inversión» e importá tu Excel (Ticker | % Meta | Tenencia).
+            {t(lang, 'inv.quotes.empty.hint')}
           </p>
         </div>
       ) : !hasQuotes ? (
         <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center dark:border-slate-700">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Aún no hay precios disponibles.
+            {t(lang, 'inv.quotes.noPrices.title')}
           </p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Actualizá las cotizaciones.
+            {t(lang, 'inv.quotes.noPrices.hint')}
           </p>
         </div>
       ) : (
@@ -265,7 +268,9 @@ export default function MarketQuotes({
           <section className="mb-4 rounded-2xl border border-slate-200 bg-white/70 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs text-slate-400 dark:text-slate-500">Patrimonio total</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  {t(lang, 'inv.quotes.total')}
+                </p>
                 <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
                   {fmt(total, display)}
                 </p>
@@ -277,10 +282,14 @@ export default function MarketQuotes({
                         : 'text-red-600 dark:text-red-400'
                     }`}
                   >
-                    {dayChange >= 0 ? '▲' : '▼'} {Math.abs(dayChange).toFixed(2)}% hoy
+                    {dayChange >= 0 ? '▲' : '▼'} {Math.abs(dayChange).toFixed(2)}%{' '}
+                    {t(lang, 'inv.quotes.today')}
                     {pricedCount < builtItems.length && (
                       <span className="ml-1 text-xs font-normal text-slate-400">
-                        · {pricedCount} de {builtItems.length} activos con precio
+                        {t(lang, 'inv.quotes.coverage', {
+                          priced: pricedCount,
+                          total: builtItems.length,
+                        })}
                       </span>
                     )}
                   </p>

@@ -7,6 +7,8 @@ import { useWatchQuotes } from '../hooks/useWatchQuotes'
 import { useToast } from './Toast'
 import QuotesErrorNotice from './QuotesErrorNotice'
 import RegisterOperationModal from './RegisterOperationModal'
+import { useLang } from './LangProvider'
+import { sideLabel, t } from '../lib/i18n'
 
 export default function LedgerView({
   session,
@@ -15,6 +17,7 @@ export default function LedgerView({
   setDisplay = () => {},
   setRateMode = () => {},
 }) {
+  const { lang } = useLang()
   const pushToast = useToast()
   const [showForm, setShowForm] = useState(false)
   const [formKey, setFormKey] = useState(0)
@@ -39,12 +42,12 @@ export default function LedgerView({
         .order('date', { ascending: false })
       if (error) {
         console.error('LedgerView: error al cargar', error)
-        throw new Error('No se pudo cargar el historial de operaciones')
+        throw new Error(t(lang, 'inv.ledger.err.load'))
       }
       return data || []
     } catch (e) {
       console.error('LedgerView: error al cargar', e)
-      throw new Error('No se pudo cargar el historial de operaciones')
+      throw new Error(t(lang, 'inv.ledger.err.load'))
     }
   }, [session?.user?.id])
 
@@ -75,15 +78,18 @@ export default function LedgerView({
       const { error } = await supabase.from('ledger_operations').delete().eq('id', op.id)
       if (error) {
         console.error('LedgerView: error al eliminar operación', error)
-        pushToast({ type: 'error', message: 'No se pudo eliminar la operación' })
+        pushToast({ type: 'error', message: t(lang, 'inv.ledger.err.remove') })
         return
       }
       setConfirmingId(null)
-      pushToast({ type: 'success', message: `Operación de ${op.symbol} eliminada` })
+      pushToast({
+        type: 'success',
+        message: t(lang, 'inv.ledger.ok.removed', { symbol: op.symbol }),
+      })
       reload()
     } catch (e) {
       console.error('LedgerView: error al eliminar operación', e)
-      pushToast({ type: 'error', message: 'No se pudo eliminar la operación' })
+      pushToast({ type: 'error', message: t(lang, 'inv.ledger.err.remove') })
     }
   }
 
@@ -98,10 +104,10 @@ export default function LedgerView({
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">
-            Operaciones
+            {t(lang, 'inv.ledger.title')}
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            Historial real de compras/ventas y rentabilidad vs. costo
+            {t(lang, 'inv.ledger.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -119,14 +125,14 @@ export default function LedgerView({
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Registrar operación
+            {t(lang, 'inv.ledger.register')}
           </button>
           {quotesError && <QuotesErrorNotice />}
           <button
             type="button"
             onClick={refreshQuotes}
-            title="Actualizar precios"
-            aria-label="Actualizar precios"
+            title={t(lang, 'inv.refresh')}
+            aria-label={t(lang, 'inv.refresh')}
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <svg
@@ -162,7 +168,7 @@ export default function LedgerView({
           <select
             value={rateMode}
             onChange={(e) => setRateMode(e.target.value)}
-            aria-label="Tipo de cambio"
+            aria-label={t(lang, 'inv.ledger.rateAria')}
             className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
           >
             <option value="CCL">CCL</option>
@@ -188,37 +194,42 @@ export default function LedgerView({
       ) : ops.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center dark:border-slate-700">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Todavía no registraste ninguna operación.
+            {t(lang, 'inv.ledger.empty.title')}
           </p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Cargá tus compras/ventas y la posición inicial (Ajuste) para ver la rentabilidad vs.
-            costo.
+            {t(lang, 'inv.ledger.empty.hint')}
           </p>
           <button
             type="button"
             onClick={openForm}
             className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600"
           >
-            Registrar operación
+            {t(lang, 'inv.ledger.register')}
           </button>
         </div>
       ) : (
         <>
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
-              <p className="text-xs text-slate-400 dark:text-slate-500">Invertido</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                {t(lang, 'inv.ledger.invested')}
+              </p>
               <p className="mt-0.5 text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
                 {fmt(toDisplay(totalInvested), display)}
               </p>
             </div>
             <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
-              <p className="text-xs text-slate-400 dark:text-slate-500">Valor actual</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                {t(lang, 'inv.ledger.currentValue')}
+              </p>
               <p className="mt-0.5 text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
                 {fmt(toDisplay(totalValue), display)}
               </p>
             </div>
             <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
-              <p className="text-xs text-slate-400 dark:text-slate-500">Ganancia/Pérdida</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                {t(lang, 'inv.ledger.pnl')}
+              </p>
               <p
                 className={`mt-0.5 text-lg font-bold tabular-nums ${
                   totalPnl >= 0
@@ -238,11 +249,19 @@ export default function LedgerView({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400 dark:border-slate-800">
-                  <th className="py-2 pr-3 font-medium">Símbolo</th>
-                  <th className="py-2 pr-3 text-right font-medium">Cantidad</th>
-                  <th className="py-2 pr-3 text-right font-medium">Costo prom.</th>
-                  <th className="py-2 pr-3 text-right font-medium">Precio</th>
-                  <th className="py-2 pr-3 text-right font-medium">Rentab.</th>
+                  <th className="py-2 pr-3 font-medium">{t(lang, 'inv.ledger.symbol')}</th>
+                  <th className="py-2 pr-3 text-right font-medium">
+                    {t(lang, 'inv.table.cantidad')}
+                  </th>
+                  <th className="py-2 pr-3 text-right font-medium">
+                    {t(lang, 'inv.ledger.avgCost')}
+                  </th>
+                  <th className="py-2 pr-3 text-right font-medium">
+                    {t(lang, 'inv.table.precio')}
+                  </th>
+                  <th className="py-2 pr-3 text-right font-medium">
+                    {t(lang, 'inv.ledger.rentability')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -285,16 +304,22 @@ export default function LedgerView({
             <table className="mt-4 w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400 dark:border-slate-800">
-                  <th className="py-2 pr-3 font-medium">Fecha</th>
-                  <th className="py-2 pr-3 font-medium">Símbolo</th>
-                  <th className="py-2 pr-3 font-medium">Nota</th>
-                  <th className="py-2 pr-3 font-medium">Tipo</th>
-                  <th className="py-2 pr-3 text-right font-medium">Cant.</th>
-                  <th className="py-2 pr-3 text-right font-medium">Precio</th>
-                  <th className="py-2 pr-3 text-right font-medium">Comisión</th>
-                  <th className="py-2 pr-3 text-right font-medium">Subtotal</th>
+                  <th className="py-2 pr-3 font-medium">{t(lang, 'inv.ledger.date')}</th>
+                  <th className="py-2 pr-3 font-medium">{t(lang, 'inv.ledger.symbol')}</th>
+                  <th className="py-2 pr-3 font-medium">{t(lang, 'inv.ledger.note')}</th>
+                  <th className="py-2 pr-3 font-medium">{t(lang, 'inv.ledger.type')}</th>
+                  <th className="py-2 pr-3 text-right font-medium">{t(lang, 'inv.ledger.qty')}</th>
+                  <th className="py-2 pr-3 text-right font-medium">
+                    {t(lang, 'inv.table.precio')}
+                  </th>
+                  <th className="py-2 pr-3 text-right font-medium">
+                    {t(lang, 'inv.ledger.commission')}
+                  </th>
+                  <th className="py-2 pr-3 text-right font-medium">
+                    {t(lang, 'inv.ledger.subtotal')}
+                  </th>
                   <th className="py-2 text-right font-medium">
-                    <span className="sr-only">Acciones</span>
+                    <span className="sr-only">{t(lang, 'inv.ledger.actions')}</span>
                   </th>
                 </tr>
               </thead>
@@ -323,7 +348,7 @@ export default function LedgerView({
                               : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
                         }`}
                       >
-                        {o.side}
+                        {sideLabel(lang, o.side)}
                       </span>
                     </td>
                     <td className="py-2 pr-3 text-right tabular-nums text-slate-700 dark:text-slate-200">
@@ -346,29 +371,29 @@ export default function LedgerView({
                       {confirmingId === o.id ? (
                         <span className="inline-flex items-center gap-1.5">
                           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            ¿Borrar?
+                            {t(lang, 'inv.ledger.deleteConfirm')}
                           </span>
                           <button
                             type="button"
                             onClick={() => removeOp(o)}
                             className="rounded-md bg-red-500 px-2 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
                           >
-                            Sí
+                            {t(lang, 'inv.ledger.yes')}
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfirmingId(null)}
                             className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                           >
-                            No
+                            {t(lang, 'inv.ledger.no')}
                           </button>
                         </span>
                       ) : (
                         <button
                           type="button"
                           onClick={() => setConfirmingId(o.id)}
-                          aria-label={`Eliminar operación de ${o.symbol}`}
-                          title="Eliminar operación"
+                          aria-label={t(lang, 'inv.ledger.deleteAria', { symbol: o.symbol })}
+                          title={t(lang, 'inv.ledger.deleteTitle')}
                           className="rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                         >
                           <svg

@@ -3,6 +3,8 @@ import '../lib/chartjs'
 import { RANGES, formatPointDate } from '../lib/history'
 import { fmt } from '../lib/format'
 import { BRAND_HEX } from '../lib/constants'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
 export default function PriceChart({
   symbol,
@@ -15,6 +17,8 @@ export default function PriceChart({
   quote = null,
   display = 'ARS',
 }) {
+  const { lang } = useLang()
+  const locale = lang === 'en' ? 'en-US' : 'es-AR'
   const data = {
     labels: points.map((p) => formatPointDate(p.t, range)),
     datasets: [
@@ -43,9 +47,9 @@ export default function PriceChart({
           title: (items) => {
             const i = items[0]?.dataIndex
             const p = points[i]
-            return p ? new Date(p.t).toLocaleDateString('es-AR') : ''
+            return p ? new Date(p.t).toLocaleDateString(locale) : ''
           },
-          label: (item) => `Cierre: ${fmt(item.parsed.y, display)}`,
+          label: (item) => t(lang, 'inv.chart.cierre', { value: fmt(item.parsed.y, display) }),
         },
       },
     },
@@ -85,31 +89,31 @@ export default function PriceChart({
             )}
             {quote.tradeHour && (
               <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                hoy {quote.tradeHour}
+                {t(lang, 'inv.chart.today', { hour: quote.tradeHour })}
               </span>
             )}
           </div>
           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
             <span>
-              Apr{' '}
+              {t(lang, 'inv.chart.open')}{' '}
               <b className="font-semibold text-slate-700 dark:text-slate-300">
                 {fmt(quote.open, display)}
               </b>
             </span>
             <span>
-              Cierre prev{' '}
+              {t(lang, 'inv.chart.prevClose')}{' '}
               <b className="font-semibold text-slate-700 dark:text-slate-300">
                 {fmt(quote.prevClose, display)}
               </b>
             </span>
             <span>
-              Máx{' '}
+              {t(lang, 'inv.chart.high')}{' '}
               <b className="font-semibold text-slate-700 dark:text-slate-300">
                 {fmt(quote.high, display)}
               </b>
             </span>
             <span>
-              Mín{' '}
+              {t(lang, 'inv.chart.low')}{' '}
               <b className="font-semibold text-slate-700 dark:text-slate-300">
                 {fmt(quote.low, display)}
               </b>
@@ -124,7 +128,7 @@ export default function PriceChart({
         </span>
         <div
           role="group"
-          aria-label="Rango del gráfico"
+          aria-label={t(lang, 'inv.chart.rangeAria')}
           className="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white/70 dark:border-slate-700 dark:bg-slate-800/70"
         >
           {RANGES.map((r) => (
@@ -149,19 +153,19 @@ export default function PriceChart({
         <div
           className={`flex items-center justify-center text-sm text-slate-400 ${compact ? 'h-32' : 'h-72'}`}
         >
-          Cargando histórico…
+          {t(lang, 'inv.chart.loading')}
         </div>
       ) : error ? (
         <div
           className={`flex items-center justify-center text-sm text-red-500 ${compact ? 'h-32' : 'h-72'}`}
         >
-          No se pudo cargar el histórico.
+          {t(lang, 'inv.chart.error')}
         </div>
       ) : points.length === 0 ? (
         <div
           className={`flex items-center justify-center text-sm text-slate-400 ${compact ? 'h-32' : 'h-72'}`}
         >
-          Sin datos históricos para {symbol}.
+          {t(lang, 'inv.chart.noData', { symbol })}
         </div>
       ) : (
         <div className={`relative ${compact ? 'h-40' : 'h-80'}`}>

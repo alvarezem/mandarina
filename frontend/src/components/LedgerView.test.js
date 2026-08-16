@@ -94,8 +94,8 @@ describe('LedgerView', () => {
 
     const tables = await screen.findAllByRole('table')
     const opsTable = tables[tables.length - 1]
-    expect(within(opsTable).getByText('compra')).toBeInTheDocument()
-    expect(within(opsTable).getByText('venta')).toBeInTheDocument()
+    expect(within(opsTable).getByText('Compra')).toBeInTheDocument()
+    expect(within(opsTable).getByText('Venta')).toBeInTheDocument()
     expect(within(opsTable).getByText('$ 252,00')).toBeInTheDocument()
     expect(within(opsTable).getByText('-$ 79,00')).toBeInTheDocument()
   })

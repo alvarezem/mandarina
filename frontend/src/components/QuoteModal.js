@@ -1,4 +1,6 @@
 import PriceChart from './PriceChart'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
 export default function QuoteModal({
   modal,
@@ -9,6 +11,7 @@ export default function QuoteModal({
   onRange,
   onClose,
 }) {
+  const { lang } = useLang()
   return (
     <div className="fixed inset-0 z-[70]">
       <div
@@ -21,17 +24,17 @@ export default function QuoteModal({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={`Gráfico de ${modal.symbol}`}
+            aria-label={t(lang, 'inv.modal.dialogAria', { symbol: modal.symbol })}
             className="relative my-4 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
           >
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                Precio · {modal.symbol}
+                {t(lang, 'inv.modal.title', { symbol: modal.symbol })}
               </h2>
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Cerrar gráfico"
+                aria-label={t(lang, 'inv.modal.closeAria')}
                 className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               >
                 <svg

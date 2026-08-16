@@ -1,6 +1,9 @@
 import { Logo } from './Sidebar'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
 export default function MarketClosedNotice({ onClose }) {
+  const { lang } = useLang()
   return (
     <div
       role="status"
@@ -8,16 +11,13 @@ export default function MarketClosedNotice({ onClose }) {
     >
       <div className="flex min-w-0 items-center gap-3 text-sm leading-relaxed text-amber-900 dark:text-amber-200">
         <Logo className="h-5 w-5 shrink-0" />
-        <span>
-          Mercado cerrado · Las cotizaciones son del último cierre y se actualizan cuando el mercado
-          vuelva a abrir (lun–vie, 11 a 17 h).
-        </span>
+        <span>{t(lang, 'inv.closed.text')}</span>
       </div>
       <button
         type="button"
         onClick={onClose}
-        aria-label="Cerrar aviso"
-        title="Cerrar"
+        aria-label={t(lang, 'inv.closed.closeAria')}
+        title={t(lang, 'inv.closed.closeTitle')}
         className="shrink-0 rounded-lg p-1.5 text-amber-700 transition hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
       >
         <svg

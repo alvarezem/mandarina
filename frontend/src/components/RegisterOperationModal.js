@@ -3,12 +3,10 @@ import { createPortal } from 'react-dom'
 import supabase from '../lib/supabaseClient'
 import { normalizeSymbol, validateSymbol } from '../lib/watchlist'
 import { useToast } from './Toast'
+import { useLang } from './LangProvider'
+import { sideLabel, t } from '../lib/i18n'
 
-const SIDES = [
-  { key: 'compra', label: 'Compra' },
-  { key: 'venta', label: 'Venta' },
-  { key: 'ajuste', label: 'Ajuste' },
-]
+const SIDES = ['compra', 'venta', 'ajuste']
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -24,6 +22,7 @@ const initialForm = () => ({
 })
 
 export default function RegisterOperationModal({ open, onClose, session, onRegistered }) {
+  const { lang } = useLang()
   const pushToast = useToast()
   const [form, setForm] = useState(initialForm)
   const [saving, setSaving] = useState(false)
@@ -46,22 +45,22 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
     e.preventDefault()
     const symbol = normalizeSymbol(form.symbol)
     if (!validateSymbol(symbol)) {
-      pushToast({ type: 'error', message: 'Ticker inválido (ej. GGAL, AL30, MELID)' })
+      pushToast({ type: 'error', message: t(lang, 'inv.watch.err.invalidTicker') })
       return
     }
     const quantity = Number(form.quantity)
     const price = form.price === '' ? 0 : Number(form.price)
     const commission = form.commission === '' ? 0 : Number(form.commission)
     if (!Number.isFinite(quantity) || quantity <= 0) {
-      pushToast({ type: 'error', message: 'La cantidad debe ser mayor a 0' })
+      pushToast({ type: 'error', message: t(lang, 'inv.op.err.quantity') })
       return
     }
     if (!Number.isFinite(price) || price < 0 || !Number.isFinite(commission) || commission < 0) {
-      pushToast({ type: 'error', message: 'Precio y comisión deben ser mayores o iguales a 0' })
+      pushToast({ type: 'error', message: t(lang, 'inv.op.err.priceCommission') })
       return
     }
     if (!form.date) {
-      pushToast({ type: 'error', message: 'Elegí una fecha para la operación' })
+      pushToast({ type: 'error', message: t(lang, 'inv.op.err.date') })
       return
     }
     setSaving(true)
@@ -80,17 +79,21 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
       })
       if (error) {
         console.error('RegisterOperationModal: error al registrar operación', error)
-        pushToast({ type: 'error', message: 'No se pudo registrar la operación' })
+        pushToast({ type: 'error', message: t(lang, 'inv.op.err.register') })
         return
       }
       pushToast({
         type: 'success',
-        message: `${symbol}: ${form.side} de ${quantity} unidades registrada`,
+        message: t(lang, 'inv.op.ok.registered', {
+          symbol,
+          side: form.side,
+          quantity,
+        }),
       })
       onRegistered()
     } catch (e) {
       console.error('RegisterOperationModal: error al registrar operación', e)
-      pushToast({ type: 'error', message: 'No se pudo registrar la operación' })
+      pushToast({ type: 'error', message: t(lang, 'inv.op.err.register') })
     } finally {
       setSaving(false)
     }
@@ -99,7 +102,7 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
   const handleByma = async () => {
     const symbol = normalizeSymbol(form.symbol)
     if (!validateSymbol(symbol)) {
-      pushToast({ type: 'error', message: 'Ticker inválido (ej. GGAL, AL30, MELID)' })
+      pushToast({ type: 'error', message: t(lang, 'inv.watch.err.invalidTicker') })
       return
     }
     setBymaLoading(true)
@@ -110,13 +113,13 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
       if (error) throw error
       const price = data?.quotes?.[symbol]?.price
       if (price == null) {
-        pushToast({ type: 'error', message: `No se pudo obtener la cotización de ${symbol}` })
+        pushToast({ type: 'error', message: t(lang, 'inv.op.err.quote', { symbol }) })
         return
       }
       setForm((f) => ({ ...f, price: String(price) }))
     } catch (e) {
       console.error('RegisterOperationModal: error al obtener cotización', e)
-      pushToast({ type: 'error', message: `No se pudo obtener la cotización de ${symbol}` })
+      pushToast({ type: 'error', message: t(lang, 'inv.op.err.quote', { symbol }) })
     } finally {
       setBymaLoading(false)
     }
@@ -137,22 +140,22 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Registrar operación"
+            aria-label={t(lang, 'inv.op.dialogAria')}
             className="relative my-4 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                  Registrar operación
+                  {t(lang, 'inv.op.dialogAria')}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Compra, venta o ajuste de tu posición
+                  {t(lang, 'inv.op.subtitle')}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Cerrar registro"
+                aria-label={t(lang, 'inv.op.closeAria')}
                 className="shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               >
                 <svg
@@ -172,20 +175,20 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
                 <select
                   value={form.side}
                   onChange={setField('side')}
-                  aria-label="Tipo de operación"
+                  aria-label={t(lang, 'inv.op.typeAria')}
                   className={inputClass}
                 >
-                  {SIDES.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
+                  {SIDES.map((key) => (
+                    <option key={key} value={key}>
+                      {sideLabel(lang, key)}
                     </option>
                   ))}
                 </select>
                 <input
                   value={form.symbol}
                   onChange={setField('symbol')}
-                  placeholder="Ticker *"
-                  aria-label="Símbolo de la operación"
+                  placeholder={t(lang, 'inv.op.tickerPlaceholder')}
+                  aria-label={t(lang, 'inv.op.symbolAria')}
                   required
                   maxLength={12}
                   className={inputClass}
@@ -194,7 +197,7 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
                   type="date"
                   value={form.date}
                   onChange={setField('date')}
-                  aria-label="Fecha de la operación"
+                  aria-label={t(lang, 'inv.op.dateAria')}
                   required
                   className={inputClass}
                 />
@@ -204,8 +207,8 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
                   step="any"
                   value={form.quantity}
                   onChange={setField('quantity')}
-                  placeholder="Cantidad *"
-                  aria-label="Cantidad de la operación"
+                  placeholder={t(lang, 'inv.op.qtyPlaceholder')}
+                  aria-label={t(lang, 'inv.op.qtyAria')}
                   required
                   className={inputClass}
                 />
@@ -216,15 +219,15 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
                     step="any"
                     value={form.price}
                     onChange={setField('price')}
-                    placeholder="Precio"
-                    aria-label="Precio por unidad"
+                    placeholder={t(lang, 'inv.op.pricePlaceholder')}
+                    aria-label={t(lang, 'inv.op.priceAria')}
                     className={inputClass}
                   />
                   <button
                     type="button"
                     onClick={handleByma}
                     disabled={bymaLoading}
-                    title="Usar el precio BYMA actual"
+                    title={t(lang, 'inv.op.bymaTitle')}
                     className="shrink-0 rounded-lg border border-slate-300 px-2 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     {bymaLoading ? '…' : 'BYMA'}
@@ -237,8 +240,8 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
                     step="any"
                     value={form.commission}
                     onChange={setField('commission')}
-                    placeholder="Comisión"
-                    aria-label="Comisión de la operación"
+                    placeholder={t(lang, 'inv.op.commissionPlaceholder')}
+                    aria-label={t(lang, 'inv.op.commissionAria')}
                     className={inputClass}
                   />
                   <div className="inline-flex shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
@@ -247,7 +250,11 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
                         key={u}
                         type="button"
                         onClick={() => setForm((f) => ({ ...f, commissionIsPct: u === '%' }))}
-                        aria-label={u === '%' ? 'Comisión en porcentaje' : 'Comisión en pesos'}
+                        aria-label={
+                          u === '%'
+                            ? t(lang, 'inv.op.commissionPctAria')
+                            : t(lang, 'inv.op.commissionArsAria')
+                        }
                         aria-pressed={form.commissionIsPct === (u === '%')}
                         className={`px-2 py-2 text-sm font-medium transition ${
                           form.commissionIsPct === (u === '%')
@@ -263,8 +270,8 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
                 <textarea
                   value={form.notes}
                   onChange={setField('notes')}
-                  placeholder="Nota (opcional)"
-                  aria-label="Nota de la operación"
+                  placeholder={t(lang, 'inv.op.notesPlaceholder')}
+                  aria-label={t(lang, 'inv.op.notesAria')}
                   rows={4}
                   maxLength={120}
                   className={`${inputClass} col-span-2 w-full resize-y sm:col-span-4`}
@@ -272,14 +279,14 @@ export default function RegisterOperationModal({ open, onClose, session, onRegis
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  Los campos con * son obligatorios · Precio en $ · Comisión en $ o %
+                  {t(lang, 'inv.op.hint')}
                 </p>
                 <button
                   type="submit"
                   disabled={saving}
                   className="self-end rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 active:scale-[0.98] disabled:opacity-60 dark:bg-brand-500 dark:hover:bg-brand-600"
                 >
-                  {saving ? 'Registrando…' : 'Registrar'}
+                  {saving ? t(lang, 'inv.op.saving') : t(lang, 'inv.op.save')}
                 </button>
               </div>
             </form>

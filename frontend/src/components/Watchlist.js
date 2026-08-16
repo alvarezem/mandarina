@@ -6,8 +6,11 @@ import { useAsync } from '../hooks/useAsync'
 import { useWatchQuotes } from '../hooks/useWatchQuotes'
 import { useToast } from './Toast'
 import QuotesErrorNotice from './QuotesErrorNotice'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
 export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }) {
+  const { lang } = useLang()
   const [symbolDraft, setSymbolDraft] = useState('')
   const [nameDraft, setNameDraft] = useState('')
   const [adding, setAdding] = useState(false)
@@ -28,12 +31,12 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
         .order('sort_order', { ascending: true })
       if (error) {
         console.error('Watchlist: error al cargar', error)
-        throw new Error('No se pudo cargar la watchlist')
+        throw new Error(t(lang, 'inv.watch.err.load'))
       }
       return data || []
     } catch (e) {
       console.error('Watchlist: error al cargar', e)
-      throw new Error('No se pudo cargar la watchlist')
+      throw new Error(t(lang, 'inv.watch.err.load'))
     }
   }, [session?.user?.id])
 
@@ -49,11 +52,11 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
     e.preventDefault()
     const symbol = normalizeSymbol(symbolDraft)
     if (!validateSymbol(symbol)) {
-      pushToast({ type: 'error', message: 'Ticker inválido (ej. GGAL, AL30, MELID)' })
+      pushToast({ type: 'error', message: t(lang, 'inv.watch.err.invalidTicker') })
       return
     }
     if (items.some((i) => i.symbol === symbol)) {
-      pushToast({ type: 'error', message: `${symbol} ya está en tu watchlist` })
+      pushToast({ type: 'error', message: t(lang, 'inv.watch.err.exists', { symbol }) })
       return
     }
     setAdding(true)
@@ -66,16 +69,16 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
       })
       if (error) {
         console.error('Watchlist: error al agregar ticker', error)
-        pushToast({ type: 'error', message: 'No se pudo agregar el ticker' })
+        pushToast({ type: 'error', message: t(lang, 'inv.watch.err.add') })
         return
       }
       setSymbolDraft('')
       setNameDraft('')
-      pushToast({ type: 'success', message: `${symbol} agregado a tu watchlist` })
+      pushToast({ type: 'success', message: t(lang, 'inv.watch.ok.added', { symbol }) })
       reload()
     } catch (e) {
       console.error('Watchlist: error al agregar ticker', e)
-      pushToast({ type: 'error', message: 'No se pudo agregar el ticker' })
+      pushToast({ type: 'error', message: t(lang, 'inv.watch.err.add') })
     } finally {
       setAdding(false)
     }
@@ -86,15 +89,18 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
       const { error } = await supabase.from('watchlist').delete().eq('id', item.id)
       if (error) {
         console.error('Watchlist: error al eliminar ticker', error)
-        pushToast({ type: 'error', message: 'No se pudo eliminar el ticker' })
+        pushToast({ type: 'error', message: t(lang, 'inv.watch.err.remove') })
         return
       }
       setConfirmingId(null)
-      pushToast({ type: 'success', message: `${item.symbol} eliminado de tu watchlist` })
+      pushToast({
+        type: 'success',
+        message: t(lang, 'inv.watch.ok.removed', { symbol: item.symbol }),
+      })
       reload()
     } catch (e) {
       console.error('Watchlist: error al eliminar ticker', e)
-      pushToast({ type: 'error', message: 'No se pudo eliminar el ticker' })
+      pushToast({ type: 'error', message: t(lang, 'inv.watch.err.remove') })
     }
   }
 
@@ -103,10 +109,10 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">
-            Mi watchlist
+            {t(lang, 'inv.watch.title')}
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            Tickers a seguir fuera de tu plan · precios BYMA (~20 min de demora)
+            {t(lang, 'inv.watch.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -114,8 +120,8 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
           <button
             type="button"
             onClick={refreshQuotes}
-            title="Actualizar precios de la watchlist"
-            aria-label="Actualizar precios de la watchlist"
+            title={t(lang, 'inv.watch.refreshAria')}
+            aria-label={t(lang, 'inv.watch.refreshAria')}
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-200/60 active:scale-[0.98] dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <svg
@@ -139,16 +145,16 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
         <input
           value={symbolDraft}
           onChange={(e) => setSymbolDraft(e.target.value)}
-          placeholder="Ticker (ej. AAPL)"
-          aria-label="Ticker a seguir"
+          placeholder={t(lang, 'inv.watch.tickerPlaceholder')}
+          aria-label={t(lang, 'inv.watch.tickerAria')}
           maxLength={12}
           className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
         />
         <input
           value={nameDraft}
           onChange={(e) => setNameDraft(e.target.value)}
-          placeholder="Etiqueta opcional"
-          aria-label="Etiqueta opcional"
+          placeholder={t(lang, 'inv.watch.labelPlaceholder')}
+          aria-label={t(lang, 'inv.watch.labelPlaceholder')}
           maxLength={60}
           className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
         />
@@ -157,7 +163,7 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
           disabled={adding}
           className="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60 dark:bg-brand-500 dark:hover:bg-brand-600"
         >
-          Agregar
+          {t(lang, 'inv.watch.add')}
         </button>
       </form>
 
@@ -178,10 +184,10 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center dark:border-slate-700">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Todavía no seguís ningún ticker.
+            {t(lang, 'inv.watch.empty.title')}
           </p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Agregá arriba un símbolo para seguirlo sin incluirlo en tu plan.
+            {t(lang, 'inv.watch.empty.hint')}
           </p>
         </div>
       ) : (
@@ -226,35 +232,35 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
                     </>
                   ) : (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                      sin precio
+                      {t(lang, 'inv.sinPrecio')}
                     </span>
                   )}
                   {confirmingId === item.id ? (
                     <span className="flex items-center gap-1.5">
                       <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        ¿Quitar?
+                        {t(lang, 'inv.watch.removeConfirm')}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeItem(item)}
                         className="rounded-md bg-red-500 px-2 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
                       >
-                        Sí
+                        {t(lang, 'inv.ledger.yes')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmingId(null)}
                         className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
-                        Cancelar
+                        {t(lang, 'summary.cancel')}
                       </button>
                     </span>
                   ) : (
                     <button
                       type="button"
                       onClick={() => setConfirmingId(item.id)}
-                      aria-label={`Quitar ${item.symbol} de la watchlist`}
-                      title="Quitar de la watchlist"
+                      aria-label={t(lang, 'inv.watch.removeAria', { symbol: item.symbol })}
+                      title={t(lang, 'inv.watch.removeTitle')}
                       className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                     >
                       <svg

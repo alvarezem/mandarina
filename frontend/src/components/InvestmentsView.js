@@ -5,14 +5,13 @@ import MarketClosedNotice from './MarketClosedNotice'
 import Watchlist from './Watchlist'
 import LedgerView from './LedgerView'
 import { loadPlanSort, savePlanSort, SORT_DEFAULT_DIR } from '../lib/planSort'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
-const TABS = [
-  { key: 'plan', label: 'Plan de inversión' },
-  { key: 'cotizaciones', label: 'Cotizaciones en vivo' },
-  { key: 'operaciones', label: 'Operaciones' },
-]
+const TABS = ['plan', 'quotes', 'ops']
 
 export default function InvestmentsView({ session }) {
+  const { lang } = useLang()
   const [tab, setTab] = useState('plan')
   const [display, setDisplay] = useState('ARS')
   const [rateMode, setRateMode] = useState('CCL')
@@ -48,30 +47,30 @@ export default function InvestmentsView({ session }) {
 
       <div
         role="tablist"
-        aria-label="Secciones de Inversiones"
+        aria-label={t(lang, 'inv.aria.tabs')}
         className="mb-4 inline-flex w-full overflow-hidden rounded-xl border border-slate-200 bg-white/70 p-1 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 sm:w-auto"
       >
-        {TABS.map((t) => (
+        {TABS.map((tabKey) => (
           <button
-            key={t.key}
+            key={tabKey}
             type="button"
             role="tab"
-            aria-selected={tab === t.key}
-            onClick={() => setTab(t.key)}
+            aria-selected={tab === tabKey}
+            onClick={() => setTab(tabKey)}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition sm:flex-none ${
-              tab === t.key
+              tab === tabKey
                 ? 'bg-brand-600 text-white dark:bg-brand-500'
                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
             }`}
           >
-            {t.label}
+            {t(lang, `inv.tab.${tabKey}`)}
           </button>
         ))}
       </div>
 
       {tab === 'plan' ? (
         <InvestmentPlan session={session} {...shared} />
-      ) : tab === 'operaciones' ? (
+      ) : tab === 'ops' ? (
         <LedgerView session={session} {...shared} />
       ) : (
         <>

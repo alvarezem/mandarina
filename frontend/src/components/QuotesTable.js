@@ -1,9 +1,11 @@
 import { Fragment } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { fmt, fmtPct } from '../lib/format'
-import { ASSET_TYPES, QUOTE_PALETTE } from '../lib/constants'
+import { QUOTE_PALETTE } from '../lib/constants'
 import SortableTh from './SortableTh'
 import PriceChart from './PriceChart'
+import { useLang } from './LangProvider'
+import { assetTypeLabel, t } from '../lib/i18n'
 
 export default function QuotesTable({
   items,
@@ -19,6 +21,7 @@ export default function QuotesTable({
   chartData,
   chartQuote,
 }) {
+  const { lang } = useLang()
   const total = items.reduce((sum, item) => sum + item.value, 0)
 
   const doughnutData = {
@@ -42,7 +45,11 @@ export default function QuotesTable({
       tooltip: {
         callbacks: {
           label: (ctx) =>
-            `${ctx.label}: ${fmt(ctx.raw, display)} (${fmtPct(total > 0 ? (ctx.raw / total) * 100 : 0)})`,
+            t(lang, 'inv.table.tooltip', {
+              symbol: ctx.label,
+              value: fmt(ctx.raw, display),
+              pct: fmtPct(total > 0 ? (ctx.raw / total) * 100 : 0, lang),
+            }),
         },
       },
     },
@@ -52,13 +59,13 @@ export default function QuotesTable({
     <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
       <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Asignación
+          {t(lang, 'inv.table.asignacion')}
         </h2>
         <div className="relative h-44">
           <Doughnut data={doughnutData} options={doughnutOptions} />
         </div>
         <p className="mt-2 text-[11px] leading-snug text-slate-400 dark:text-slate-500">
-          Mismo orden que tu plan · se cambia desde Plan de inversión
+          {t(lang, 'inv.table.asignHint')}
         </p>
         <div className="mt-2 flex flex-col gap-1 pr-1">
           {items.map((item, i) => (
@@ -74,7 +81,7 @@ export default function QuotesTable({
                 <span className="truncate font-medium">{item.symbol}</span>
               </span>
               <span className="shrink-0 text-slate-500 dark:text-slate-400">
-                {fmtPct(item.actualPct)}
+                {fmtPct(item.actualPct, lang)}
               </span>
             </div>
           ))}
@@ -86,9 +93,14 @@ export default function QuotesTable({
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800">
-                <SortableTh label="Activo" sortKey="symbol" sort={sort} onSort={onSort} />
                 <SortableTh
-                  label="Precio"
+                  label={t(lang, 'inv.table.activo')}
+                  sortKey="symbol"
+                  sort={sort}
+                  onSort={onSort}
+                />
+                <SortableTh
+                  label={t(lang, 'inv.table.precio')}
                   sortKey="price"
                   sort={sort}
                   onSort={onSort}
@@ -96,7 +108,7 @@ export default function QuotesTable({
                   className="hidden sm:table-cell"
                 />
                 <SortableTh
-                  label="Var. diaria"
+                  label={t(lang, 'inv.table.varD')}
                   sortKey="changePct"
                   sort={sort}
                   onSort={onSort}
@@ -104,7 +116,7 @@ export default function QuotesTable({
                   className="hidden sm:table-cell"
                 />
                 <SortableTh
-                  label="Cantidad"
+                  label={t(lang, 'inv.table.cantidad')}
                   sortKey="quantity"
                   sort={sort}
                   onSort={onSort}
@@ -112,21 +124,21 @@ export default function QuotesTable({
                   className="hidden md:table-cell"
                 />
                 <SortableTh
-                  label="Valor"
+                  label={t(lang, 'inv.table.valor')}
                   sortKey="value"
                   sort={sort}
                   onSort={onSort}
                   align="right"
                 />
                 <SortableTh
-                  label="% cartera"
+                  label={t(lang, 'inv.table.portafolioPct')}
                   sortKey="actualPct"
                   sort={sort}
                   onSort={onSort}
                   align="right"
                 />
                 <th className="px-3 py-2 text-right">
-                  <span className="sr-only">Ver gráfico</span>
+                  <span className="sr-only">{t(lang, 'inv.table.verGrafico')}</span>
                 </th>
               </tr>
             </thead>
@@ -142,7 +154,7 @@ export default function QuotesTable({
                           type="button"
                           onClick={() => onOpenInline(item.symbol)}
                           aria-expanded={open}
-                          title="Ver gráfico del precio"
+                          title={t(lang, 'inv.table.chartTitle')}
                           className="flex w-full items-center gap-2 text-left"
                         >
                           <svg
@@ -162,7 +174,7 @@ export default function QuotesTable({
                             {item.symbol}
                           </span>
                           <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                            {ASSET_TYPES[item.asset_type] ?? item.asset_type}
+                            {assetTypeLabel(lang, item.asset_type)}
                           </span>
                         </button>
                         {item.name && item.name !== item.symbol && (
@@ -184,7 +196,7 @@ export default function QuotesTable({
                           </span>
                         ) : (
                           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                            sin precio
+                            {t(lang, 'inv.sinPrecio')}
                           </span>
                         )}
                       </td>
@@ -210,14 +222,14 @@ export default function QuotesTable({
                         {item.price != null ? fmt(item.value, display) : '—'}
                       </td>
                       <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">
-                        {fmtPct(item.actualPct)}
+                        {fmtPct(item.actualPct, lang)}
                       </td>
                       <td className="px-3 py-3 text-right">
                         <button
                           type="button"
                           onClick={() => onOpenModal(item.symbol)}
-                          title="Ver gráfico en otra ventana"
-                          aria-label={`Abrir gráfico de ${item.symbol}`}
+                          title={t(lang, 'inv.table.chartWindow')}
+                          aria-label={t(lang, 'inv.table.openChartAria', { symbol: item.symbol })}
                           className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                         >
                           <svg

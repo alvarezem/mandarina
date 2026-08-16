@@ -1,13 +1,8 @@
 import { fmt } from '../lib/format'
+import { useLang } from './LangProvider'
+import { t } from '../lib/i18n'
 
-const STRATEGY_OPTIONS = [
-  { key: 'faltante', label: 'Mayor faltante ($)' },
-  { key: 'gap', label: 'Mayor faltante (%)' },
-  { key: 'billetera', label: 'Mayor % de cartera' },
-  { key: 'peso', label: 'Mayor peso objetivo' },
-  { key: 'barato', label: 'Más barato' },
-  { key: 'caro', label: 'Más caro' },
-]
+const STRATEGY_OPTIONS = ['faltante', 'gap', 'billetera', 'peso', 'barato', 'caro']
 
 export default function DistributionPanel({
   budget,
@@ -18,23 +13,24 @@ export default function DistributionPanel({
   display,
   onBuy,
 }) {
+  const { lang } = useLang()
   return (
     <section className="mt-4 rounded-2xl border border-slate-200 bg-white/70 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Tengo para comprar
+          {t(lang, 'inv.dist.title')}
         </h2>
         <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-          Priorizar por
+          {t(lang, 'inv.dist.priorityBy')}
           <select
             value={strategy}
             onChange={(e) => onStrategy(e.target.value)}
-            aria-label="Prioridad de compra"
+            aria-label={t(lang, 'inv.dist.priorityAria')}
             className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
-            {STRATEGY_OPTIONS.map((o) => (
-              <option key={o.key} value={o.key}>
-                {o.label}
+            {STRATEGY_OPTIONS.map((key) => (
+              <option key={key} value={key}>
+                {t(lang, `inv.dist.strategy.${key}`)}
               </option>
             ))}
           </select>
@@ -45,7 +41,7 @@ export default function DistributionPanel({
             value={budget}
             onChange={(e) => onBudget(e.target.value)}
             placeholder={display === 'USD' ? '0' : '0'}
-            aria-label="Presupuesto para comprar"
+            aria-label={t(lang, 'inv.dist.budgetAria')}
             min={0}
             className="w-32 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           />
@@ -66,7 +62,9 @@ export default function DistributionPanel({
                     <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
                       {step.symbol}
                     </span>
-                    <span className="ml-2 text-xs text-slate-400">≈{step.qty} u</span>
+                    <span className="ml-2 text-xs text-slate-400">
+                      {t(lang, 'inv.dist.units', { qty: step.qty })}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -77,7 +75,7 @@ export default function DistributionPanel({
                       onClick={() => onBuy(step)}
                       className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-emerald-500 active:scale-[0.98] dark:bg-emerald-500 dark:hover:bg-emerald-400"
                     >
-                      Comprar
+                      {t(lang, 'inv.dist.buy')}
                     </button>
                   </div>
                 </li>
@@ -85,20 +83,21 @@ export default function DistributionPanel({
             </ul>
             <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
               {dist.covered
-                ? `Te sobran ${fmt(dist.remaining, display)} para llegar a la meta.`
-                : `Con ${fmt(Number(budget) || 0, display)} cubrís ${fmt((Number(budget) || 0) - dist.remaining, display)} de ${fmt(dist.totalNeeded, display)} de faltantes.`}
+                ? t(lang, 'inv.dist.covered', { amount: fmt(dist.remaining, display) })
+                : t(lang, 'inv.dist.partial', {
+                    budget: fmt(Number(budget) || 0, display),
+                    covered: fmt((Number(budget) || 0) - dist.remaining, display),
+                    needed: fmt(dist.totalNeeded, display),
+                  })}
             </p>
           </>
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            No hay faltantes: ya estás en la meta o con exceso.
+            {t(lang, 'inv.dist.noShortfall')}
           </p>
         )
       ) : (
-        <p className="text-sm text-slate-400 dark:text-slate-500">
-          Ingresá cuánto tenés disponible y te ordenamos qué comprar primero según tu prioridad (se
-          recalcula en vivo al comprar).
-        </p>
+        <p className="text-sm text-slate-400 dark:text-slate-500">{t(lang, 'inv.dist.hint')}</p>
       )}
     </section>
   )

@@ -38,7 +38,7 @@ al dict de `lib/i18n.js`.
 6. **Ejecución por sub-fases** — 4 pasos, cada uno con suite verde + lint 0 +
    build OK + commit propio (frontend-only; sin `db push`).
 
-## Sub-fase 1 — Base e infraestructura
+## Sub-fase 1 — Base e infraestructura **(HECHA — commit `3cb6e60`)**
 
 - `lib/i18n.js`: agregar pluralización (variantes `_one`/`_other` o similar) y
   helpers de mapeo de datos (categorías, `ASSET_TYPES`, `side`, tipos de resumen).
@@ -53,7 +53,7 @@ al dict de `lib/i18n.js`.
 - Hooks: toasts de `usePortfolioQuotes`/`useWatchQuotes` (duplicados) → claves
   i18n; fallback `'Ocurrió un error'` de `useAsync` → dict.
 
-## Sub-fase 2 — Módulo Resúmenes/Gastos
+## Sub-fase 2 — Módulo Resúmenes/Gastos **(HECHA — commit `6679c6a`)**
 
 `ResumenesView`, `Dashboard` (incluye el bloque de pagos reescrito con plural),
 `FiltersBar`, `SummaryCards`, `SpendingCharts`, `IncomeSources`,

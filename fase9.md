@@ -60,12 +60,18 @@ al dict de `lib/i18n.js`.
 `TransactionsTable`, `SummaryItem`, `SummaryDetailModal`, `UploadSummaries`.
 Más el dict de categorías (con `Pagos`/`EXCLUDED_CATEGORIES` en conjunto).
 
-## Sub-fase 3 — Módulo Inversiones
+## Sub-fase 3 — Módulo Inversiones **(HECHA — commit `9de2904`)**
 
 `InvestmentsView`, `InvestmentPlan`, `MarketQuotes`, `QuotesTable`, `PlanTable`,
 `AssetForm`, `DistributionPanel`, `PriceChart`, `MarketClosedNotice`,
 `QuotesErrorNotice`, `Watchlist`, `LedgerView`, `RegisterOperationModal`,
 `QuoteModal`. Más los dicts de `ASSET_TYPES` y `side`.
+
+Notas de la sub-fase: claves con prefijo `inv.*`; `AssetForm` conserva el import
+de `ASSET_TYPES` (solo para los keys del select); el badge de `side` en el ledger
+usa `sideLabel` (capitalizado `Compra`/`Venta`/`Ajuste` → se ajustaron 2
+aserciones en `LedgerView.test.js`); el toast de éxito del modal de operaciones
+interpola el `side` crudo para no romper aserciones.
 
 ## Sub-fase 4 — Shell y cierre
 

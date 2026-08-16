@@ -84,9 +84,14 @@ lógico; el baseline de formato y los refactors de lint van en commits separados
 **Leer en este orden según la tarea:**
 1. **`HANDOFF.md`** — estado de la última sesión: qué se hizo, qué sigue. **LEER PRIMERO SIEMPRE**.
 2. **`TODO.md`** — roadmap y pendientes vivos.
-3. **`DONE.md`** — historial de lo completado y decisiones de producto.
-4. **`improvements.md`** — plan de saneamiento/refactor en 8 fases. **LEER ANTES de tocar toolchain, seguridad, o estructura.** Contiene la justificación de cada decisión (Vite, Vitest, rotación de service role, CI, etc.).
-5. **`README.md`** — descripción general y stack.
+3. **`DONE.md`** — historial completo de lo completado.
+4. **`DECISIONS.md`** — log de decisiones técnicas (ADR ligeros) a no re-litigar. **LEER ANTES de revertir o "mejorar" algo que parezca discutible.**
+5. **`improvements.md`** — plan de saneamiento/refactor en 8 fases. **LEER ANTES de tocar toolchain, seguridad, o estructura.** Contiene la justificación de cada decisión (Vite, Vitest, rotación de service role, CI, etc.).
+6. **`README.md`** — descripción general y stack.
+
+> Fuentes únicas de verdad: **historial → `DONE.md`**, **handoff corto →
+> `HANDOFF.md`**, **roadmap/status → `TODO.md`**, **decisiones → `DECISIONS.md`**.
+> `monetization.md` (raíz) lista ideas de tier pago sin decidir rumbo.
 
 > `fase8.md` (raíz) es el plan de ejecución de la Fase 8; `faseN.md` anteriores
 > ya se archivaron al cerrar sus fases. `compromised.md` se borró en Fase 8: la
@@ -111,4 +116,4 @@ Cuando surjan procedimientos repetidos (ej. deploy, migraciones), sesiones
 profundas, o necesidad de aislar dominios, evaluar implementar:
 - **Skills** on-demand (`.opencode/skills/*/SKILL.md`) para procedimientos repetitivos.
 - **Subagentes** de dominio (`.opencode/agent/*.md`): frontend, backend, reviewer.
-- **DECISIONS.md** (ADR ligeros) para el log de decisiones técnicas.
+- **DECISIONS.md ya existe** (ADR ligeros, raíz) — agregar entradas nuevas ahí, no en HANDOFF.

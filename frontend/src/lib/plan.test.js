@@ -33,6 +33,10 @@ describe('buyAmount', () => {
   it('da 0 si la meta es 100%', () => {
     expect(buyAmount(100, 3574720, 1000)).toBe(0)
   })
+
+  it('da 0 si la meta es negativa', () => {
+    expect(buyAmount(-10, 3574720, 1000)).toBe(0)
+  })
 })
 
 describe('buyQty', () => {
@@ -40,8 +44,8 @@ describe('buyQty', () => {
     expect(buyQty(46554.73, 34920)).toBe(1)
   })
 
-  it('al menos 1 si hay faltante aunque no alcance para una unidad', () => {
-    expect(buyQty(1541.6, 7550)).toBe(1)
+  it('0 si no alcanza para una unidad', () => {
+    expect(buyQty(1541.6, 7550)).toBe(0)
   })
 
   it('0 sin precio o sin faltante', () => {
@@ -110,44 +114,64 @@ describe('distribute estrategias', () => {
 
   it('default: mayor faltante ($) primero', () => {
     const { steps } = distribute(1000000, plan())
-    expect(symbols(steps)).toEqual(['AAPL', 'MSFT', 'KO'])
+    expect(symbols(steps)).toEqual(['AAPL', 'KO'])
     expect(steps[0].buy ?? steps[0].amount).toBeGreaterThanOrEqual(steps[1].amount)
   })
 
   it('gap: mayor faltante (%) primero', () => {
     const { steps } = distribute(1000000, plan(), 'gap')
-    expect(symbols(steps)).toEqual(['MSFT', 'AAPL', 'KO'])
+    expect(symbols(steps)).toEqual(['AAPL', 'KO'])
   })
 
   it('peso: mayor peso objetivo primero', () => {
     const { steps } = distribute(1000000, plan(), 'peso')
-    expect(symbols(steps)).toEqual(['AAPL', 'MSFT', 'KO'])
+    expect(symbols(steps)).toEqual(['AAPL', 'KO'])
   })
 
   it('billetera: mayor % de cartera primero', () => {
     const { steps } = distribute(1000000, plan(), 'billetera')
-    expect(symbols(steps)).toEqual(['AAPL', 'KO', 'MSFT'])
+    expect(symbols(steps)).toEqual(['AAPL', 'KO'])
   })
 
   it('barato: menor precio por unidad primero', () => {
     const { steps } = distribute(1000000, plan(), 'barato')
-    expect(symbols(steps)).toEqual(['KO', 'AAPL', 'MSFT'])
+    expect(symbols(steps)).toEqual(['KO', 'AAPL'])
   })
 
   it('caro: mayor precio por unidad primero', () => {
     const { steps } = distribute(1000000, plan(), 'caro')
-    expect(symbols(steps)).toEqual(['MSFT', 'AAPL', 'KO'])
+    expect(symbols(steps)).toEqual(['AAPL', 'KO'])
   })
 
-  it('sin precio va al final en barato/caro', () => {
+  it('no genera steps con qty 0 (no alcanza para una unidad) y avisa', () => {
+    const { steps, skipped } = distribute(1000000, plan())
+    expect(steps.every((s) => s.qty > 0)).toBe(true)
+    expect(skipped.map((s) => s.symbol)).toEqual(['MSFT'])
+  })
+
+  it('un activo cuyo faltante no alcanza una unidad no debita presupuesto', () => {
+    const p = buildPlan([
+      item({ symbol: 'GOLD', name: 'GOLD', target_weight: 0, quantity: 10, price: 1000 }),
+      item({ symbol: 'KO', name: 'KO', target_weight: 20, quantity: 0, price: 10 }),
+      item({ symbol: 'VIST', name: 'VIST', target_weight: 9, quantity: 0, price: 34920 }),
+    ])
+    const { steps, skipped, remaining } = distribute(1000000, p)
+    expect(symbols(steps)).toEqual(['KO'])
+    expect(skipped.map((s) => s.symbol)).toEqual(['VIST'])
+    expect(remaining).toBeGreaterThan(0)
+  })
+
+  it('sin precio no entra al plan de compra (buy 0)', () => {
     const p = buildPlan([
       item({ symbol: 'AAPL', name: 'AAPL', target_weight: 50, quantity: 0, price: 100 }),
       item({ symbol: 'CASH', name: 'CASH', target_weight: 30, quantity: 0, price: null }),
       item({ symbol: 'KO', name: 'KO', target_weight: 20, quantity: 0, price: 50 }),
       item({ symbol: 'GOLD', name: 'GOLD', target_weight: 0, quantity: 10, price: 1000 }),
     ])
-    expect(symbols(distribute(1000000, p, 'barato').steps)).toEqual(['KO', 'AAPL', 'CASH'])
-    expect(symbols(distribute(1000000, p, 'caro').steps)).toEqual(['AAPL', 'KO', 'CASH'])
+    const cash = p.find((i) => i.symbol === 'CASH')
+    expect(cash.buy).toBe(0)
+    expect(symbols(distribute(1000000, p, 'barato').steps)).toEqual(['KO', 'AAPL'])
+    expect(symbols(distribute(1000000, p, 'caro').steps)).toEqual(['AAPL', 'KO'])
   })
 })
 
@@ -175,5 +199,21 @@ describe('portfolioChangePct', () => {
   it('devuelve null sin activos con precio', () => {
     expect(portfolioChangePct([{ price: null, quantity: 1, changePct: 5 }])).toBeNull()
     expect(portfolioChangePct([])).toBeNull()
+  })
+
+  it('devuelve null con un cambio del -100% (precio de ayer indefinido)', () => {
+    const items = [
+      { price: 100, quantity: 2, changePct: -100 },
+      { price: 100, quantity: 1, changePct: 10 },
+    ]
+    expect(portfolioChangePct(items)).toBeNull()
+  })
+
+  it('devuelve null si un activo cayó más del 100%', () => {
+    const items = [
+      { price: 100, quantity: 1, changePct: -150 },
+      { price: 100, quantity: 1, changePct: 0 },
+    ]
+    expect(portfolioChangePct(items)).toBeNull()
   })
 })

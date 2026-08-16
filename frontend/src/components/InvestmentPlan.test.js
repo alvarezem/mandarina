@@ -140,8 +140,185 @@ describe('InvestmentPlan', () => {
       expect(supabase.from('portfolio_plan').update).toHaveBeenCalledWith({ quantity: 2 }),
     )
     expect(supabase.from('ledger_operations').insert).toHaveBeenCalledWith(
-      expect.objectContaining({ symbol: 'VIST', side: 'compra', quantity: 1 }),
+      expect.objectContaining({ symbol: 'VIST', side: 'compra', quantity: 1, price: 1000 }),
     )
+  })
+
+  it('registra en el ledger el precio de mercado, no amount/qty', async () => {
+    mockPlan(
+      [
+        {
+          id: '1',
+          symbol: 'VIST',
+          name: 'VIST',
+          asset_type: 'accion',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 0,
+        },
+        {
+          id: '2',
+          symbol: 'SPY',
+          name: 'SPY',
+          asset_type: 'cedear',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 1,
+        },
+      ],
+      { VIST: 100, SPY: 300 },
+    )
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VIST')
+    await userEvent.type(
+      screen.getByRole('spinbutton', { name: /Presupuesto para comprar/i }),
+      '150',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Comprar' }))
+    await waitFor(() =>
+      expect(supabase.from('ledger_operations').insert).toHaveBeenCalledWith(
+        expect.objectContaining({ price: 100 }),
+      ),
+    )
+  })
+
+  it('no incrementa el plan si falla el insert del ledger', async () => {
+    mockPlan(
+      [
+        {
+          id: '1',
+          symbol: 'VIST',
+          name: 'VIST',
+          asset_type: 'accion',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 0,
+        },
+        {
+          id: '2',
+          symbol: 'SPY',
+          name: 'SPY',
+          asset_type: 'cedear',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 1,
+        },
+      ],
+      { VIST: 1000, SPY: 3000 },
+    )
+    supabase.mockTable('ledger_operations', { insert: null, insertError: new Error('ledger') })
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VIST')
+    await userEvent.type(
+      screen.getByRole('spinbutton', { name: /Presupuesto para comprar/i }),
+      '1000',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Comprar' }))
+    await waitFor(() => expect(supabase.from('portfolio_plan').update).not.toHaveBeenCalled())
+    expect(screen.getByText('No se pudo registrar la compra')).toBeInTheDocument()
+  })
+
+  it('revierte el ledger si falla la actualización del plan', async () => {
+    mockPlan(
+      [
+        {
+          id: '1',
+          symbol: 'VIST',
+          name: 'VIST',
+          asset_type: 'accion',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 0,
+        },
+        {
+          id: '2',
+          symbol: 'SPY',
+          name: 'SPY',
+          asset_type: 'cedear',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 1,
+        },
+      ],
+      { VIST: 1000, SPY: 3000 },
+    )
+    supabase.mockTable('ledger_operations', { insert: { id: 'op1' }, insertError: null })
+    supabase.mockTable('portfolio_plan', {
+      rows: [
+        {
+          id: '1',
+          symbol: 'VIST',
+          name: 'VIST',
+          asset_type: 'accion',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 0,
+        },
+        {
+          id: '2',
+          symbol: 'SPY',
+          name: 'SPY',
+          asset_type: 'cedear',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 1,
+        },
+      ],
+      updateError: new Error('plan'),
+    })
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VIST')
+    await userEvent.type(
+      screen.getByRole('spinbutton', { name: /Presupuesto para comprar/i }),
+      '1000',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Comprar' }))
+    await waitFor(() => expect(supabase.from('ledger_operations').delete).toHaveBeenCalled())
+    expect(supabase.from('ledger_operations').delete().eq).toHaveBeenCalledWith('id', 'op1')
+  })
+
+  it('no crea steps de compra cuando el faltante no alcanza una unidad', async () => {
+    mockPlan(
+      [
+        {
+          id: '1',
+          symbol: 'VIST',
+          name: 'VIST',
+          asset_type: 'accion',
+          currency: 'ARS',
+          target_weight: 50,
+          quantity: 1,
+          sort_order: 0,
+        },
+        {
+          id: '2',
+          symbol: 'GOLD',
+          name: 'GOLD',
+          asset_type: 'cedear',
+          currency: 'ARS',
+          target_weight: 0,
+          quantity: 1,
+          sort_order: 1,
+        },
+      ],
+      { VIST: 7550, GOLD: 10000 },
+    )
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('VIST')
+    await userEvent.type(
+      screen.getByRole('spinbutton', { name: /Presupuesto para comprar/i }),
+      '1541.6',
+    )
+    expect(await screen.findByText(/No alcanza para una unidad: VIST/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Comprar' })).not.toBeInTheDocument()
   })
 
   it('cambia la prioridad de compra con el selector de estrategia', async () => {
@@ -361,5 +538,55 @@ describe('InvestmentPlan', () => {
     supabase.functions.invoke.mockResolvedValue({ data: { quotes: {}, rates: {} }, error: null })
     await userEvent.click(screen.getByRole('button', { name: 'Actualizar precios' }))
     await waitFor(() => expect(screen.queryByTestId('quotes-error-notice')).not.toBeInTheDocument())
+  })
+
+  it('muestra el total en USD aunque no haya rate si el plan es 100% USD', async () => {
+    mockPlan(
+      [
+        {
+          id: '1',
+          symbol: 'QQQ',
+          name: 'QQQ',
+          asset_type: 'cedear',
+          currency: 'USD',
+          target_weight: 100,
+          quantity: 2,
+          sort_order: 0,
+        },
+      ],
+      { QQQ: 100 },
+    )
+    supabase.functions.invoke.mockResolvedValue({
+      data: { quotes: { QQQ: { price: 100 } }, rates: {} },
+      error: null,
+    })
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} display="USD" />)
+    await screen.findByText('QQQ')
+    await waitFor(() => expect(screen.getAllByText('$200.00').length).toBeGreaterThan(0))
+  })
+
+  it('muestra "—" en el total si hace falta conversión y no hay rate', async () => {
+    mockPlan(
+      [
+        {
+          id: '1',
+          symbol: 'VIST',
+          name: 'VIST',
+          asset_type: 'accion',
+          currency: 'ARS',
+          target_weight: 100,
+          quantity: 2,
+          sort_order: 0,
+        },
+      ],
+      { VIST: 100 },
+    )
+    supabase.functions.invoke.mockResolvedValue({
+      data: { quotes: { VIST: { price: 100 } }, rates: {} },
+      error: null,
+    })
+    wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} display="USD" />)
+    await screen.findByText('VIST')
+    await waitFor(() => expect(screen.getAllByText('—').length).toBeGreaterThan(0))
   })
 })

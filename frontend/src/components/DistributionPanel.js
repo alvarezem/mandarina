@@ -50,52 +50,63 @@ export default function DistributionPanel({
       </div>
 
       {Number(budget) > 0 ? (
-        dist.steps.length > 0 ? (
-          <>
-            <ul className="flex flex-col gap-1.5">
-              {dist.steps.map((step, i) => (
-                <li
-                  key={`${step.symbol}-${i}`}
-                  className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/60"
-                >
-                  <div className="min-w-0">
-                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                      {step.symbol}
-                    </span>
-                    <span className="ml-2 text-xs text-slate-400">
-                      {t(lang, 'inv.dist.units', { qty: step.qty })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                      {fmt(step.amount, display)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onBuy(step)}
-                      className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-emerald-500 active:scale-[0.98] dark:bg-emerald-500 dark:hover:bg-emerald-400"
-                    >
-                      {t(lang, 'inv.dist.buy')}
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-              {dist.covered
-                ? t(lang, 'inv.dist.covered', { amount: fmt(dist.remaining, display) })
-                : t(lang, 'inv.dist.partial', {
-                    budget: fmt(Number(budget) || 0, display),
-                    covered: fmt((Number(budget) || 0) - dist.remaining, display),
-                    needed: fmt(dist.totalNeeded, display),
-                  })}
+        <>
+          {dist.steps.length > 0 ? (
+            <>
+              <ul className="flex flex-col gap-1.5">
+                {dist.steps.map((step, i) => (
+                  <li
+                    key={`${step.symbol}-${i}`}
+                    className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/60"
+                  >
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                        {step.symbol}
+                      </span>
+                      <span className="ml-2 text-xs text-slate-400">
+                        {t(lang, 'inv.dist.units', { qty: step.qty })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {fmt(step.amount, display)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onBuy(step)}
+                        className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-emerald-500 active:scale-[0.98] dark:bg-emerald-500 dark:hover:bg-emerald-400"
+                      >
+                        {t(lang, 'inv.dist.buy')}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                {dist.covered
+                  ? t(lang, 'inv.dist.covered', { amount: fmt(dist.remaining, display) })
+                  : t(lang, 'inv.dist.partial', {
+                      budget: fmt(Number(budget) || 0, display),
+                      covered: fmt((Number(budget) || 0) - dist.remaining, display),
+                      needed: fmt(dist.totalNeeded, display),
+                    })}
+              </p>
+            </>
+          ) : (
+            dist.skipped?.length === 0 && (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t(lang, 'inv.dist.noShortfall')}
+              </p>
+            )
+          )}
+          {dist.skipped?.length > 0 && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              {t(lang, 'inv.dist.skipped', {
+                symbols: dist.skipped.map((s) => s.symbol).join(', '),
+              })}
             </p>
-          </>
-        ) : (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t(lang, 'inv.dist.noShortfall')}
-          </p>
-        )
+          )}
+        </>
       ) : (
         <p className="text-sm text-slate-400 dark:text-slate-500">{t(lang, 'inv.dist.hint')}</p>
       )}

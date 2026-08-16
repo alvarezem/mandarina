@@ -308,6 +308,7 @@ export const translations = {
     'inv.plan.err.save': 'No se pudo guardar el activo',
     'inv.plan.err.remove': 'No se pudo eliminar el activo',
     'inv.plan.err.buy': 'No se pudo registrar la compra',
+    'inv.plan.err.buyQty': 'El faltante no alcanza para una unidad',
     'inv.plan.ok.bought': '{symbol}: compraste ≈{qty} ({amount})',
     'inv.plan.notes.budget': 'Compra por presupuesto',
     'inv.plan.empty.title': 'Todavía no cargaste tu plan.',
@@ -363,6 +364,7 @@ export const translations = {
     'inv.dist.units': '≈{qty} u',
     'inv.dist.covered': 'Te sobran {amount} para llegar a la meta.',
     'inv.dist.partial': 'Con {budget} cubrís {covered} de {needed} de faltantes.',
+    'inv.dist.skipped': 'No alcanza para una unidad: {symbols}',
     'inv.dist.noShortfall': 'No hay faltantes: ya estás en la meta o con exceso.',
     'inv.dist.hint':
       'Ingresá cuánto tenés disponible y te ordenamos qué comprar primero según tu prioridad (se recalcula en vivo al comprar).',
@@ -826,6 +828,7 @@ export const translations = {
     'inv.plan.err.save': 'Could not save the asset',
     'inv.plan.err.remove': 'Could not remove the asset',
     'inv.plan.err.buy': 'Could not register the purchase',
+    'inv.plan.err.buyQty': 'The shortfall does not cover a single unit',
     'inv.plan.ok.bought': '{symbol}: you bought ≈{qty} ({amount})',
     'inv.plan.notes.budget': 'Purchase from budget',
     'inv.plan.empty.title': 'You have not loaded your plan yet.',
@@ -882,6 +885,7 @@ export const translations = {
     'inv.dist.units': '≈{qty} u',
     'inv.dist.covered': 'You have {amount} left to reach the target.',
     'inv.dist.partial': 'With {budget} you cover {covered} of {needed} of the shortfall.',
+    'inv.dist.skipped': 'Not enough for a single unit: {symbols}',
     'inv.dist.noShortfall': 'No shortfall: you are already at or above your target.',
     'inv.dist.hint':
       'Enter how much you have available and we will order what to buy first based on your priority (recalculated live when buying).',

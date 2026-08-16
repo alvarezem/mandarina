@@ -223,30 +223,44 @@ export default function InvestmentPlan({
   }
 
   const applyBuy = async (step) => {
+    if (!step?.qty || step.qty <= 0) {
+      pushToast({ type: 'error', message: t(lang, 'inv.plan.err.buyQty') })
+      return
+    }
     const current = items.find((i) => i.symbol === step.symbol)
     if (!current) return
     const newQuantity = (Number(current.quantity) || 0) + step.qty
     try {
+      const { data: op, error: opErr } = await supabase
+        .from('ledger_operations')
+        .insert({
+          user_id: session.user.id,
+          symbol: step.symbol,
+          side: 'compra',
+          quantity: step.qty,
+          price: quotes[step.symbol]?.price ?? step.price,
+          commission: 0,
+          currency: current.currency || 'ARS',
+          date: new Date().toISOString().slice(0, 10),
+          notes: t(lang, 'inv.plan.notes.budget'),
+        })
+        .select('id')
+        .single()
+      if (opErr) {
+        console.error('InvestmentPlan: error al registrar la compra', opErr)
+        pushToast({ type: 'error', message: t(lang, 'inv.plan.err.buy') })
+        return
+      }
       const { error } = await supabase
         .from('portfolio_plan')
         .update({ quantity: newQuantity })
         .eq('id', current.id)
       if (error) {
         console.error('InvestmentPlan: error al aplicar compra', error)
+        if (op?.id) await supabase.from('ledger_operations').delete().eq('id', op.id)
         pushToast({ type: 'error', message: t(lang, 'inv.plan.err.buy') })
         return
       }
-      await supabase.from('ledger_operations').insert({
-        user_id: session.user.id,
-        symbol: step.symbol,
-        side: 'compra',
-        quantity: step.qty,
-        price: step.qty > 0 ? step.amount / step.qty : 0,
-        commission: 0,
-        currency: 'ARS',
-        date: new Date().toISOString().slice(0, 10),
-        notes: t(lang, 'inv.plan.notes.budget'),
-      })
       setBudget(String(Math.max(0, (Number(budget) || 0) - step.amount)))
       pushToast({
         type: 'success',
@@ -387,7 +401,7 @@ export default function InvestmentPlan({
               {t(lang, 'inv.plan.totalPortfolio')}
             </p>
             <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
-              {rate == null && (display === 'USD' || items.some((i) => i.currency !== display))
+              {rate == null && items.some((i) => (i.currency || 'ARS') !== display)
                 ? '—'
                 : fmt(total, display)}
             </p>

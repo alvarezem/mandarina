@@ -19,7 +19,7 @@ export function buyAmount(targetPct, total, value) {
   const t = (Number(targetPct) || 0) / 100
   const V = Number(total) || 0
   const v = Number(value) || 0
-  if (t >= 1) return 0
+  if (t >= 1 || t < 0) return 0
   const need = (t * V - v) / (1 - t)
   return Math.max(0, need)
 }
@@ -27,9 +27,8 @@ export function buyAmount(targetPct, total, value) {
 export function buyQty(amount, price) {
   const a = Number(amount) || 0
   const p = Number(price) || 0
-  if (!p) return 0
-  const q = Math.floor(a / p)
-  return q === 0 && a > 0 ? 1 : q
+  if (!p || a <= 0) return 0
+  return Math.floor(a / p)
 }
 
 export function isOver(targetPct, actualPct) {
@@ -41,11 +40,13 @@ export function buildPlan(items) {
     ...item,
     value: valueOf(item.quantity, item.price),
   }))
+  // Criterio: los sin-precio entran al total como 0 (su valor real es
+  // desconocido) y no generan buy — sin precio no se puede comprar.
   const total = withValues.reduce((sum, item) => sum + item.value, 0)
   return withValues.map((item) => {
     const target = Number(item.target_weight) || 0
     const ap = actualPct(item.value, total)
-    const buy = buyAmount(target, total, item.value)
+    const buy = item.price == null ? 0 : buyAmount(target, total, item.value)
     return {
       ...item,
       total,
@@ -63,7 +64,10 @@ export function portfolioChangePct(items) {
   let prev = 0
   for (const item of items) {
     const chg = item.changePct
+    // chg = -100 haría 1 + chg/100 = 0 (precio de ayer indefinido);
+    // < -100 daría prev negativo. Sin precio ayer no hay cambio computable.
     if (chg == null || item.price == null) continue
+    if (chg <= -100) return null
     const value = valueOf(item.quantity, item.price)
     now += value
     prev += value / (1 + chg / 100)
@@ -97,21 +101,31 @@ export function distribute(budget, builtItems, strategy = 'faltante') {
     .sort(STRATEGY_SORTERS[strategy] ?? STRATEGY_SORTERS.faltante)
   let remaining = Number(budget) || 0
   const steps = []
-  let i = 0
-  for (; i < underweight.length; i++) {
+  const skipped = []
+  for (const item of underweight) {
     if (remaining <= 0) break
-    const item = underweight[i]
     const amount = Math.min(item.buy, remaining)
+    const qty = buyQty(amount, item.price)
+    if (qty === 0) {
+      skipped.push({ symbol: item.symbol, name: item.name, price: item.price })
+      continue
+    }
     steps.push({
       symbol: item.symbol,
       name: item.name,
       amount,
-      qty: buyQty(amount, item.price),
+      qty,
       price: item.price,
       targetWeight: item.target_weight,
     })
     remaining -= amount
   }
   const totalNeeded = underweight.reduce((sum, item) => sum + item.buy, 0)
-  return { steps, remaining, totalNeeded, covered: totalNeeded <= (Number(budget) || 0) }
+  return {
+    steps,
+    skipped,
+    remaining,
+    totalNeeded,
+    covered: totalNeeded <= (Number(budget) || 0),
+  }
 }

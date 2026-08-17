@@ -102,7 +102,6 @@ type FinalizeArgs = {
     category: string
     currency: string
   }[]
-  p_result: { period: { days: number } }
   p_period_year: number
   p_period_month: number
   p_summary_id: string
@@ -134,7 +133,6 @@ Deno.test('handleParse: flujo CSV completo -> ok:true con count', async () => {
   assertEquals(tx.amount, -1250.5)
   assertEquals(tx.category, 'Supermercados')
   assertEquals(tx.currency, 'ARS')
-  assertEquals(args.p_result.period.days, 2)
   assertEquals(args.p_period_year, 2026)
   assertEquals(args.p_period_month, 1)
 })

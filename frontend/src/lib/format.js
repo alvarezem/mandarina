@@ -16,7 +16,7 @@ const EN_MONTHS = [
 ]
 
 export function fmt(n, currency = 'ARS') {
-  return n == null
+  return n == null || !Number.isFinite(n)
     ? '—'
     : new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-AR', {
         style: 'currency',
@@ -27,6 +27,7 @@ export function fmt(n, currency = 'ARS') {
 }
 
 export function fmtCompact(n, currency = 'ARS') {
+  if (n == null || !Number.isFinite(n)) return '—'
   return new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-AR', {
     style: 'currency',
     currency,

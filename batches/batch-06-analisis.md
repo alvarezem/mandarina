@@ -1,7 +1,7 @@
 # Batch 6 — Análisis de consumo
 
 **Dominio:** frontend (análisis) + backend (persistencia). **Índice:** #6.
-**Estado:** [ ] pendiente
+**Estado:** [x] hecho (2026-08-16)
 
 > **Decisiones ya tomadas**: eliminar la persistencia de `consumption_analyses`. Fuente única: la tabla `transactions` (backend, autoritativa) + `lib/analysis.js` como función pura que deriva en el front.
 
@@ -48,8 +48,8 @@
 
 ## Checklist de cierre
 
-- [ ] `npm test` verde
-- [ ] `deno test` verde (if backend touched)
-- [ ] Migración `0018` aplicada en hosting + `parse-summary` redeployada
-- [ ] grep `consumption_analyses` sin referencias vivas
-- [ ] Índice `batches/README.md` marcado [x]
+- [x] `npm test` verde (397/397)
+- [x] `deno test` verde (76/76) + lint/fmt OK
+- [x] Migración `0020` aplicada en hosting + `parse-summary` redeployada (2026-08-16)
+- [x] grep `consumption_analyses` sin referencias vivas
+- [x] Índice `batches/README.md` marcado [x]

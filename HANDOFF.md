@@ -6,6 +6,17 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-16)
 
+- **Batch 6 de `post-improvements.md` — Análisis de consumo HECHO**.
+  Cerró `batches/batch-06-analisis.md` ([x] en `batches/README.md`).
+  `consumption_analyses` **eliminado** (data muerta y divergente del dashboard):
+  migración `0020` hace `drop table` y redefine `finalize_parse` sin `p_result`;
+  se borró `buildAnalysis`/`computeTotals`/`aggregate` de `parse-summary/parser.ts`
+  y `index.ts` ya no pasa `p_result`. Fuente única: `transactions` +
+  `lib/analysis.js` (función pura). `period.days` con guard (solo USD/sin txs ya
+  no da NaN) y `fmt`/`fmtCompact` devuelven `—` para null/NaN/±Inf. Suite
+  **397/397** (+4) + lint 0; deno **76/76** (−2) + lint/fmt OK; grep limpio.
+  Decisión en `DECISIONS.md`. **DEPLOY APLICADO (2026-08-16)**: `supabase db
+  push` (0020) ANTES de `functions deploy parse-summary`.
 - **Batch 4 de `post-improvements.md` — Upload y storage HECHO**.
   Cerró `batches/batch-04-upload.md` ([x] en `batches/README.md`). `lib/upload.js`
   nuevo (puro): `fileTypeError` (extensión + ≤10 MB + magic bytes PDF/XLSX) y
@@ -61,10 +72,10 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 ## En progreso
 
 - **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5
-  → 7 → 8 → 9 (índice y detalle en `batches/`). B1, B2, B3 y B4 cerrados;
-  **siguiente: B6 (análisis de consumo)** — frontend (`lib/analysis.js` como
-  función pura, se elimina la persistencia de `consumption_analyses`; requiere
-  migración + `functions deploy` al tocar `finalize_parse`).
+  → 7 → 8 → 9 (índice y detalle en `batches/`). B1, B2, B3, B4 y B6 cerrados;
+  **siguiente: B5 (parse-summary: resiliencia)** — backend (re-parse, retry,
+  recovery de `parsing` colgado, categorías manuales en `finalize_parse`;
+  coordinado con B6, que ya sacó `p_result`/`consumption_analyses`).
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).

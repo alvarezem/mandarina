@@ -1,13 +1,11 @@
 import { assertEquals } from '@std/assert'
 import {
-  buildAnalysis,
   detectSeparator,
   findColumns,
   mapRows,
   parseAmount,
   parseDate,
   pdfColumn,
-  type Transaction,
 } from './parse-summary/parser.ts'
 
 Deno.test('detectSeparator: elige ; cuando el CSV usa ;', () => {
@@ -89,60 +87,4 @@ Deno.test('pdfColumn: rangos posicionales de columnas', () => {
   assertEquals(pdfColumn(420), 'cupon')
   assertEquals(pdfColumn(480), 'pesos')
   assertEquals(pdfColumn(600), 'dolares')
-})
-
-Deno.test('buildAnalysis: arma el análisis completo sin USD', () => {
-  const txs: Transaction[] = [
-    {
-      date: '2026-01-01',
-      merchant: 'COTO',
-      amount: -100,
-      currency: 'ARS',
-      category: 'Supermercados',
-    },
-    {
-      date: '2026-01-02',
-      merchant: 'GYM',
-      amount: -50,
-      currency: 'ARS',
-      category: 'Gimnasio',
-    },
-    {
-      date: '2026-01-02',
-      merchant: 'DEVOLUCIÓN',
-      amount: 20,
-      currency: 'ARS',
-      category: 'Otros',
-    },
-  ]
-  const a = buildAnalysis(txs)
-  assertEquals(a.totals.net, -130)
-  assertEquals(a.totals.txCount, 3)
-  assertEquals(a.maxExpense?.merchant, 'COTO')
-  assertEquals(a.maxExpense?.amount, -100)
-  assertEquals(a.balanceTrend[1].runningBalance, -130)
-  assertEquals(a.byCategory.length, 3)
-  assertEquals(a.usd, undefined)
-})
-
-Deno.test('buildAnalysis: agrega bloque usd cuando hay transacciones USD', () => {
-  const txs: Transaction[] = [
-    {
-      date: '2026-01-01',
-      merchant: 'A',
-      amount: -10,
-      currency: 'ARS',
-      category: 'Otros',
-    },
-    {
-      date: '2026-01-01',
-      merchant: 'B',
-      amount: -5,
-      currency: 'USD',
-      category: 'Otros',
-    },
-  ]
-  const a = buildAnalysis(txs)
-  assertEquals(a.usd?.totals.net, -5)
-  assertEquals(a.totals.net, -10)
 })

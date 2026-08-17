@@ -6,7 +6,6 @@ import { detectPeriod, detectSummaryType } from './detection.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { createUserClient } from '../_shared/supabase.ts'
 import {
-  buildAnalysis,
   detectSeparator,
   mapRows,
   parseAmount,
@@ -182,9 +181,8 @@ export async function handleParse(
     category: overrideMap.get(t.merchant.toLowerCase()) ?? t.category,
   }))
 
-  // Persistencia atómica e idempotente: delete + insert de transacciones,
-  // upsert del análisis y metadata del resumen en una sola transacción.
-  const result = buildAnalysis(transactions)
+  // Persistencia atómica e idempotente: delete + insert de transacciones y
+  // metadata del resumen en una sola transacción.
   const summaryType = detectSummaryType(
     summary.file_name,
     isPdf(summary.file_name),
@@ -198,7 +196,6 @@ export async function handleParse(
       p_user_id: summary.user_id,
       p_summary_id: summaryId,
       p_transactions: transactions,
-      p_result: result,
       p_summary_type: summaryType,
       p_period_year: period_year ?? null,
       p_period_month: period_month ?? null,

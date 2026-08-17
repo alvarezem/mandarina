@@ -37,7 +37,8 @@ function buildAnalysis(txs, { includePayments = false } = {}) {
   const dates = ars.map((t) => t.date).sort()
   const from = dates[0]
   const to = dates[dates.length - 1]
-  const days = Math.max(1, Math.round((new Date(to) - new Date(from)) / 86400000) + 1)
+  const days =
+    from && to ? Math.max(1, Math.round((new Date(to) - new Date(from)) / 86400000) + 1) : 1
 
   const totals = computeTotals(ars)
 

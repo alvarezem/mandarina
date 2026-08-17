@@ -17,6 +17,13 @@ describe('fmt', () => {
     expect(fmt(undefined)).toBe('—')
     expect(fmt(null, 'USD')).toBe('—')
   })
+
+  it('devuelve — para NaN e infinitos', () => {
+    expect(fmt(NaN)).toBe('—')
+    expect(fmt(Infinity)).toBe('—')
+    expect(fmt(-Infinity)).toBe('—')
+    expect(fmt(NaN, 'USD')).toBe('—')
+  })
 })
 
 describe('fmtCompact', () => {
@@ -24,6 +31,13 @@ describe('fmtCompact', () => {
     expect(fmtCompact(1250000)).toContain('1,3')
     expect(fmtCompact(1250000)).toContain('M')
     expect(fmtCompact(5000, 'USD')).toBe('$5K')
+  })
+
+  it('devuelve — para null/undefined/NaN', () => {
+    expect(fmtCompact(null)).toBe('—')
+    expect(fmtCompact(undefined)).toBe('—')
+    expect(fmtCompact(NaN)).toBe('—')
+    expect(fmtCompact(Infinity)).toBe('—')
   })
 })
 

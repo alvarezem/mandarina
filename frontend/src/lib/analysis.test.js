@@ -117,6 +117,22 @@ describe('buildAnalysis', () => {
     expect(r.usd).toBeUndefined()
   })
 
+  it('con solo USD no produce NaN en period.days', () => {
+    const r = buildAnalysis([tx({ amount: -17.61, currency: 'USD' })])
+    expect(Number.isFinite(r.period.days)).toBe(true)
+    expect(r.period.days).toBe(1)
+    expect(r.period.from).toBeUndefined()
+    expect(r.period.to).toBeUndefined()
+    expect(r.totals.debits).toBe(0)
+    expect(r.usd.totals.debits).toBe(-17.61)
+  })
+
+  it('sin transacciones no produce NaN en period.days', () => {
+    const r = buildAnalysis([])
+    expect(Number.isFinite(r.period.days)).toBe(true)
+    expect(r.period.days).toBe(1)
+  })
+
   it('excluye créditos (montos positivos) de byCategory y byMerchant', () => {
     const r = buildAnalysis([
       tx({ merchant: 'DEPÓSITO', category: 'Ingresos', amount: 5000 }),

@@ -6,6 +6,21 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-16)
 
+- **Fix i18n del onboarding — última hoja del tour en el idioma del usuario**.
+  El cuerpo del paso final estaba en `FINAL_BODY` hardcodeado en español
+  (`OnboardingTour.js`); pasó a la clave `tour.finalBody` (ES/EN) en `lib/i18n.js`
+  y el componente compone texto traducido + `<Logo>`. Test nuevo en EN (+1).
+  Suite **379/379** + lint 0. Frontend-only (autodeploy en push a master).
+- **Batch 2 de `post-improvements.md` — import-plan: validaciones backend HECHO**.
+  Cerró `batches/batch-02-import-plan.md` ([x] en `batches/README.md`).
+  `parsePercent` sin heurística `≤1→×100` (1 es 1%, 0.5 es 0.5%); `extractPlan`
+  rechaza quantity negativa y target fuera de [0,100] con `PlanError` que nombra
+  símbolo y valor; respeta moneda/tipo del Excel (fallback ARS/otro); multi-hoja
+  (primera con encabezados); `handleImport` exportado (Deno.serve bajo
+  `import.meta.main`); RPC `replace_user_plan` validado en `0018`. Deno **78/78**
+  + lint/fmt OK. Decisión en `DECISIONS.md`.
+  **DEPLOY PENDIENTE (usuario): `supabase db push` (0018) ANTES de `functions
+  deploy import-plan`** — sin migrar, import-plan 500 con PGRST202.
 - **Batch 3 de `post-improvements.md` — Ledger: moneda y ventas HECHO**.
   Cerró `batches/batch-03-ledger-usd.md` ([x] en `batches/README.md`). Cambios:
   `ledger.js` sin supuesto ARS + señal `exceeded` en `costBasis` + `currency` en
@@ -16,7 +31,6 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
   totales, rentabilidad por símbolo en su moneda y celdas por moneda de la fila.
   Decisión en `DECISIONS.md`. Suite **378/378** + lint 0 + coverage lib ≥80%.
   Frontend-only (la columna `currency` ya existía en `0016_ledger.sql`).
-  **Sigue: Batch 2 (import-plan backend)**.
 - **Consolidación de docs + ideas de monetización** — se creó `DECISIONS.md`
   (log de decisiones, movido de HANDOFF), `HANDOFF.md` quedó corto (este archivo),
   `TODO.md` se deduplicó (items HECHO a una línea; los 3 GEO colapsados en 1) y
@@ -38,9 +52,11 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 ## En progreso
 
 - **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5
-  → 7 → 8 → 9 (índice y detalle en `batches/`). B1 y B3 cerrados; **siguiente:
-  B2 (import-plan: validaciones backend)** — es backend Deno (Edge Function), si
+  → 7 → 8 → 9 (índice y detalle en `batches/`). B1, B2 y B3 cerrados; **siguiente:
+  B4 (upload y storage)** — es backend (parse-summary: removeSummary/upload + storage), si
   toca migraciones requiere `supabase db push` antes del `functions deploy`.
+  **PENDIENTE del usuario**: deploy de B2 — `supabase db push` (0018) ANTES de
+  `functions deploy import-plan`.
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).

@@ -75,6 +75,8 @@ export const HEADER_ALIASES = {
     'cantidad (cant)',
     'unidades',
   ],
+  currency: ['moneda', 'currency', 'divisa'],
+  assetType: ['tipo de activo', 'tipo activo', 'asset type', 'tipo', 'clase'],
 }
 
 export function matchExact(cell: unknown, alias: string): boolean {

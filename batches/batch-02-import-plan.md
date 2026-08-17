@@ -1,7 +1,7 @@
 # Batch 2 — import-plan: validaciones del backend
 
 **Dominio:** backend Deno (Edge Function `import-plan`). **Índice:** #2.
-**Estado:** [ ] pendiente
+**Estado:** [x] hecho (2026-08-16)
 
 ## Hallazgos que resuelve
 
@@ -45,7 +45,7 @@
 
 ## Checklist de cierre
 
-- [ ] `deno test` verde en functions
-- [ ] `deno lint` + `deno fmt --check` OK
-- [ ] Migración aplicada en hosting (si aplica)
-- [ ] Índice `batches/README.md` marcado [x]
+- [x] `deno test` verde en functions (78/78)
+- [x] `deno lint` + `deno fmt --check` OK
+- [ ] Migración `0018` aplicada en hosting (`supabase db push`) + `functions deploy import-plan` (pendiente del usuario)
+- [x] Índice `batches/README.md` marcado [x]

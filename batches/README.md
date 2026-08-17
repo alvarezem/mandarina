@@ -15,7 +15,7 @@ Decisiones tomadas (ver `DECISIONS.md` al cerrar cada batch):
 | # | Batch | Dominio | Hallazgos | Estado |
 |---|-------|---------|-----------|--------|
 | 1 | `batch-01-presupuesto.md` | Presupuesto y compra del plan | orig #1, #4; add #1, #2, #3, #6, #8; menor InvestmentPlan:375 | [x] |
-| 2 | `batch-02-import-plan.md` | import-plan: validaciones backend | orig #2, #3; add #5, #6, #17, #19 | [ ] |
+| 2 | `batch-02-import-plan.md` | import-plan: validaciones backend | orig #2, #3; add #5, #6, #17, #19 | [x] |
 | 3 | `batch-03-ledger-usd.md` | Ledger: moneda y ventas | add #4, #7; menor LedgerView scope | [x] |
 | 4 | `batch-04-upload.md` | Upload y storage | orig #7, #8; add #13, #14 | [ ] |
 | 5 | `batch-05-parse-summary.md` | parse-summary: resiliencia | add #10, #11, #12, #16; menores PDF pesos+dólares, summary_type, visa, mapRows | [ ] |

@@ -4,7 +4,14 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom/vitest'
 import { createElement } from 'react'
+import { webcrypto } from 'node:crypto'
 import { createSupabaseMock } from './test/setup'
+
+// jsdom expone crypto sin subtle (solo getRandomValues); el SHA-256 de
+// content_hash (lib/upload.js) lo necesita, así que se usa el webcrypto de Node.
+if (!globalThis.crypto?.subtle) {
+  Object.defineProperty(globalThis, 'crypto', { value: webcrypto })
+}
 
 // Mock global de supabase (Fase 6: 1 sola definición). Cada archivo de tests
 // importa el cliente y setea comportamientos con mockTable()/auth/storage/functions.

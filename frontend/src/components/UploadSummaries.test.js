@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import UploadSummaries from './UploadSummaries'
 import ToastProvider from './Toast'
 import supabase from '../lib/supabaseClient'
+import { hashFile } from '../lib/upload'
 
 function mockSummaries(list) {
   supabase.mockTable('card_summaries', list)
@@ -135,6 +136,77 @@ describe('UploadSummaries', () => {
     ).toBeInTheDocument()
   })
 
+  it('rechaza un archivo gigante sin subirlo', async () => {
+    const upload = vi.fn()
+    supabase.storage.from.mockReturnValue({ upload })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    const big = new ArrayBuffer(11 * 1024 * 1024)
+    const file = new File([big], 'resumen.csv', { type: 'text/csv' })
+    const input = document.querySelector('input[type="file"]')
+    await userEvent.upload(input, file)
+
+    const toast = await screen.findByRole('status')
+    expect(toast).toHaveTextContent('El archivo supera el límite de 10 MB')
+    expect(upload).not.toHaveBeenCalled()
+  })
+
+  it('rechaza un PDF roto (sin magic bytes) sin subirlo', async () => {
+    const upload = vi.fn()
+    supabase.storage.from.mockReturnValue({ upload })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    const file = new File(['no es un pdf'], 'resumen.pdf', { type: 'application/pdf' })
+    const input = document.querySelector('input[type="file"]')
+    await userEvent.upload(input, file)
+
+    const toast = await screen.findByRole('status')
+    expect(toast).toHaveTextContent('Formato no soportado')
+    expect(upload).not.toHaveBeenCalled()
+  })
+
+  it('no sube un archivo duplicado por contenido', async () => {
+    const upload = vi.fn()
+    supabase.storage.from.mockReturnValue({ upload })
+    const dupHash = await hashFile(new File(['duplicado'], 'x.csv'))
+    supabase.mockTable('card_summaries', [
+      {
+        id: 'a',
+        file_name: 'resumen-2026.csv',
+        file_path: 'u1/resumen-2026.csv',
+        content_hash: dupHash,
+        status: 'done',
+        error: null,
+        created_at: '2026-07-01',
+      },
+    ])
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('resumen-2026.csv')
+    const file = new File(['duplicado'], 'resumen.csv', { type: 'text/csv' })
+    const input = document.querySelector('input[type="file"]')
+    await userEvent.upload(input, file)
+
+    const toast = await screen.findByRole('status')
+    expect(toast).toHaveTextContent('Ya subiste este archivo con el mismo contenido')
+    expect(upload).not.toHaveBeenCalled()
+  })
+
+  it('borra el blob subido si el INSERT de la fila falla (rollback)', async () => {
+    const upload = vi.fn().mockResolvedValue({ error: null })
+    const remove = vi.fn().mockResolvedValue({ data: null, error: null })
+    supabase.storage.from.mockReturnValue({ upload, remove })
+    supabase.mockTable('card_summaries', { rows: [], insertError: new Error('denied') })
+
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    const file = new File(['x'], 'resumen.csv', { type: 'text/csv' })
+    const input = document.querySelector('input[type="file"]')
+    await userEvent.upload(input, file)
+
+    await waitFor(() => expect(remove).toHaveBeenCalledWith(['u1/resumen.csv']))
+    expect(await screen.findByRole('status')).toHaveTextContent('No se pudo registrar el resumen')
+  })
+
   it('renombra un resumen existente', async () => {
     mockSummaries([
       {
@@ -223,6 +295,7 @@ describe('UploadSummaries', () => {
     await waitFor(() => expect(remove).toHaveBeenCalledWith(['u1/visa-julio.pdf']))
     expect(del).toHaveBeenCalled()
     expect(eq).toHaveBeenCalledWith('id', 'a')
+    expect(del.mock.invocationCallOrder[0]).toBeLessThan(remove.mock.invocationCallOrder[0])
     await waitFor(() => expect(onDataChanged).toHaveBeenCalled())
     expect(await screen.findByRole('status')).toHaveTextContent('Resumen visa-julio.pdf eliminado')
   })
@@ -285,6 +358,7 @@ describe('UploadSummaries', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sí' }))
 
     expect(await screen.findByRole('status')).toHaveTextContent('No se pudo eliminar el resumen')
+    expect(remove).not.toHaveBeenCalled()
   })
 
   it('muestra el badge de tipo y período (y "Sin clasificar" si no hay metadata)', async () => {

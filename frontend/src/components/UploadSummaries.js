@@ -3,6 +3,7 @@ import supabase from '../lib/supabaseClient'
 import { useAsync } from '../hooks/useAsync'
 import { useToast } from './Toast'
 import { sanitizeStoragePath, uniqueStoragePath } from '../lib/sanitizeFileName'
+import { fileTypeError, hashFile } from '../lib/upload'
 import SummaryItem from './SummaryItem'
 import { useLang } from './LangProvider'
 import { t, tn } from '../lib/i18n'
@@ -76,13 +77,32 @@ export default function UploadSummaries({
 
   const handleUpload = async (file) => {
     if (!file || uploading) return
+
+    const typeError = await fileTypeError(file)
+    if (typeError) {
+      const friendly = t(lang, typeError)
+      setError(friendly)
+      pushToast({ type: 'error', message: friendly })
+      return
+    }
+
     setUploading(true)
     setError(null)
 
-    const existingPaths = files.map((f) => f.file_path).filter(Boolean)
-    const path = uniqueStoragePath(session.user.id, file.name, existingPaths)
-    const renamed = path !== sanitizeStoragePath(session.user.id, file.name)
     try {
+      const contentHash = await hashFile(file)
+      const duplicate = files.find((f) => f.content_hash && f.content_hash === contentHash)
+      if (duplicate) {
+        const friendly = t(lang, 'upload.err.duplicate')
+        setError(friendly)
+        pushToast({ type: 'error', message: friendly })
+        return
+      }
+
+      const existingPaths = files.map((f) => f.file_path).filter(Boolean)
+      const path = uniqueStoragePath(session.user.id, file.name, existingPaths)
+      const renamed = path !== sanitizeStoragePath(session.user.id, file.name)
+
       const { error: uploadError } = await supabase.storage
         .from('card-resumes')
         .upload(path, file, { upsert: false })
@@ -100,11 +120,17 @@ export default function UploadSummaries({
           user_id: session.user.id,
           file_name: file.name,
           file_path: path,
+          content_hash: contentHash,
         })
         .select()
         .single()
 
       if (insertError) {
+        try {
+          await supabase.storage.from('card-resumes').remove([path])
+        } catch (e) {
+          console.error('UploadSummaries: no se pudo limpiar el blob huérfano', e)
+        }
         console.error('UploadSummaries: error al registrar resumen', insertError)
         const friendly = t(lang, 'upload.err.insert')
         setError(friendly)
@@ -154,18 +180,18 @@ export default function UploadSummaries({
   const removeSummary = async (file) => {
     setConfirmingId(null)
     try {
+      const { error } = await supabase.from('card_summaries').delete().eq('id', file.id)
+      if (error) {
+        console.error('UploadSummaries: error al eliminar resumen', error)
+        pushToast({ type: 'error', message: t(lang, 'upload.err.delete') })
+        return
+      }
       if (file.file_path) {
         try {
           await supabase.storage.from('card-resumes').remove([file.file_path])
         } catch {
           // tolerar: el archivo puede no existir o el storage no responder
         }
-      }
-      const { error } = await supabase.from('card_summaries').delete().eq('id', file.id)
-      if (error) {
-        console.error('UploadSummaries: error al eliminar resumen', error)
-        pushToast({ type: 'error', message: t(lang, 'upload.err.delete') })
-        return
       }
       if (selectedId === file.id) onSelect?.(null)
       onDataChanged?.()

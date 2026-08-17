@@ -1,7 +1,7 @@
 # Batch 4 — Upload y storage
 
 **Dominio:** frontend (subida de resúmenes). **Índice:** #4.
-**Estado:** [ ] pendiente
+**Estado:** [x] hecho (2026-08-16)
 
 ## Hallazgos que resuelve
 
@@ -36,6 +36,7 @@
 
 ## Checklist de cierre
 
-- [ ] `npm test` verde
-- [ ] `npm run lint` sin issues
-- [ ] Índice `batches/README.md` marcado [x]
+- [x] `npm test` verde (393/393)
+- [x] `npm run lint` sin issues
+- [x] Migración `0019` aplicada en hosting (`supabase db push`, 2026-08-16)
+- [x] Índice `batches/README.md` marcado [x]

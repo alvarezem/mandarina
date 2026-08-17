@@ -6,6 +6,16 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-16)
 
+- **Batch 4 de `post-improvements.md` — Upload y storage HECHO**.
+  Cerró `batches/batch-04-upload.md` ([x] en `batches/README.md`). `lib/upload.js`
+  nuevo (puro): `fileTypeError` (extensión + ≤10 MB + magic bytes PDF/XLSX) y
+  `hashFile` (SHA-256); `UploadSummaries.js` valida antes de subir, **dedupe por
+  contenido** (columna `content_hash`, migración `0019`, bloquea el mismo archivo
+  renombrado; el `_N` por nombre se mantiene), **rollback del blob** si el INSERT
+  falla, y `removeSummary` reordenado (fila → blob). Suite **393/393** (+14) +
+  lint 0 + coverage lib 96.5%. Decisión en `DECISIONS.md`.
+  **DEPLOY APLICADO (2026-08-16)**: `supabase db push` (0019) ANTES del push a
+  master (el insert con `content_hash` sin columna da PGRST202). Frontend-only.
 - **Fix i18n del onboarding — última hoja del tour en el idioma del usuario**.
   El cuerpo del paso final estaba en `FINAL_BODY` hardcodeado en español
   (`OnboardingTour.js`); pasó a la clave `tour.finalBody` (ES/EN) en `lib/i18n.js`
@@ -51,9 +61,10 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 ## En progreso
 
 - **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5
-  → 7 → 8 → 9 (índice y detalle en `batches/`). B1, B2 y B3 cerrados; **siguiente:
-  B4 (upload y storage)** — es backend (parse-summary: removeSummary/upload + storage), si
-  toca migraciones requiere `supabase db push` antes del `functions deploy`.
+  → 7 → 8 → 9 (índice y detalle en `batches/`). B1, B2, B3 y B4 cerrados;
+  **siguiente: B6 (análisis de consumo)** — frontend (`lib/analysis.js` como
+  función pura, se elimina la persistencia de `consumption_analyses`; requiere
+  migración + `functions deploy` al tocar `finalize_parse`).
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).

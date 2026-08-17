@@ -47,5 +47,5 @@
 
 - [x] `deno test` verde en functions (78/78)
 - [x] `deno lint` + `deno fmt --check` OK
-- [ ] Migración `0018` aplicada en hosting (`supabase db push`) + `functions deploy import-plan` (pendiente del usuario)
+- [x] Migración `0018` aplicada en hosting (`supabase db push`) + `functions deploy import-plan` (2026-08-16)
 - [x] Índice `batches/README.md` marcado [x]

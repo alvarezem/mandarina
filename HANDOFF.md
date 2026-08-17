@@ -18,9 +18,8 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
   símbolo y valor; respeta moneda/tipo del Excel (fallback ARS/otro); multi-hoja
   (primera con encabezados); `handleImport` exportado (Deno.serve bajo
   `import.meta.main`); RPC `replace_user_plan` validado en `0018`. Deno **78/78**
-  + lint/fmt OK. Decisión en `DECISIONS.md`.
-  **DEPLOY PENDIENTE (usuario): `supabase db push` (0018) ANTES de `functions
-  deploy import-plan`** — sin migrar, import-plan 500 con PGRST202.
+  + lint/fmt OK. Decisión en `DECISIONS.md`. **DEPLOY APLICADO (2026-08-16)**:
+  `supabase db push` (0018) + `functions deploy import-plan`.
 - **Batch 3 de `post-improvements.md` — Ledger: moneda y ventas HECHO**.
   Cerró `batches/batch-03-ledger-usd.md` ([x] en `batches/README.md`). Cambios:
   `ledger.js` sin supuesto ARS + señal `exceeded` en `costBasis` + `currency` en
@@ -55,8 +54,6 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
   → 7 → 8 → 9 (índice y detalle en `batches/`). B1, B2 y B3 cerrados; **siguiente:
   B4 (upload y storage)** — es backend (parse-summary: removeSummary/upload + storage), si
   toca migraciones requiere `supabase db push` antes del `functions deploy`.
-  **PENDIENTE del usuario**: deploy de B2 — `supabase db push` (0018) ANTES de
-  `functions deploy import-plan`.
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).

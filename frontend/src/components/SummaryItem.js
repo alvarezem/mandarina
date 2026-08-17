@@ -38,11 +38,13 @@ export default function SummaryItem({
   submitMeta,
   cancelMetaEdit,
   startMetaEdit,
+  onReparse,
 }) {
   const { lang } = useLang()
   const statusKey = STATUS_CLASS[file.status] ? file.status : 'pending'
   const statusClass = STATUS_CLASS[statusKey]
   const locked = editingId !== null || metaEditingId !== null
+  const reparsing = file.status === 'parsing'
   return (
     <div
       className={`w-full rounded-lg p-2.5 transition ${
@@ -178,6 +180,34 @@ export default function SummaryItem({
                     />
                   </svg>
                 </button>
+                {onReparse && (file.status === 'error' || file.status === 'done') && (
+                  <button
+                    type="button"
+                    onClick={() => onReparse(file.id)}
+                    disabled={locked || reparsing}
+                    aria-label={t(lang, 'summary.reparseAria', { name: file.file_name })}
+                    title={t(lang, 'summary.reparse')}
+                    className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 disabled:opacity-40 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-brand-400"
+                  >
+                    {reparsing ? (
+                      <span className="block h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600 dark:border-slate-600 dark:border-t-brand-500" />
+                    ) : (
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.8}
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                )}
               </>
             )}
             <span

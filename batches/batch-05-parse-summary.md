@@ -1,7 +1,7 @@
 # Batch 5 — parse-summary: resiliencia
 
 **Dominio:** backend Deno (Edge Function `parse-summary`) + migración. **Índice:** #5.
-**Estado:** [ ] pendiente
+**Estado:** [x] hecho (2026-08-17)
 
 > Depende de **B6** (se elimina `consumption_analyses`, que `finalize_parse` hoy escribe — tocar `finalize_parse` acá debe respetar ese cambio).
 
@@ -48,10 +48,20 @@
 - Nota de deploy (orden db push → deploy) si cambia la migración.
 - `DONE.md` + `HANDOFF.md` al cierre.
 
+## Decisiones (2026-08-17, confirmadas con el usuario)
+
+- **Preservar categorías manuales**: flag `category_override boolean not null default false` en `transactions` (migración `0021`); el dashboard lo setea al editar la categoría de una tx; `finalize_parse` guarda las filas override por `(merchant, date, amount)` antes del delete y las re-aplica tras el insert.
+- **Botón de re-parse**: visible en `error` + `parsing` (colgado) + `done` (re-procesar tras cambiar overrides). Reusa la función `parse` existente de `UploadSummaries.js`.
+- **PDF pesos+dólares**: si la fila tiene columna dólares → monto = dólares con `currency USD`; si no → pesos/ARS (consistente por fila).
+- **`summary_type` manual**: no se pisa en re-parse si el usuario lo clasificó a mano (flag en `card_summaries`, alineado con MetaForm).
+- **Tope de tamaño**: `MAX_BLOB_BYTES = 10 MB` (alineado con el límite del frontend), status `error` con mensaje claro sin parsear.
+- **`detectSummaryType`**: `/\bvisa\b/` con word boundary (no matchea "Avisación…").
+- **`mapRows`/`findColumns`**: si hay columnas "Cargo" Y "Abono" (ambas en `HEADER_ALIASES.amount`), abono se negativiza; no tomar solo la primera.
+
 ## Checklist de cierre
 
-- [ ] `deno test` verde en functions
-- [ ] `deno lint` + `deno fmt --check` OK
-- [ ] Migración aplicada en hosting (si aplica)
-- [ ] `npm test` verde (si tocó UI)
-- [ ] Índice `batches/README.md` marcado [x]
+- [x] `deno test` verde en functions
+- [x] `deno lint` + `deno fmt --check` OK
+- [x] Migración aplicada en hosting (si aplica)
+- [x] `npm test` verde (si tocó UI)
+- [x] Índice `batches/README.md` marcado [x]

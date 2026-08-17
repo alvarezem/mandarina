@@ -18,7 +18,7 @@ Decisiones tomadas (ver `DECISIONS.md` al cerrar cada batch):
 | 2 | `batch-02-import-plan.md` | import-plan: validaciones backend | orig #2, #3; add #5, #6, #17, #19 | [x] |
 | 3 | `batch-03-ledger-usd.md` | Ledger: moneda y ventas | add #4, #7; menor LedgerView scope | [x] |
 | 4 | `batch-04-upload.md` | Upload y storage | orig #7, #8; add #13, #14 | [x] |
-| 5 | `batch-05-parse-summary.md` | parse-summary: resiliencia | add #10, #11, #12, #16; menores PDF pesos+dólares, summary_type, visa, mapRows | [ ] |
+| 5 | `batch-05-parse-summary.md` | parse-summary: resiliencia | add #10, #11, #12, #16; menores PDF pesos+dólares, summary_type, visa, mapRows | [x] |
 | 6 | `batch-06-analisis.md` | Análisis de consumo | orig #5, #6; menores fmt NaN, fmtCompact null | [x] |
 | 7 | `batch-07-cotizaciones.md` | Cotizaciones y moneda de instrumento | add #15; menores Watchlist MEP/CCL, MarketQuotes display, usePortfolioQuotes cap 50 | [ ] |
 | 8 | `batch-08-dashboard.md` | Dashboard: paginación y filtros | add #9; menores paymentsCount, dropdown sin txs, fetch sin user_id | [ ] |

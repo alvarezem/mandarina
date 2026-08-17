@@ -1,5 +1,5 @@
 const SUMMARY_TYPE_RULES: [RegExp, string][] = [
-  [/visa/, 'VISA'],
+  [/\bvisa\b/, 'VISA'],
   [/mastercard|\bmaster\b|\bmc\b/, 'MASTERCARD'],
   [/american ?express|\bamex\b/, 'AMEX'],
   [

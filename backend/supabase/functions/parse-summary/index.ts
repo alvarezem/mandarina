@@ -17,6 +17,10 @@ import {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+// Tope de tamaño del resumen (alineado con MAX_UPLOAD_BYTES del frontend): un
+// archivo gigante no se parsea ni deja el resumen colgado en 'parsing'.
+const MAX_BLOB_BYTES = 10 * 1024 * 1024
+
 // Columnas X para el PDF posicional de BBVA.
 const PDF_DATE = /^\d{2}-[A-Za-z]{3}-\d{2}$/
 const PDF_DATE_IN_DESC = /(\^|\D)\d{2}-[A-Za-z]{3}-\d{2}(\D|$)/
@@ -138,6 +142,12 @@ export async function handleParse(
     await setStatus('error', message)
     return json({ error: message }, 500, cors)
   }
+  if (blob.size > MAX_BLOB_BYTES) {
+    const message =
+      'El archivo supera el límite de 10 MB y no se puede procesar'
+    await setStatus('error', message)
+    return json({ error: message }, 400, cors)
+  }
 
   let transactions: Transaction[] = []
   let pdfText: string | null = null
@@ -150,7 +160,6 @@ export async function handleParse(
       const rows = await extractRows(summary, blob)
       transactions = mapRows(rows).map((t) => ({
         ...t,
-        currency: 'ARS',
         category: categorize(t.merchant),
       }))
     }
@@ -271,7 +280,8 @@ async function extractPdfTransactions(
       }
 
       if (!parts.desc || PDF_DATE_IN_DESC.test(parts.desc)) continue
-      const amountStr = parts.pesos || parts.dolares
+      // Si la fila tiene dólares, el monto es en dólares (USD); si no, pesos (ARS).
+      const amountStr = parts.dolares || parts.pesos
       if (!amountStr) continue
       const amount = parseAmount(amountStr)
       if (amount === null) continue

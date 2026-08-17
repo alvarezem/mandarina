@@ -412,7 +412,10 @@ describe('Dashboard', () => {
     await userEvent.click(within(mercadoRow).getByRole('button', { name: /Compras/i }))
     await userEvent.click(await screen.findByRole('button', { name: /Transferencias/i }))
 
-    expect(update).toHaveBeenCalledWith({ category: 'Transferencias' })
+    expect(update).toHaveBeenCalledWith({
+      category: 'Transferencias',
+      category_override: true,
+    })
     expect(eq).toHaveBeenCalledWith('id', '1')
     expect(await screen.findByText('Categoría actualizada')).toBeInTheDocument()
     const categoryCells = (await rowsOfTable())
@@ -432,7 +435,7 @@ describe('Dashboard', () => {
     await userEvent.click(within(amazonRow).getByRole('button', { name: /Compras/i }))
     await userEvent.click(await screen.findByRole('button', { name: /✓\s*Pagos/i }))
 
-    expect(update).toHaveBeenCalledWith({ category: 'Pagos' })
+    expect(update).toHaveBeenCalledWith({ category: 'Pagos', category_override: true })
     expect(await screen.findByText(/se excluyen 2 pagos de tarjeta/i)).toBeInTheDocument()
     const merchants = (await rowsOfTable())
       .slice(1)
@@ -457,7 +460,10 @@ describe('Dashboard', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Transferencias/i }))
 
     expect(await screen.findByText('Guardado: MERCADO LIBRE → Transferencias')).toBeInTheDocument()
-    expect(update).toHaveBeenCalledWith({ category: 'Transferencias' })
+    expect(update).toHaveBeenCalledWith({
+      category: 'Transferencias',
+      category_override: true,
+    })
     expect(eq).toHaveBeenCalledWith('id', '1')
     expect(ovUpsert).toHaveBeenCalledWith(
       { user_id: 'user-1', merchant: 'MERCADO LIBRE', category: 'Transferencias' },

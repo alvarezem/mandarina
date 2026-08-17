@@ -6,6 +6,23 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-17)
 
+- **Batch 5 de `post-improvements.md` — parse-summary: resiliencia HECHO**.
+  Cerró `batches/batch-05-parse-summary.md` ([x] en `batches/README.md`).
+  Migración `0021`: `category_override` en `transactions` y `summary_type_manual`
+  en `card_summaries`; `finalize_parse` snapshot las categorías manuales por
+  `(merchant, date, amount)` antes del delete+insert y las re-aplica tras el
+  insert, y no pisa `summary_type` clasificado a mano. `parse-summary`:
+  `MAX_BLOB_BYTES = 10 MB` (blob gigante → status error claro, sin quedar en
+  'parsing'), **moneda real en CSV/XLSX** (columna Moneda/Currency o header
+  "Monto USD"; se dejó de forzar ARS), **PDF pesos+dólares consistente** (dólares
+  si la fila los tiene). `detection.ts`: `/\bvisa\b/`. `parser.ts`: Cargo/Abono en
+  columnas separadas (abono negativizado, no se pierden filas). **Frontend**:
+  botón re-parse en `SummaryItem.js` (error/done, reusa `parse()` de
+  UploadSummaries), `Dashboard.js` setea `category_override` al editar categoría,
+  MetaForm setea `summary_type_manual`. Suites **deno 83/83** (+2) + lint/fmt OK;
+  **npm 400/400** (+1) + lint 0 + coverage lib 96%. Decisión en `DECISIONS.md`.
+  **DEPLOY APLICADO (2026-08-17)**: `supabase db push` (0021) ANTES de
+  `functions deploy parse-summary`.
 - **QA del usuario → 2 bugs arreglados + 1 limitación aceptada (2026-08-17)**.
   **(1) Toast detrás del modal**: el contenedor de toasts usaba `z-[60]` y los
   modales `z-[70]` (RegisterOperationModal/QuoteModal/SummaryDetailModal) y el
@@ -86,10 +103,11 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 ## En progreso
 
 - **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5
-  → 7 → 8 → 9 (índice y detalle en `batches/`). B1, B2, B3, B4 y B6 cerrados;
-  **siguiente: B5 (parse-summary: resiliencia)** — backend (re-parse, retry,
-  recovery de `parsing` colgado, categorías manuales en `finalize_parse`;
-  coordinado con B6, que ya sacó `p_result`/`consumption_analyses`).
+  → 7 → 8 → 9 (índice y detalle en `batches/`). B1, B2, B3, B4, B5 y B6 cerrados;
+  **siguiente: B7 (cotizaciones y moneda de instrumento)** — add #15 (moneda de
+  BYMA muerta) + menores Watchlist MEP/CCL, MarketQuotes display, usePortfolioQuotes
+  cap 50; tiene un punto de contacto con la moneda real que B5 acaba de introducir
+  en `transactions` (el parse ya guarda USD cuando corresponde).
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).

@@ -71,10 +71,10 @@ function makeClient(overrides: Record<string, unknown> = {}) {
             if (overrides.downloadError) {
               return Promise.resolve({ data: null, error: { message: 'x' } })
             }
-            return Promise.resolve({
-              data: new Blob([overrides.fileText ?? CSV] as BlobPart[]),
-              error: null,
-            })
+            const data = overrides.blobSize
+              ? new Blob([new Uint8Array(overrides.blobSize as number)])
+              : new Blob([overrides.fileText ?? CSV] as BlobPart[])
+            return Promise.resolve({ data, error: null })
           },
         }
       },
@@ -165,6 +165,28 @@ Deno.test('handleParse: error de descarga -> 500 con status error', async () => 
   assertEquals(res.status, 500)
   const last = client.calls.updates.at(-1)!
   assertEquals(last.payload.status, 'error')
+})
+
+Deno.test('handleParse: archivo mayor a 10 MB -> 400 sin parsear', async () => {
+  const client = makeClient({ blobSize: 10 * 1024 * 1024 + 1 })
+  const res = await handleParse(client, SUMMARY_ID, {})
+  assertEquals(res.status, 400)
+  const last = client.calls.updates.at(-1)!
+  assertEquals(last.payload.status, 'error')
+})
+
+Deno.test('handleParse: columna de moneda define la moneda de cada fila', async () => {
+  const client = makeClient({
+    fileText:
+      'Fecha;Descripción;Importe;Moneda\n01-ENE-26;NETFLIX;12,50;USD\n02-ENE-26;COTO;1000;ARS',
+  })
+  const res = await handleParse(client, SUMMARY_ID, {})
+  assertEquals(res.status, 200)
+  const args = finalizeArgsOf(client)
+  const usd = args.p_transactions.find((t) => t.merchant === 'NETFLIX')
+  assertEquals(usd?.currency, 'USD')
+  const ars = args.p_transactions.find((t) => t.merchant === 'COTO')
+  assertEquals(ars?.currency, 'ARS')
 })
 
 Deno.test('handleParse: aplica overrides de categoría del usuario', async () => {

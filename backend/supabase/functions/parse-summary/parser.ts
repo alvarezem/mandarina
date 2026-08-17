@@ -1,20 +1,32 @@
 // Funciones puras de parseo de resúmenes (sin I/O ni dependencias de red).
 // Extraídas de parse-summary/index.ts para poder testearlas unitariamente.
 
-import { HEADER_ALIASES, matchExact } from '../_shared/normalize.ts'
+import {
+  HEADER_ALIASES,
+  matchExact,
+  normalizeHeader,
+} from '../_shared/normalize.ts'
 
 export type ParsedRow = {
   date: string
   merchant: string
   amount: number
+  currency: 'ARS' | 'USD'
 }
 
 export type Transaction = ParsedRow & {
-  currency: 'ARS' | 'USD'
   category: string
 }
 
-export type ColumnMap = { date: number; merchant: number; amount: number }
+export type ColumnMap = {
+  date: number
+  merchant: number
+  amount: number
+  credit: number
+  amountIsDebit: boolean
+  currency: number
+  currencyDefault: 'ARS' | 'USD'
+}
 
 export function detectSeparator(text: string): string {
   const firstLine = text.split(/\r?\n/).find((l) => l.trim())
@@ -38,10 +50,42 @@ export function findColumns(row: unknown[]): ColumnMap {
   const merchant = row.findIndex((cell) =>
     HEADER_ALIASES.merchant.some((a) => matchExact(cell, a))
   )
-  const amount = row.findIndex((cell) =>
-    HEADER_ALIASES.amount.some((a) => matchExact(cell, a))
+
+  // Columnas de monto: si hay "Cargo" y "Abono" (débito y crédito), la de
+  // débito es el monto principal y la de crédito se negativiza (es un abono).
+  const amountCells = row.map((cell, i) => ({ cell, i })).filter(
+    ({ cell }) => HEADER_ALIASES.amount.some((a) => matchExact(cell, a)),
   )
-  return { date, merchant, amount }
+  const debit = amountCells.find(({ cell }) =>
+    /cargo|debito|debit/i.test(normalizeHeader(cell))
+  )
+  const credit = amountCells.find(({ cell }) =>
+    /abono|credito|credit/i.test(normalizeHeader(cell))
+  )
+  const amount = debit?.i ?? credit?.i ?? amountCells[0]?.i ?? -1
+  const creditIdx = debit && credit && debit.i !== credit.i ? credit.i : -1
+
+  // Moneda: columna explícita ("Moneda"/"Currency") o default según el alias
+  // del monto ("monto usd" → USD). Si no hay señal, ARS.
+  const currency = row.findIndex((cell) =>
+    HEADER_ALIASES.currency.some((a) => matchExact(cell, a))
+  )
+  const amountHeader = row[amount] ?? ''
+  const currencyDefault: 'ARS' | 'USD' = /\busd\b|dolar|dolares/.test(
+      normalizeHeader(amountHeader),
+    )
+    ? 'USD'
+    : 'ARS'
+
+  return {
+    date,
+    merchant,
+    amount,
+    credit: creditIdx,
+    amountIsDebit: Boolean(debit),
+    currency,
+    currencyDefault,
+  }
 }
 
 const MONTHS: Record<string, string> = {
@@ -123,11 +167,37 @@ export function normalizeRow(
   const merchant = columns.merchant >= 0
     ? cells[columns.merchant]
     : 'Sin descripción'
-  const amount = parseAmount(cells[columns.amount])
+
+  // Monto: si hay columna de crédito (abono) y el débito está vacío, se usa el
+  // crédito con signo negativo. Si el débito es un "Cargo", el valor de la
+  // planilla suele venir positivo → se negativiza (es un egreso).
+  let amount: number | null = null
+  const debitRaw = columns.amount >= 0 ? cells[columns.amount] : ''
+  if (debitRaw) {
+    amount = parseAmount(debitRaw)
+    if (amount !== null && columns.amountIsDebit && amount > 0) amount = -amount
+  }
+  if (amount === null && columns.credit >= 0 && cells[columns.credit]) {
+    amount = parseAmount(cells[columns.credit])
+    if (amount !== null) amount = -Math.abs(amount)
+  }
+
+  // Moneda: columna explícita gana; si no, el default del encabezado del monto.
+  let currency: 'ARS' | 'USD' = columns.currencyDefault
+  if (columns.currency >= 0 && cells[columns.currency]) {
+    const raw = normalizeHeader(cells[columns.currency])
+    if (/\busd\b|dolar|dolares/.test(raw)) currency = 'USD'
+    else if (/ars|peso/.test(raw)) currency = 'ARS'
+  }
 
   if (!date || amount === null) return null
 
-  return { date, merchant: merchant || 'Sin descripción', amount }
+  return {
+    date,
+    merchant: merchant || 'Sin descripción',
+    amount,
+    currency,
+  }
 }
 
 export function mapRows(rows: unknown[][]): ParsedRow[] {

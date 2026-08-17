@@ -321,7 +321,10 @@ export default function Dashboard({
 
   const changeCategory = async (tx, category, remember = false) => {
     try {
-      const { error } = await supabase.from('transactions').update({ category }).eq('id', tx.id)
+      const { error } = await supabase
+        .from('transactions')
+        .update({ category, category_override: true })
+        .eq('id', tx.id)
       if (error) {
         console.error('Dashboard: error al actualizar categoría', error)
         pushToast({ type: 'error', message: t(lang, 'dashboard.err.updateCategory') })
@@ -343,7 +346,7 @@ export default function Dashboard({
           ])
           const { data: all } = await supabase
             .from('transactions')
-            .update({ category })
+            .update({ category, category_override: true })
             .eq('merchant', tx.merchant)
           if (all)
             setAllTx((prev) =>

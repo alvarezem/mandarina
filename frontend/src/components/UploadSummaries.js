@@ -265,6 +265,7 @@ export default function UploadSummaries({
 
     const payload = {
       summary_type: metaDraft.type || null,
+      summary_type_manual: Boolean(metaDraft.type),
       period_month: metaDraft.month,
       period_year: metaDraft.year,
     }
@@ -410,6 +411,7 @@ export default function UploadSummaries({
                   submitMeta={submitMeta}
                   cancelMetaEdit={cancelMetaEdit}
                   startMetaEdit={startMetaEdit}
+                  onReparse={parse}
                 />
               </li>
             ))}

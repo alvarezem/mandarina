@@ -47,6 +47,30 @@ describe('UploadSummaries', () => {
     expect(screen.getByText('parse failed')).toBeInTheDocument()
   })
 
+  it('reprocesa un resumen con error desde el botón de re-parse', async () => {
+    supabase.functions.invoke.mockResolvedValue({ data: {}, error: null })
+    mockSummaries([
+      {
+        id: 'a',
+        file_name: 'visa-julio.pdf',
+        status: 'error',
+        error: 'parse failed',
+        created_at: '2026-07-01',
+      },
+    ])
+    wrap(<UploadSummaries session={{ user: { id: 'u1' } }} />)
+    await screen.findByText('visa-julio.pdf')
+
+    await userEvent.click(screen.getByRole('button', { name: /Reprocesar visa-julio/ }))
+
+    await waitFor(() =>
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('parse-summary', {
+        body: { summary_id: 'a' },
+      }),
+    )
+    await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1))
+  })
+
   it('dispara la subida y el parseo con un archivo y muestra toast de éxito', async () => {
     const upload = vi.fn().mockResolvedValue({ error: null })
     supabase.storage.from.mockReturnValue({ upload })
@@ -415,6 +439,7 @@ describe('UploadSummaries', () => {
     await waitFor(() =>
       expect(update).toHaveBeenCalledWith({
         summary_type: 'Broker',
+        summary_type_manual: true,
         period_month: 8,
         period_year: 2026,
       }),

@@ -11,6 +11,12 @@ Deno.test('detectSummaryType: alias de tarjetas de crédito', () => {
   assertEquals(detectSummaryType('american express julio.pdf', true), 'AMEX')
 })
 
+Deno.test('detectSummaryType: visa no matchea substrings (word boundary)', () => {
+  assertEquals(detectSummaryType('carnetvisa-2026.csv', false), null)
+  assertEquals(detectSummaryType('revisar-factura.csv', false), null)
+  assertEquals(detectSummaryType('Revisar Visa.csv', false), 'VISA')
+})
+
 Deno.test('detectSummaryType: billeteras virtuales', () => {
   for (
     const n of [

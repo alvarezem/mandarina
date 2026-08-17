@@ -47,7 +47,7 @@ export default function QuotesTable({
           label: (ctx) =>
             t(lang, 'inv.table.tooltip', {
               symbol: ctx.label,
-              value: fmt(ctx.raw, display),
+              value: fmt(ctx.raw, items[ctx.dataIndex]?.valueCurrency ?? display),
               pct: fmtPct(total > 0 ? (ctx.raw / total) * 100 : 0, lang),
             }),
         },
@@ -192,7 +192,7 @@ export default function QuotesTable({
                       <td className="hidden px-3 py-3 text-right sm:table-cell">
                         {item.price != null ? (
                           <span className="font-medium text-slate-700 dark:text-slate-200">
-                            {fmt(item.price, display)}
+                            {fmt(item.price, item.valueCurrency ?? display)}
                           </span>
                         ) : (
                           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
@@ -219,7 +219,7 @@ export default function QuotesTable({
                         {item.quantity}
                       </td>
                       <td className="px-3 py-3 text-right font-medium text-slate-700 dark:text-slate-200">
-                        {item.price != null ? fmt(item.value, display) : '—'}
+                        {item.price != null ? fmt(item.value, item.valueCurrency ?? display) : '—'}
                       </td>
                       <td className="px-3 py-3 text-right text-slate-600 dark:text-slate-300">
                         {fmtPct(item.actualPct, lang)}

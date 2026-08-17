@@ -612,7 +612,7 @@ describe('InvestmentPlan', () => {
     await waitFor(() => expect(screen.getAllByText('$200.00').length).toBeGreaterThan(0))
   })
 
-  it('muestra "—" en el total si hace falta conversión y no hay rate', async () => {
+  it('sin rate muestra el total en la moneda real del activo (no ARS como USD)', async () => {
     mockPlan(
       [
         {
@@ -634,6 +634,6 @@ describe('InvestmentPlan', () => {
     })
     wrap(<InvestmentPlan session={{ user: { id: 'u1' } }} display="USD" />)
     await screen.findByText('VIST')
-    await waitFor(() => expect(screen.getAllByText('—').length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText('$ 200,00').length).toBeGreaterThan(0))
   })
 })

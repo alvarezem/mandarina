@@ -1,7 +1,7 @@
 # Batch 7 — Cotizaciones y moneda de instrumento
 
 **Dominio:** frontend (cotizaciones) + backend (quotes). **Índice:** #7.
-**Estado:** [ ] pendiente
+**Estado:** [x] hecho (2026-08-17, frontend-only)
 
 ## Hallazgos que resuelve
 
@@ -41,6 +41,6 @@
 
 ## Checklist de cierre
 
-- [ ] `npm test` verde
-- [ ] `deno test` verde (if backend touched)
-- [ ] Índice `batches/README.md` marcado [x]
+- [x] `npm test` verde
+- [x] `deno test` verde (if backend touched)
+- [x] Índice `batches/README.md` marcado [x]

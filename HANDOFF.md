@@ -6,6 +6,18 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-17)
 
+- **Batch 7 de `post-improvements.md` — Cotizaciones y moneda de instrumento HECHO**.
+  Cerró `batches/batch-07-cotizaciones.md` ([x] en `batches/README.md`). **Frontend-only**
+  (la edge ya devolvía `currency` por quote; sin `db push` ni redeploy de functions).
+  **Moneda efectiva de la quote** en `usePortfolioQuotes.js`: `quote.currency ?? item.currency
+  ?? 'ARS'` manda en la conversión (add #15: USD en el plan como ARS se valora `× rate`; ARS
+  tipeado USD ya no multiplica de más) + cada item expone `valueCurrency`. **Cap 50 + dedupe +
+  sin MEP/CCL** en el request (espejo de la edge) + toast `inv.quotes.limit` si >50 únicos.
+  **`totalCurrency`** para el total (con rate → display; sin rate → moneda única; mixto → `—`).
+  **Etiquetado por moneda real** en `QuotesTable`/`PlanTable`/`MarketQuotes`/`InvestmentPlan` +
+  `Watchlist` → display USD sin rate ya no etiqueta ARS como USD; gráfico/modal con `chartDisplay`
+  + nota `inv.quotes.noRate`. `validateSymbol` rechaza `MEP`/`CCL`. Suite **npm 412/412** (+12)
+  + lint 0 + coverage lib 96% + build OK. Decisión en `DECISIONS.md`. Frontend-only.
 - **Batch 5 de `post-improvements.md` — parse-summary: resiliencia HECHO**.
   Cerró `batches/batch-05-parse-summary.md` ([x] en `batches/README.md`).
   Migración `0021`: `category_override` en `transactions` y `summary_type_manual`
@@ -102,12 +114,11 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## En progreso
 
-- **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5
-  → 7 → 8 → 9 (índice y detalle en `batches/`). B1, B2, B3, B4, B5 y B6 cerrados;
-  **siguiente: B7 (cotizaciones y moneda de instrumento)** — add #15 (moneda de
-  BYMA muerta) + menores Watchlist MEP/CCL, MarketQuotes display, usePortfolioQuotes
-  cap 50; tiene un punto de contacto con la moneda real que B5 acaba de introducir
-  en `transactions` (el parse ya guarda USD cuando corresponde).
+- **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5 → 7
+  → 8 → 9 (índice y detalle en `batches/`). B1 a B7 cerrados;
+  **siguiente: B8 (dashboard: paginación y filtros)** — add #9 (paginación del dashboard)
+  + menores paymentsCount con filtro de moneda/categoría, resumen sin transacciones en el
+  dropdown, fetch sin user_id.
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).

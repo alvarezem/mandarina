@@ -46,7 +46,7 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
   })
 
   const rate = rates[rateMode]?.price || null
-  const toDisplay = (price) => (display === 'USD' && rate ? price / rate : price)
+  const scaled = display === 'USD' && rate != null
 
   const handleAdd = async (e) => {
     e.preventDefault()
@@ -194,7 +194,8 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {items.map((item) => {
             const q = quotes[item.symbol]
-            const price = q?.price != null ? toDisplay(q.price) : null
+            const price = q?.price != null ? (scaled ? q.price / rate : q.price) : null
+            const label = scaled ? 'USD' : (q?.currency ?? 'ARS')
             const changePct = q?.changePct ?? null
             return (
               <li key={item.id} className="flex items-center justify-between gap-3 py-2.5">
@@ -212,7 +213,7 @@ export default function Watchlist({ session, display = 'ARS', rateMode = 'CCL' }
                   {price != null ? (
                     <>
                       <span className="text-right text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {fmt(price, display)}
+                        {fmt(price, label)}
                       </span>
                       {changePct != null ? (
                         <span

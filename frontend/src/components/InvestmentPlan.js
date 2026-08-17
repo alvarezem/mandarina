@@ -75,12 +75,13 @@ export default function InvestmentPlan({
   }, [session?.user?.id])
   const items = planData ?? []
 
-  const { quotes, rates, rate, builtItems, refreshQuotes, quotesError } = usePortfolioQuotes({
-    items,
-    display,
-    rateMode,
-    onMarketClosed,
-  })
+  const { quotes, rates, builtItems, totalCurrency, refreshQuotes, quotesError } =
+    usePortfolioQuotes({
+      items,
+      display,
+      rateMode,
+      onMarketClosed,
+    })
 
   const total = builtItems.reduce((sum, item) => sum + item.value, 0)
 
@@ -401,9 +402,7 @@ export default function InvestmentPlan({
               {t(lang, 'inv.plan.totalPortfolio')}
             </p>
             <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
-              {rate == null && items.some((i) => (i.currency || 'ARS') !== display)
-                ? '—'
-                : fmt(total, display)}
+              {totalCurrency != null ? fmt(total, totalCurrency) : '—'}
             </p>
           </div>
         </div>

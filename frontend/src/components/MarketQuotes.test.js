@@ -306,4 +306,32 @@ describe('MarketQuotes', () => {
     wrap(<MarketQuotes session={{ user: { id: 'u1' } }} />)
     expect(await screen.findByTestId('quotes-error-notice')).toBeInTheDocument()
   })
+
+  it('en display USD sin rate muestra los precios en ARS correctamente etiquetados', async () => {
+    mockPlan(
+      ITEMS,
+      {
+        VIST: { price: 34920, changePct: 1.2, source: 'byma', currency: 'ARS' },
+        QQQ: { price: 56400, changePct: -0.5, source: 'byma', currency: 'ARS' },
+      },
+      { MEP: null, CCL: null },
+    )
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} display="USD" />)
+    await screen.findByText('Patrimonio total')
+
+    expect(screen.getByText('$ 34.920,00')).toBeInTheDocument()
+    expect(screen.getByText('$ 786.960,00')).toBeInTheDocument()
+    expect(screen.getByText(/Dólar no disponible/)).toBeInTheDocument()
+  })
+
+  it('valora un activo con quote en USD contra el rate aunque el plan lo tenga en ARS', async () => {
+    mockPlan([{ ...ITEMS[0], currency: 'ARS' }], {
+      VIST: { price: 100, changePct: 1, source: 'byma', currency: 'USD' },
+    })
+    wrap(<MarketQuotes session={{ user: { id: 'u1' } }} display="ARS" rateMode="MEP" />)
+    await screen.findByText('Patrimonio total')
+
+    expect(screen.getByText('$ 120.000,00')).toBeInTheDocument()
+    expect(screen.getAllByText('$ 960.000,00').length).toBeGreaterThanOrEqual(2)
+  })
 })

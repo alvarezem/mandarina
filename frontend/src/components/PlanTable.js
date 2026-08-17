@@ -130,7 +130,7 @@ export default function PlanTable({
                 <td className="hidden px-3 py-3 sm:table-cell">
                   {item.price != null ? (
                     <span>
-                      {fmt(item.price, display)}
+                      {fmt(item.price, item.valueCurrency ?? display)}
                       {quotes[item.symbol]?.changePct != null && (
                         <span
                           className={`ml-1.5 text-xs ${
@@ -175,7 +175,7 @@ export default function PlanTable({
                   {item.quantity}
                 </td>
                 <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-200">
-                  {fmt(item.value, display)}
+                  {fmt(item.value, item.valueCurrency ?? display)}
                 </td>
                 <td className="px-3 py-3 text-right">
                   {item.buy > 0 ? (

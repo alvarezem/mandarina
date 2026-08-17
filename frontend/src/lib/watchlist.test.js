@@ -22,13 +22,14 @@ describe('validateSymbol', () => {
     expect(validateSymbol('  ggal  ')).toBe(true)
   })
 
-  it('rechaza vacíos, largos y caracteres raros', () => {
+  it('rechaza vacíos, largos, caracteres raros y los dólares MEP/CCL', () => {
     expect(validateSymbol('')).toBe(false)
     expect(validateSymbol('   ')).toBe(false)
     expect(validateSymbol(null)).toBe(false)
     expect(validateSymbol('A'.repeat(13))).toBe(false)
     expect(validateSymbol('CÓRDOBA')).toBe(false)
-    expect(validateSymbol('MEP')).toBe(true)
-    expect(validateSymbol('CCL')).toBe(true)
+    expect(validateSymbol('MEP')).toBe(false)
+    expect(validateSymbol('CCL')).toBe(false)
+    expect(validateSymbol('  mep  ')).toBe(false)
   })
 })

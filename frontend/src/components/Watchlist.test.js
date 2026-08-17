@@ -80,6 +80,15 @@ describe('Watchlist', () => {
     expect(supabase.from('watchlist').insert).not.toHaveBeenCalled()
   })
 
+  it('rechaza MEP y CCL (dólares) como tickers de la watchlist', async () => {
+    wrap(<Watchlist session={{ user: { id: 'u1' } }} />)
+    await userEvent.type(screen.getByLabelText('Ticker a seguir'), 'MEP')
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar' }))
+
+    expect(await screen.findByText(/Ticker inválido/i)).toBeInTheDocument()
+    expect(supabase.from('watchlist').insert).not.toHaveBeenCalled()
+  })
+
   it('avisa con toast cuando el ticker ya está en la lista', async () => {
     mockRows([{ id: 'w1', symbol: 'GGAL', name: 'GGAL', sort_order: 0 }])
     wrap(<Watchlist session={{ user: { id: 'u1' } }} />)
@@ -143,6 +152,14 @@ describe('Watchlist', () => {
     wrap(<Watchlist session={{ user: { id: 'u1' } }} display="USD" rateMode="CCL" />)
 
     expect(await screen.findByText('$2.50')).toBeInTheDocument()
+  })
+
+  it('sin rate muestra el precio en su moneda real (no ARS etiquetado como USD)', async () => {
+    mockRows([{ id: 'w1', symbol: 'GGAL', name: 'GGAL', sort_order: 0 }])
+    mockQuotes({ GGAL: { price: 3000, changePct: 1, currency: 'ARS' } }, { MEP: null, CCL: null })
+    wrap(<Watchlist session={{ user: { id: 'u1' } }} display="USD" rateMode="CCL" />)
+
+    expect(await screen.findByText('$ 3.000,00')).toBeInTheDocument()
   })
 
   it('muestra un error amigable cuando falla el fetch de cotizaciones', async () => {

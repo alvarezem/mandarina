@@ -119,14 +119,20 @@ export default function MarketQuotes({
   }, [session?.user?.id])
   const items = planData ?? []
 
-  const { quotes, rates, rate, builtItems, refreshQuotes, quotesError } = usePortfolioQuotes({
-    items,
-    display,
-    rateMode,
-    onMarketClosed,
-  })
+  const { quotes, rates, rate, builtItems, totalCurrency, refreshQuotes, quotesError } =
+    usePortfolioQuotes({
+      items,
+      display,
+      rateMode,
+      onMarketClosed,
+    })
 
   const total = builtItems.reduce((sum, item) => sum + item.value, 0)
+
+  // El histórico de BYMA es nativo de la moneda listada (ARS típicamente) y solo
+  // se convierte a USD con rate; sin rate se muestra en su moneda real.
+  const chartDisplay = display === 'USD' && rate ? 'USD' : 'ARS'
+  const chartScale = chartDisplay === 'USD' ? 1 / rate : 1
 
   const withChange = useMemo(
     () =>
@@ -140,8 +146,6 @@ export default function MarketQuotes({
   const dayChange = useMemo(() => portfolioChangePct(withChange), [withChange])
 
   const pricedCount = withChange.filter((item) => item.price != null).length
-
-  const chartScale = display === 'USD' && rate ? 1 / rate : 1
 
   const chartPoints = useMemo(() => {
     if (chartScale === 1) return chartData.points
@@ -272,7 +276,7 @@ export default function MarketQuotes({
                   {t(lang, 'inv.quotes.total')}
                 </p>
                 <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-                  {fmt(total, display)}
+                  {totalCurrency != null ? fmt(total, totalCurrency) : '—'}
                 </p>
                 {dayChange != null && (
                   <p
@@ -315,6 +319,11 @@ export default function MarketQuotes({
                 <p className="text-xs text-slate-400 dark:text-slate-500">
                   MEP {rates.MEP?.price != null ? fmt(rates.MEP.price, 'ARS') : '—'} · CCL{' '}
                   {rates.CCL?.price != null ? fmt(rates.CCL.price, 'ARS') : '—'}
+                  {display === 'USD' && !rate && (
+                    <span className="ml-1 text-amber-600 dark:text-amber-400">
+                      · {t(lang, 'inv.quotes.noRate')}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -325,7 +334,7 @@ export default function MarketQuotes({
             sort={sort}
             onSort={onSort}
             quotes={quotes}
-            display={display}
+            display={chartDisplay}
             chart={chart}
             onOpenInline={openInline}
             onOpenModal={openModal}
@@ -343,7 +352,7 @@ export default function MarketQuotes({
           chartQuote={chartQuote}
           chartPoints={chartPoints}
           chartData={chartData}
-          display={display}
+          display={chartDisplay}
           onRange={setChartRange}
           onClose={() => setModal(null)}
         />

@@ -4,8 +4,22 @@ Documento de traspaso entre sesiones. El agente lo **lee al inicio** de cada
 sesión y lo **actualiza al cerrar** (o al terminar una tarea grande). Resumen
 corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
-## Última sesión (2026-08-16)
+## Última sesión (2026-08-17)
 
+- **QA del usuario → 2 bugs arreglados + 1 limitación aceptada (2026-08-17)**.
+  **(1) Toast detrás del modal**: el contenedor de toasts usaba `z-[60]` y los
+  modales `z-[70]` (RegisterOperationModal/QuoteModal/SummaryDetailModal) y el
+  onboarding `z-[80]` → el toast de oversell quedaba bajo el backdrop. `Toast.js`
+  subido a `z-[90]`. **(2) Hint con `{currency}` literal**: `t()` usaba
+  `String.replace` (solo reemplaza la primera ocurrencia) y `inv.op.hint` tiene
+  `{currency}` dos veces → la de "Comisión" quedaba literal; ahora `replaceAll`
+  (fix general para cualquier clave con var repetida). **(3) Dedupe por contenido
+  NO aplica a resúmenes subidos antes de la migración `0019`** (su `content_hash`
+  es NULL → re-subir ese archivo vuelve a subirlo con sufijo `_1`) — el bundle
+  desplegado sí tiene el dedupe; el usuario **decidió aceptar la limitación**
+  (ya documentada en `DECISIONS.md`/`DONE.md`), sin backfill. Tests: +1 toast
+  (z-index del contenedor), +1 i18n (var repetida es/en). Suite **399/399** +
+  lint 0 + coverage lib 96%. Commit `521790b`, push a master (autodeploy).
 - **Batch 6 de `post-improvements.md` — Análisis de consumo HECHO**.
   Cerró `batches/batch-06-analisis.md` ([x] en `batches/README.md`).
   `consumption_analyses` **eliminado** (data muerta y divergente del dashboard):

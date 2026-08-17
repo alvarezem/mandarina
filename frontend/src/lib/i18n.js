@@ -1069,7 +1069,7 @@ export function t(lang, key, vars) {
   if (value === undefined) value = translations[DEFAULT_LANG][key]
   if (value === undefined) return key
   if (vars === undefined || typeof value !== 'string') return value
-  return Object.entries(vars).reduce((acc, [k, v]) => acc.replace(`{${k}}`, String(v)), value)
+  return Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{${k}}`, String(v)), value)
 }
 
 // Pluralización simple: la clave vive como `<key>.one` / `<key>.other` y se

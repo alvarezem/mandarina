@@ -31,6 +31,15 @@ describe('i18n', () => {
     )
   })
 
+  it('interpola la misma variable repetida en una clave', () => {
+    expect(t('es', 'inv.op.hint', { currency: 'USD' })).toBe(
+      'Los campos con * son obligatorios · Precio en USD · Comisión en USD o %',
+    )
+    expect(t('en', 'inv.op.hint', { currency: 'ARS' })).toBe(
+      'Fields with * are required · Price in ARS · Commission in ARS or %',
+    )
+  })
+
   it('cae a es si la clave falta en el idioma pedido', () => {
     expect(t('fr', 'landing.hero.title')).toBe('A tu plata, sacale todo el jugo')
   })

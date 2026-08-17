@@ -45,6 +45,17 @@ describe('Toast', () => {
     expect(toast).toHaveClass('border-emerald-200')
   })
 
+  it('se renderiza por encima de los modales (z-index alto)', async () => {
+    render(
+      <ToastProvider>
+        <Consumer message="Todo ok" />
+      </ToastProvider>,
+    )
+    await userEvent.click(screen.getByTestId('disparar'))
+    const container = (await screen.findByRole('status')).parentElement
+    expect(container).toHaveClass('z-[90]')
+  })
+
   it('renderiza un toast de error con su icono', async () => {
     render(
       <ToastProvider>

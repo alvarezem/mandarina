@@ -133,7 +133,7 @@ export default function ToastProvider({ children }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-4 top-4 z-[60] flex flex-col items-center gap-2 sm:inset-x-auto sm:right-4 sm:items-end"
+        className="pointer-events-none fixed inset-x-4 top-4 z-[90] flex flex-col items-center gap-2 sm:inset-x-auto sm:right-4 sm:items-end"
       >
         {toasts.map((t) => (
           <div

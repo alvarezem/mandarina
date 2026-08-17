@@ -7,13 +7,6 @@ const TARGETS = [null, 'egresos', 'resumenes', 'inversiones', 'inversiones', 'he
 
 const FINAL_ICON = <Logo className="h-9 w-9" />
 
-const FINAL_BODY = (
-  <>
-    Cuando lo necesites, volvé a abrir esta guía desde el ícono ? del encabezado. Ahora sí, a
-    sacarle todo el jugo. <Logo className="inline h-5 w-5 align-[-3px]" />
-  </>
-)
-
 const PAD = 10
 
 export default function OnboardingTour({ open, onClose }) {
@@ -23,11 +16,16 @@ export default function OnboardingTour({ open, onClose }) {
   const cardRef = useRef(null)
 
   const dictSteps = t(lang, 'tour.steps')
+  const finalBody = (
+    <>
+      {t(lang, 'tour.finalBody')} <Logo className="inline h-5 w-5 align-[-3px]" />
+    </>
+  )
   const steps = dictSteps.map((s, i) => {
     const last = i === dictSteps.length - 1
     return {
       title: s.title,
-      body: last ? FINAL_BODY : s.body,
+      body: last ? finalBody : s.body,
       target: TARGETS[i],
       icon: last ? FINAL_ICON : undefined,
     }

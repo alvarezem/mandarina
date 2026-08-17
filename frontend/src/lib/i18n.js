@@ -501,6 +501,8 @@ export const translations = {
     'tour.prev': '← Anterior',
     'tour.next': 'Siguiente →',
     'tour.finish': 'Finalizar',
+    'tour.finalBody':
+      'Cuando lo necesites, volvé a abrir esta guía desde el ícono ? del encabezado. Ahora sí, a sacarle todo el jugo.',
     'tour.steps': [
       {
         title: 'Bienvenido/a a Mandarina 🍊',
@@ -1024,6 +1026,8 @@ export const translations = {
     'tour.prev': '← Previous',
     'tour.next': 'Next →',
     'tour.finish': 'Finish',
+    'tour.finalBody':
+      'Whenever you need it, reopen this guide from the ? icon in the header. Now go make the most of it.',
     'tour.steps': [
       {
         title: 'Welcome to Mandarina 🍊',

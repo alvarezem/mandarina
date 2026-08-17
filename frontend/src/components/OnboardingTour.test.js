@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import OnboardingTour from './OnboardingTour'
+import { LangProvider } from './LangProvider'
 
 describe('OnboardingTour', () => {
   const onClose = vi.fn()
@@ -107,5 +108,22 @@ describe('OnboardingTour', () => {
     expect(within(dialog).getByText(/a sacarle todo el jugo/i)).toBeInTheDocument()
     expect(dialog.querySelectorAll('img').length).toBeGreaterThanOrEqual(1)
     expect(container).not.toBeNull()
+  })
+
+  it('el último paso traduce el texto al idioma del usuario', async () => {
+    render(
+      <LangProvider lang="en" setLang={() => {}}>
+        <OnboardingTour open onClose={onClose} />
+      </LangProvider>,
+    )
+    const dialog = screen.getByRole('dialog', { name: /Mandarina guide/i })
+
+    for (let i = 0; i < 5; i += 1) {
+      await userEvent.click(within(dialog).getByRole('button', { name: /Next|Finish/i }))
+    }
+
+    expect(within(dialog).getByText(/reopen this guide/i)).toBeInTheDocument()
+    expect(within(dialog).getByText(/make the most of it/i)).toBeInTheDocument()
+    expect(within(dialog).queryByText(/a sacarle todo el jugo/i)).not.toBeInTheDocument()
   })
 })

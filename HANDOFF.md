@@ -6,6 +6,16 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-17)
 
+- **QA del usuario en el reset de contraseña (B9) → 2 fixes frontend (autodeploy en push)**.
+  Probando el link de recuperación en hosting encontró: **(1)** al poner la misma contraseña,
+  la notificación llegaba **en inglés** — `authErrors.js` no mapeaba `same_password` (código ni
+  mensaje) → `authErrorToMessage` devolvía el `error.message` crudo; ahora `BY_CODE` + regex
+  `/different from the old password/i` cubren es/en ("La contraseña nueva debe ser diferente de
+  la actual"). **(2)** la pantalla de nueva contraseña **no tenía toggle de idioma** (quedaba fija
+  en el detectado) — `NewPasswordScreen` no renderizaba `LangToggle`; se agregó junto al
+  `ThemeToggle` (mismo patrón de `Landing.js`; al togglear se traduce toda la pantalla vía
+  `LangProvider`). Suite **npm 421/421** (+2) + lint 0 + coverage lib 96.6% + build OK.
+  Detalle en `DONE.md`.
 - **Batch 9 de `post-improvements.md` — Hardening: CORS, reset, rate limit HECHO. ÚLTIMO batch de la cola (B1–B9 cerrados)**.
   Cerró `batches/batch-09-hardening.md` ([x] en `batches/README.md`). **Deploy APLICADO
   (2026-08-17)**: `supabase functions deploy quotes parse-summary import-plan` (sin `db push`,
@@ -153,8 +163,9 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).
-- **Pendiente del usuario (QA)**: verificar manualmente el link de reset de contraseña en
-  hosting (B9, tarea 2) y crear los perfiles externos de `offpage.md` (GEO).
+- **Pendiente del usuario (QA)**: re-verificar el flujo de reset de contraseña en hosting tras el
+  fix de i18n (error `same_password` en español + toggle de idioma en `NewPasswordScreen`) y crear
+  los perfiles externos de `offpage.md` (GEO).
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 

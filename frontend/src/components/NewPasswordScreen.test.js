@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import NewPasswordScreen from './NewPasswordScreen'
 import ToastProvider from './Toast'
+import { LangProvider } from './LangProvider'
 import supabase from '../lib/supabaseClient'
 
 function renderScreen() {
@@ -9,6 +11,15 @@ function renderScreen() {
     <ToastProvider>
       <NewPasswordScreen />
     </ToastProvider>,
+  )
+}
+
+function LangHarness({ children }) {
+  const [lang, setLang] = useState('es')
+  return (
+    <LangProvider lang={lang} setLang={setLang}>
+      {children}
+    </LangProvider>
   )
 }
 
@@ -83,5 +94,21 @@ describe('NewPasswordScreen', () => {
       ),
     ).toBeInTheDocument()
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
+  })
+
+  it('muestra el toggle de idioma y cambia toda la pantalla a inglés', async () => {
+    render(
+      <ToastProvider>
+        <LangHarness>
+          <NewPasswordScreen />
+        </LangHarness>
+      </ToastProvider>,
+    )
+    expect(screen.getByRole('heading', { name: 'Nueva contraseña' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'English' }))
+
+    expect(screen.getByRole('heading', { name: 'New password' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Save password/i })).toBeInTheDocument()
   })
 })

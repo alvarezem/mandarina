@@ -5,6 +5,7 @@ const BY_CODE = {
       'La contraseña no cumple los requisitos: al menos 8 caracteres con letras y números',
     email_not_confirmed: 'Tu email aún no está confirmado. Revisá tu bandeja de entrada.',
     user_already_exists: 'Ya existe una cuenta con este email',
+    same_password: 'La contraseña nueva debe ser diferente de la actual',
     email_send_rate_limit: 'Esperá unos segundos y probá de nuevo.',
     over_email_send_rate_limit: 'Esperá unos segundos y probá de nuevo.',
   },
@@ -14,6 +15,7 @@ const BY_CODE = {
       'Password does not meet the requirements: at least 8 characters with letters and numbers',
     email_not_confirmed: 'Your email is not confirmed yet. Check your inbox.',
     user_already_exists: 'An account with this email already exists',
+    same_password: 'The new password must be different from the current one',
     email_send_rate_limit: 'Wait a few seconds and try again.',
     over_email_send_rate_limit: 'Wait a few seconds and try again.',
   },
@@ -25,6 +27,7 @@ const BY_MESSAGE = {
     { re: /password.*(weak|at least|requirements)/i, message: BY_CODE.es.weak_password },
     { re: /email not confirmed/i, message: BY_CODE.es.email_not_confirmed },
     { re: /user already registered/i, message: BY_CODE.es.user_already_exists },
+    { re: /different from the old password/i, message: BY_CODE.es.same_password },
     { re: /rate limit/i, message: BY_CODE.es.email_send_rate_limit },
   ],
   en: [
@@ -32,6 +35,7 @@ const BY_MESSAGE = {
     { re: /password.*(weak|at least|requirements)/i, message: BY_CODE.en.weak_password },
     { re: /email not confirmed/i, message: BY_CODE.en.email_not_confirmed },
     { re: /user already registered/i, message: BY_CODE.en.user_already_exists },
+    { re: /different from the old password/i, message: BY_CODE.en.same_password },
     { re: /rate limit/i, message: BY_CODE.en.email_send_rate_limit },
   ],
 }

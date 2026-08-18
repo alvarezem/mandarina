@@ -4,6 +4,7 @@ import { authErrorToMessage } from '../lib/authErrors'
 import { strengthOf, STRENGTH_BAR, validatePassword } from '../lib/password'
 import { t } from '../lib/i18n'
 import ThemeToggle from './ThemeToggle'
+import LangToggle from './LangToggle'
 import { Logo } from './Sidebar'
 import { useToast } from './Toast'
 import { useLang } from './LangProvider'
@@ -99,9 +100,12 @@ export default function NewPasswordScreen({ dark, onToggleTheme }) {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 via-slate-50 to-brand-50/40 px-4 dark:from-slate-950 dark:via-slate-950 dark:to-brand-950/40">
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-emerald-500/15 blur-3xl dark:bg-emerald-500/10" />
 
-      <div className="group absolute right-4 top-4 z-10">
-        <div className="pointer-events-none absolute -inset-6 -z-10 rounded-full bg-brand-500/25 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100 dark:bg-brand-500/15" />
-        <ThemeToggle dark={dark} onToggle={onToggleTheme} />
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+        <LangToggle />
+        <div className="group">
+          <div className="pointer-events-none absolute -inset-6 -z-10 rounded-full bg-brand-500/25 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100 dark:bg-brand-500/15" />
+          <ThemeToggle dark={dark} onToggle={onToggleTheme} />
+        </div>
       </div>
 
       <div className="relative z-10 w-full max-w-md">

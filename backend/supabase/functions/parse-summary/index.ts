@@ -4,6 +4,7 @@ import { extractTextItems, getDocumentProxy } from 'unpdf'
 import { categorize } from '../_shared/categorize.ts'
 import { detectPeriod, detectSummaryType } from './detection.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { createRateLimiter, type RateLimiter } from '../_shared/rate_limit.ts'
 import { createUserClient } from '../_shared/supabase.ts'
 import {
   detectSeparator,
@@ -20,6 +21,10 @@ const UUID_RE =
 // Tope de tamaño del resumen (alineado con MAX_UPLOAD_BYTES del frontend): un
 // archivo gigante no se parsea ni deja el resumen colgado en 'parsing'.
 const MAX_BLOB_BYTES = 10 * 1024 * 1024
+
+// El parse es caro (descarga + parseo + escritura): tope por usuario en ventana.
+// Límite en memoria por isolate (ver _shared/rate_limit.ts).
+const rateLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 })
 
 // Columnas X para el PDF posicional de BBVA.
 const PDF_DATE = /^\d{2}-[A-Za-z]{3}-\d{2}$/
@@ -104,6 +109,7 @@ export async function handleParse(
   supabase: ParseClient,
   summaryId: string,
   cors: Record<string, string>,
+  limiter: RateLimiter = rateLimiter,
 ) {
   const { data: summaryRaw, error: sumError } = await supabase
     .from('card_summaries')
@@ -114,6 +120,15 @@ export async function handleParse(
     return json({ error: 'Resumen no encontrado' }, 404, cors)
   }
   const summary = summaryRaw as SummaryRow
+
+  const rl = limiter(summary.user_id)
+  if (!rl.allowed) {
+    return json(
+      { error: 'Demasiadas solicitudes. Intenta de nuevo en un momento.' },
+      429,
+      { ...cors, 'Retry-After': String(rl.retryAfterSec) },
+    )
+  }
 
   const setStatus = async (
     status: string,

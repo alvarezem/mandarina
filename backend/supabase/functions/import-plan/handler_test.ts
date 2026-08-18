@@ -1,5 +1,6 @@
 import { assertEquals } from '@std/assert'
 import * as XLSX from 'xlsx'
+import { createRateLimiter } from '../_shared/rate_limit.ts'
 import { handleImport, type ImportClient } from './index.ts'
 
 const USER_ID = '00000000-0000-4000-8000-000000000001'
@@ -149,4 +150,17 @@ Deno.test('handleImport: archivo demasiado grande -> 413', async () => {
   const { client } = makeClient()
   const res = await handleImport(client, 'a'.repeat(7 * 1024 * 1024 + 1))
   assertEquals(res.status, 413)
+})
+
+Deno.test('handleImport: excede el rate limit -> 429', async () => {
+  const { client } = makeClient()
+  const limiter = createRateLimiter({ limit: 1, windowMs: 60_000 })
+  const first = await handleImport(client, PLAN_XLSX, limiter)
+  assertEquals(first.status, 200)
+  const second = await handleImport(client, PLAN_XLSX, limiter)
+  assertEquals(second.status, 429)
+  assertEquals(
+    second.body.error,
+    'Demasiadas solicitudes. Intenta de nuevo en un momento.',
+  )
 })

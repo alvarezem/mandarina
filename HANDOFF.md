@@ -6,10 +6,27 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-17)
 
+- **Batch 9 de `post-improvements.md` — Hardening: CORS, reset, rate limit HECHO. ÚLTIMO batch de la cola (B1–B9 cerrados)**.
+  Cerró `batches/batch-09-hardening.md` ([x] en `batches/README.md`). **Deploy APLICADO
+  (2026-08-17)**: `supabase functions deploy quotes parse-summary import-plan` (sin `db push`,
+  sin migraciones). Backend-only; frontend sin cambios. **(1) CORS** (`_shared/cors.ts`):
+  `allowedOrigin` acepta `localhost:3000` + https `mandarina-fi.vercel.app` o `*.mandarina-fi.vercel.app`
+  (subdominios, para futuros ambientes dev); se eliminó el `*.vercel.app` genérico y, por decisión
+  del usuario, el prefijo `mandarina-*` (cualquier `mandarina-X.vercel.app` es ajeno). Consecuencia
+  asumida: los previews automáticos de Vercel (`mandarina-fi-<hash>-<scope>.vercel.app`) dejan de
+  recibir ACAO → si se necesita un preview, crear subdominio dev. **(2) Rate limit** (`_shared/rate_limit.ts`
+  nuevo): `createRateLimiter({limit, windowMs})` en-memoria por isolate (limitación multi-isolate
+  documentada) — **quotes 30/min, parse-summary 10/min, import-plan 10/min**, 429 con `Retry-After`
+  + error claro. Hooks: quotes tras `getUser()`, parse-summary en `handleParse` (usa `summary.user_id`,
+  param opcional `limiter`), import-plan en `handleImport` (param opcional `limiter`). **(3) Reset de
+  contraseña: hallazgo orig #10 STALE** — ya resuelto en QW-F (13/08); se verificó el flujo sin gaps,
+  sin tocar código; queda QA manual del link en hosting (usuario). Suites **deno 98/98** (+15) + lint
+  + fmt OK + `deno check` de las 3 functions. **Smoke test en hosting**: evil origin → sin ACAO; prod
+  y `dev.mandarina-fi.vercel.app` → ACAO; JWT inválido → 401. Decisiones en `DECISIONS.md`.
 - **Batch 8 de `post-improvements.md` — Dashboard: paginación, filtros consistentes y `user_id` real HECHO**.
-  Cerró `batches/batch-08-dashboard.md` ([x] en `batches/README.md`). **Deploy pendiente:
-  `supabase db push` (0022) ANTES del push a master** (el fetch filtra `transactions` por
-  `user_id`; sin migrar da PGRST202). Sin redeploy de functions (firma de `finalize_parse` intacta).
+  Cerró `batches/batch-08-dashboard.md` ([x] en `batches/README.md`). **Deploy APLICADO
+  (2026-08-17)**: `supabase db push` (0022) ANTES del push a master (commit `da4ec59`); sin redeploy
+  de functions (firma de `finalize_parse` intacta).
   **(1) Migración `0022_transactions_user_id.sql`**: `transactions` gana `user_id` (backfill desde
   `card_summaries`, NOT NULL, índice) + RLS simplificada a `auth.uid() = user_id` + `finalize_parse`
   con INSERT `user_id = p_user_id` y guard de pertenencia del resumen. **(2) `lib/transactions.js`**
@@ -130,14 +147,14 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## En progreso
 
-- **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5 → 7
-  → 8 → 9 (índice y detalle en `batches/`). B1 a B8 cerrados;
-  **siguiente: B9 (hardening: CORS/reset/rate limit)** — `batches/batch-09-hardening.md`
-  (orig #9, #10; add #18): CORS hardening en `_shared/cors.ts`, reset/recuperación del estado
-  `parsing`, rate limit por usuario en las edge functions. Deploy de B8 pendiente (ver arriba).
+- **Batches de `post-improvements.md` — COLUMNA COMPLETA (B1–B9 cerrados, 2026-08-17)**.
+  Índice en `batches/README.md` con las 9 filas [x] y las decisiones acumuladas por batch.
+  No quedan batches pendientes.
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).
+- **Pendiente del usuario (QA)**: verificar manualmente el link de reset de contraseña en
+  hosting (B9, tarea 2) y crear los perfiles externos de `offpage.md` (GEO).
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 

@@ -5,11 +5,16 @@
 
 import * as XLSX from 'xlsx'
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { createRateLimiter, type RateLimiter } from '../_shared/rate_limit.ts'
 import { createUserClient } from '../_shared/supabase.ts'
 import { extractPlan, findHeaderRow, PlanError } from './planner.ts'
 
 // ~5MB binario (base64 ≈ +33%). Un plan de inversión real pesa KBs.
 const MAX_BASE64_LENGTH = 7 * 1024 * 1024
+
+// Reemplazo del plan completo: tope por usuario en ventana.
+// Límite en memoria por isolate (ver _shared/rate_limit.ts).
+const rateLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 })
 
 export type ImportClient = {
   auth: {
@@ -27,6 +32,7 @@ export type ImportClient = {
 export async function handleImport(
   supabase: ImportClient,
   fileBase64: string,
+  limiter: RateLimiter = rateLimiter,
 ): Promise<{ status: number; body: Record<string, unknown> }> {
   if (!fileBase64 || typeof fileBase64 !== 'string') {
     return { status: 400, body: { error: 'file_base64 es requerido' } }
@@ -40,6 +46,16 @@ export async function handleImport(
     return { status: 401, body: { error: 'No autenticado' } }
   }
   const userId = userData.user.id
+
+  const rl = limiter(userId)
+  if (!rl.allowed) {
+    return {
+      status: 429,
+      body: {
+        error: 'Demasiadas solicitudes. Intenta de nuevo en un momento.',
+      },
+    }
+  }
 
   let wb
   try {

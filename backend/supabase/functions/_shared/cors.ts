@@ -1,20 +1,20 @@
 // CORS compartido para las Edge Functions.
-// Orígenes permitidos: local dev, producción y previews de Vercel (*.vercel.app).
+// Orígenes permitidos: local dev, producción y subdominios del dominio de
+// producción (para futuros ambientes dev como dev.mandarina-fi.vercel.app).
 // Se refleja el Origin del request solo si está permitido (CORS con Vary: Origin).
 
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'https://mandarina-fi.vercel.app',
-]
+const ALLOWED_ORIGINS = ['http://localhost:3000']
 
-const VERCEL_PREVIEW_SUFFIX = '.vercel.app'
+const PRODUCTION_HOST = 'mandarina-fi.vercel.app'
 
 export function allowedOrigin(origin: string | null): string {
   if (!origin) return ''
   try {
     const url = new URL(origin)
     if (
-      url.protocol === 'https:' && url.hostname.endsWith(VERCEL_PREVIEW_SUFFIX)
+      url.protocol === 'https:' &&
+      (url.hostname === PRODUCTION_HOST ||
+        url.hostname.endsWith(`.${PRODUCTION_HOST}`))
     ) {
       return origin
     }

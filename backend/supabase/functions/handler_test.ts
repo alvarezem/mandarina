@@ -1,4 +1,5 @@
 import { assertEquals } from '@std/assert'
+import { createRateLimiter } from './_shared/rate_limit.ts'
 import {
   handleParse,
   type QueryResult,
@@ -198,4 +199,14 @@ Deno.test('handleParse: aplica overrides de categoría del usuario', async () =>
   const args = finalizeArgsOf(client)
   const gim = args.p_transactions.find((t) => t.merchant === 'SUPER COTO')
   assertEquals(gim?.category, 'Compras')
+})
+
+Deno.test('handleParse: excede el rate limit -> 429 con Retry-After', async () => {
+  const client = makeClient()
+  const limiter = createRateLimiter({ limit: 1, windowMs: 60_000 })
+  const first = await handleParse(client, SUMMARY_ID, {}, limiter)
+  assertEquals(first.status, 200)
+  const second = await handleParse(client, SUMMARY_ID, {}, limiter)
+  assertEquals(second.status, 429)
+  assertEquals(second.headers.get('Retry-After'), '60')
 })

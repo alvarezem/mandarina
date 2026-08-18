@@ -9,6 +9,7 @@ Decisiones tomadas (ver `DECISIONS.md` al cerrar cada batch):
 - **B3**: ledger **soporta USD completo** (selector de moneda + valuación mixta).
 - **B6**: `consumption_analyses` → **eliminar persistencia**; `analysis.js` queda como función pura (fuente única: tabla `transactions`).
 - **B8**: `transactions.user_id` → **fix real con migración 0022** (columna + backfill + RLS directa); paginación del dashboard por **chunks de 1000** + tabla "Ver más" de 100.
+- **B9**: CORS → **subdominios propios** (`*.mandarina-fi.vercel.app`, decidido por el usuario; sin `mandarina-*`); rate limit → **en-memoria por isolate** (soft limit, limitación multi-isolate documentada); reset de contraseña ya resuelto en QW-F (verificado, sin cambios).
 - Estructura: carpeta `batches/` + índice (este archivo).
 
 ## Status board
@@ -23,7 +24,7 @@ Decisiones tomadas (ver `DECISIONS.md` al cerrar cada batch):
 | 6 | `batch-06-analisis.md` | Análisis de consumo | orig #5, #6; menores fmt NaN, fmtCompact null | [x] |
 | 7 | `batch-07-cotizaciones.md` | Cotizaciones y moneda de instrumento | add #15; menores Watchlist MEP/CCL, MarketQuotes display, usePortfolioQuotes cap 50 | [x] |
 | 8 | `batch-08-dashboard.md` | Dashboard: paginación y filtros | add #9; menores paymentsCount, dropdown sin txs, fetch sin user_id (fix real, migración 0022) | [x] |
-| 9 | `batch-09-hardening.md` | Hardening: CORS, reset, rate limit | orig #9, #10; add #18 | [ ] |
+| 9 | `batch-09-hardening.md` | Hardening: CORS, reset, rate limit | orig #9, #10; add #18 | [x] |
 
 ## Orden de ejecución
 

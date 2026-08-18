@@ -4,6 +4,7 @@
 import { bymaHistory, bymaLastClose, bymaQuote } from './byma.ts'
 import { mapWithConcurrency } from './pool.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { createRateLimiter } from '../_shared/rate_limit.ts'
 import { createUserClient } from '../_shared/supabase.ts'
 
 const DOLARAPI_CASAS = { MEP: 'bolsa', CCL: 'contadoconliqui' }
@@ -13,6 +14,10 @@ const CACHE_TTL_MS = 60_000
 const HISTORY_CACHE_TTL_MS = 300_000
 const CACHE_MAX = 1000
 const MAX_SYMBOLS = 50
+
+// El request pide hasta 50 símbolos que resuelven contra BYMA: tope por usuario
+// en ventana. Límite en memoria por isolate (ver _shared/rate_limit.ts).
+const rateLimiter = createRateLimiter({ limit: 30, windowMs: 60_000 })
 
 const cache = new Map<string, { at: number; value: unknown }>()
 
@@ -185,6 +190,15 @@ Deno.serve(async (req) => {
   const { data: userData, error: authError } = await supabase.auth.getUser()
   if (authError || !userData?.user) {
     return json({ error: 'No autenticado' }, 401, cors)
+  }
+
+  const rl = rateLimiter(userData.user.id)
+  if (!rl.allowed) {
+    return json(
+      { error: 'Demasiadas solicitudes. Intenta de nuevo en un momento.' },
+      429,
+      { ...cors, 'Retry-After': String(rl.retryAfterSec) },
+    )
   }
 
   const [rates, quotes, historyResult] = await Promise.all([

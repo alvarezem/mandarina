@@ -8,6 +8,7 @@ Decisiones tomadas (ver `DECISIONS.md` al cerrar cada batch):
 - **B1**: `buyQty` → qty 0 + aviso (re-litigar `plan.test.js:43-45`). No exceder presupuesto.
 - **B3**: ledger **soporta USD completo** (selector de moneda + valuación mixta).
 - **B6**: `consumption_analyses` → **eliminar persistencia**; `analysis.js` queda como función pura (fuente única: tabla `transactions`).
+- **B8**: `transactions.user_id` → **fix real con migración 0022** (columna + backfill + RLS directa); paginación del dashboard por **chunks de 1000** + tabla "Ver más" de 100.
 - Estructura: carpeta `batches/` + índice (este archivo).
 
 ## Status board
@@ -21,7 +22,7 @@ Decisiones tomadas (ver `DECISIONS.md` al cerrar cada batch):
 | 5 | `batch-05-parse-summary.md` | parse-summary: resiliencia | add #10, #11, #12, #16; menores PDF pesos+dólares, summary_type, visa, mapRows | [x] |
 | 6 | `batch-06-analisis.md` | Análisis de consumo | orig #5, #6; menores fmt NaN, fmtCompact null | [x] |
 | 7 | `batch-07-cotizaciones.md` | Cotizaciones y moneda de instrumento | add #15; menores Watchlist MEP/CCL, MarketQuotes display, usePortfolioQuotes cap 50 | [x] |
-| 8 | `batch-08-dashboard.md` | Dashboard: paginación y filtros | add #9; menores paymentsCount, dropdown sin txs, fetch sin user_id | [ ] |
+| 8 | `batch-08-dashboard.md` | Dashboard: paginación y filtros | add #9; menores paymentsCount, dropdown sin txs, fetch sin user_id (fix real, migración 0022) | [x] |
 | 9 | `batch-09-hardening.md` | Hardening: CORS, reset, rate limit | orig #9, #10; add #18 | [ ] |
 
 ## Orden de ejecución
@@ -35,7 +36,7 @@ Racional:
 
 ## Reglas de deploy (recordatorio)
 
-- `supabase db push` ANTES de `functions deploy parse-summary|import-plan` si el batch toca migraciones (B2, B5, B6).
+- `supabase db push` ANTES de `functions deploy parse-summary|import-plan` si el batch toca migraciones (B2, B5, B6, B8).
 - Frontend: push a `master` autodeploya Vercel.
 
 ## Cierre de un batch

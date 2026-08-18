@@ -30,6 +30,7 @@ function makeChain(tables, table, chains) {
     order: vi.fn(() => self),
     single: vi.fn(() => self),
     limit: vi.fn(() => self),
+    range: vi.fn(() => self),
     insert: vi.fn(() => {
       mode = 'insert'
       return self

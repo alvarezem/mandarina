@@ -5,10 +5,21 @@ import ToastProvider from './Toast'
 import supabase from '../lib/supabaseClient'
 import { LangProvider } from './LangProvider'
 
-function mockTx(data, { overrides = [], customCategories = [] } = {}) {
+function summariesFrom(data) {
+  const seen = new Map()
+  for (const t of data) {
+    const cs = t.card_summaries
+    if (!cs || !t.summary_id || seen.has(t.summary_id)) continue
+    seen.set(t.summary_id, { id: t.summary_id, file_name: cs.file_name })
+  }
+  return [...seen.values()]
+}
+
+function mockTx(data, { overrides = [], customCategories = [], cardSummaries } = {}) {
   supabase.mockTable('transactions', data)
   supabase.mockTable('merchant_overrides', overrides)
   supabase.mockTable('custom_categories', customCategories)
+  supabase.mockTable('card_summaries', cardSummaries ?? summariesFrom(data))
   const tx = supabase.tableChain('transactions')
   const ov = supabase.tableChain('merchant_overrides')
   const cc = supabase.tableChain('custom_categories')
@@ -93,14 +104,14 @@ describe('Dashboard', () => {
     mockTx(txs)
   })
 
-  it('carga los gastos sin filtrar por user_id en transactions', async () => {
-    const { select } = mockTx(txs)
+  it('filtra las transacciones por user_id', async () => {
+    const { select, eq } = mockTx(txs)
     renderDashboard()
     expect(await screen.findByText('Débitos')).toBeInTheDocument()
     expect(select).toHaveBeenCalledWith(
       '*, card_summaries(file_name, summary_type, period_month, period_year)',
     )
-    expect(select.mock.results[0].value.eq).not.toHaveBeenCalled()
+    expect(eq).toHaveBeenCalledWith('user_id', 'user-1')
   })
 
   it('muestra un error si no se pueden cargar los gastos', async () => {
@@ -375,6 +386,53 @@ describe('Dashboard', () => {
     await userEvent.click(screen.getByRole('button', { name: /Resumen\s*Todos los resúmenes/i }))
     await userEvent.click(await screen.findByRole('button', { name: /resumen-junio\.csv/i }))
     expect(onSummarySelect).toHaveBeenCalledWith('s2')
+  })
+
+  it('muestra en el dropdown resúmenes sin transacciones', async () => {
+    mockTx(txs, {
+      cardSummaries: [
+        { id: 's1', file_name: 'resumen-julio.csv' },
+        { id: 's2', file_name: 'resumen-junio.csv' },
+        { id: 's3', file_name: 'resumen-vacio.csv' },
+      ],
+    })
+    renderDashboard()
+    await screen.findByText('Débitos')
+    await userEvent.click(screen.getByRole('button', { name: /Resumen\s*Todos los resúmenes/i }))
+    expect(await screen.findByRole('button', { name: /resumen-vacio\.csv/i })).toBeInTheDocument()
+  })
+
+  it('paymentsCount respeta el filtro de moneda activo', async () => {
+    renderDashboard()
+    await screen.findByText('Débitos')
+    expect(screen.getByText(/se excluye 1 pago de tarjeta/i)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /Moneda\s*Ambas/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /USD/i }))
+
+    expect(screen.queryByText(/pago de tarjeta/i)).not.toBeInTheDocument()
+  })
+
+  it('pagina la tabla con "Ver más" y muestra las filas restantes', async () => {
+    mockTx(
+      Array.from({ length: 150 }, (_, i) => ({
+        id: `t${i}`,
+        date: '2026-07-01',
+        merchant: `COMERCIO ${i}`,
+        category: 'Compras',
+        currency: 'ARS',
+        amount: -100,
+        summary_id: 's1',
+        card_summaries: { file_name: 'resumen-julio.csv' },
+      })),
+    )
+    renderDashboard()
+    await screen.findByText('Débitos')
+
+    expect(await rowsOfTable()).toHaveLength(101)
+    await userEvent.click(screen.getByRole('button', { name: /Ver más \(50 restantes\)/i }))
+    expect(await rowsOfTable()).toHaveLength(151)
+    expect(screen.queryByRole('button', { name: /Ver más/i })).not.toBeInTheDocument()
   })
 
   it('muestra "Limpiar filtros" con filtros activos y resetea', async () => {

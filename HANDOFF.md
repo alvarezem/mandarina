@@ -6,6 +6,22 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-17)
 
+- **Batch 8 de `post-improvements.md` — Dashboard: paginación, filtros consistentes y `user_id` real HECHO**.
+  Cerró `batches/batch-08-dashboard.md` ([x] en `batches/README.md`). **Deploy pendiente:
+  `supabase db push` (0022) ANTES del push a master** (el fetch filtra `transactions` por
+  `user_id`; sin migrar da PGRST202). Sin redeploy de functions (firma de `finalize_parse` intacta).
+  **(1) Migración `0022_transactions_user_id.sql`**: `transactions` gana `user_id` (backfill desde
+  `card_summaries`, NOT NULL, índice) + RLS simplificada a `auth.uid() = user_id` + `finalize_parse`
+  con INSERT `user_id = p_user_id` y guard de pertenencia del resumen. **(2) `lib/transactions.js`**
+  (puro): `fetchAllTransactions` por chunks `.range()` de 1000 → elimina el corte silencioso de
+  PostgREST (add #9); `Dashboard.js` lo usa → `allTx` conserva **todas** las filas (análisis sobre el
+  total) y agrega `.eq('user_id', userId)`. **(3) Tabla "Ver más"** (`TransactionsTable.js`): 100
+  filas + botón `tn('table.showMore', n)` (reset por patrón de ajuste en render, no en effect).
+  **(4) `paymentsCount` con filtros** de moneda/categoría (el banner USD ya no cuenta pagos ARS).
+  **(5) Dropdown de resúmenes desde `card_summaries`** (fetch independiente) → **resúmenes sin
+  transacciones aparecen** en el dropdown. Suite **npm 419/419** (+7) + lint 0 + coverage lib
+  96.2% + build OK. Decisiones en `DECISIONS.md`. Test de regresión de Fase 2 **actualizado** (ahora
+  espera el filtro `user_id` en vez de su ausencia).
 - **Batch 7 de `post-improvements.md` — Cotizaciones y moneda de instrumento HECHO**.
   Cerró `batches/batch-07-cotizaciones.md` ([x] en `batches/README.md`). **Frontend-only**
   (la edge ya devolvía `currency` por quote; sin `db push` ni redeploy de functions).
@@ -115,10 +131,10 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 ## En progreso
 
 - **Batches de `post-improvements.md`** — ejecutando en orden 1 → 3 → 2 → 4 → 6 → 5 → 7
-  → 8 → 9 (índice y detalle en `batches/`). B1 a B7 cerrados;
-  **siguiente: B8 (dashboard: paginación y filtros)** — add #9 (paginación del dashboard)
-  + menores paymentsCount con filtro de moneda/categoría, resumen sin transacciones en el
-  dropdown, fetch sin user_id.
+  → 8 → 9 (índice y detalle en `batches/`). B1 a B8 cerrados;
+  **siguiente: B9 (hardening: CORS/reset/rate limit)** — `batches/batch-09-hardening.md`
+  (orig #9, #10; add #18): CORS hardening en `_shared/cors.ts`, reset/recuperación del estado
+  `parsing`, rate limit por usuario en las edge functions. Deploy de B8 pendiente (ver arriba).
 - **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
   `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).

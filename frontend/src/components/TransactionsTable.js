@@ -4,7 +4,9 @@ import Dropdown from './Dropdown'
 import SortableTh from './SortableTh'
 import Check, { itemBase, itemActive, itemInactive } from './Check'
 import { useLang } from './LangProvider'
-import { t, categoryLabel } from '../lib/i18n'
+import { t, tn, categoryLabel } from '../lib/i18n'
+
+const TABLE_PAGE = 100
 
 function CategoryCell({ tx, options, onChange, onAddCustom }) {
   const { lang } = useLang()
@@ -127,6 +129,15 @@ export default function TransactionsTable({
   addCustomCategory,
 }) {
   const { lang } = useLang()
+  const [pageSize, setPageSize] = useState(TABLE_PAGE)
+  // Reset de la página cuando cambian los filtros: ajuste de estado durante el
+  // render (patrón del repo, ver Dashboard.js prevRefs).
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey)
+    setPageSize(TABLE_PAGE)
+  }
+  const visible = sorted.slice(0, pageSize)
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
@@ -172,7 +183,7 @@ export default function TransactionsTable({
           key={filterKey}
           className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900"
         >
-          {sorted.map((t, i) => (
+          {visible.map((t, i) => (
             <tr
               key={t.id}
               className="animate-fade-in transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
@@ -222,6 +233,17 @@ export default function TransactionsTable({
           ))}
         </tbody>
       </table>
+      {sorted.length > visible.length && (
+        <div className="border-t border-slate-200 px-4 py-3 text-center dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => setPageSize((p) => p + TABLE_PAGE)}
+            className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            {tn(lang, 'table.showMore', sorted.length - visible.length)}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

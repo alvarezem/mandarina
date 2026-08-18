@@ -3,6 +3,7 @@ import supabase from '../lib/supabaseClient'
 import { buildAnalysis, buildIncomeAnalysis, EXCLUDED_CATEGORIES } from '../lib/analysis'
 import { fileOf } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
+import { fetchAllTransactions } from '../lib/transactions'
 import FiltersBar from './FiltersBar'
 import SpendingCharts from './SpendingCharts'
 import TransactionsTable from './TransactionsTable'
@@ -120,14 +121,12 @@ export default function Dashboard({
   } = useAsync(async () => {
     if (!userId) return []
     try {
-      const { data, error } = await supabase
+      const builder = supabase
         .from('transactions')
         .select('*, card_summaries(file_name, summary_type, period_month, period_year)')
         .order('date', { ascending: false })
-      if (error) {
-        console.error('Dashboard: error al cargar transacciones', error)
-        throw new Error(t(lang, 'dashboard.err.load'))
-      }
+        .eq('user_id', userId)
+      const data = await fetchAllTransactions(builder)
       return data ?? []
     } catch (e) {
       console.error('Dashboard: error al cargar transacciones', e)
@@ -137,14 +136,16 @@ export default function Dashboard({
   const allTx = useMemo(() => txData ?? [], [txData])
 
   const { data: refs } = useAsync(async () => {
-    if (!userId) return { overrides: [], customCategories: [] }
-    const [ov, cc] = await Promise.all([
+    if (!userId) return { overrides: [], customCategories: [], summaries: [] }
+    const [ov, cc, cs] = await Promise.all([
       supabase.from('merchant_overrides').select('merchant, category').eq('user_id', userId),
       supabase.from('custom_categories').select('name').eq('user_id', userId),
+      supabase.from('card_summaries').select('id, file_name').eq('user_id', userId),
     ])
     return {
       overrides: ov.error ? [] : (ov.data ?? []),
       customCategories: cc.error ? [] : (cc.data ?? []).map((c) => c.name),
+      summaries: cs.error ? [] : (cs.data ?? []),
     }
   }, [userId, refreshKey])
 
@@ -203,10 +204,13 @@ export default function Dashboard({
     () => base.filter((t) => includePayments || !EXCLUDED_CATEGORIES.includes(t.category)),
     [base, includePayments],
   )
-  const paymentsCount = useMemo(
-    () => base.filter((t) => EXCLUDED_CATEGORIES.includes(t.category)).length,
-    [base],
-  )
+  const paymentsCount = useMemo(() => {
+    let txs = base
+    if (currency === 'ARS') txs = txs.filter((t) => t.currency !== 'USD')
+    if (currency === 'USD') txs = txs.filter((t) => t.currency === 'USD')
+    if (categories.length) txs = txs.filter((t) => categories.includes(t.category))
+    return txs.filter((t) => EXCLUDED_CATEGORIES.includes(t.category)).length
+  }, [base, currency, categories])
 
   const categoryOptions = useMemo(
     () => [...new Set(working.map((t) => t.category).filter(Boolean))].sort(),
@@ -222,16 +226,11 @@ export default function Dashboard({
   )
 
   const summaryOptions = useMemo(() => {
-    const seen = new Map()
-    for (const t of allTx) {
-      if (!t.summary_id) continue
-      const name = fileOf(t)
-      if (name && !seen.has(t.summary_id)) seen.set(t.summary_id, name)
-    }
-    return [...seen.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [allTx])
+    const rows = (refs?.summaries ?? [])
+      .map((s) => ({ id: s.id, name: s.file_name }))
+      .filter((s) => s.name)
+    return rows.sort((a, b) => a.name.localeCompare(b.name))
+  }, [refs])
 
   const hasActiveFilters =
     period !== 'todo' ||

@@ -4,8 +4,22 @@ Documento de traspaso entre sesiones. El agente lo **lee al inicio** de cada
 sesión y lo **actualiza al cerrar** (o al terminar una tarea grande). Resumen
 corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
-## Última sesión (2026-08-17)
+## Última sesión (2026-08-18)
 
+- **Reportes avanzados C1+C2+C3 — exportación Excel/CSV/PDF HECHO (frontend-only)**.
+  Idea C de `monetization.md` implementada **100% gratis**; pasa a ser el primer
+  candidato del futuro tier Pro (gating + billing MercadoPago = paso futuro).
+  `lib/reports.js` nuevo (puro: `buildExpenseReport`/`buildFiscalReport`/
+  `buildLedgerReport` + `toCsv` con BOM+CRLF / `toXlsx` exceljs / `toPdf`
+  jsPDF v4 + jspdf-autotable v5) + `components/ReportsView.js` (3 secciones,
+  botones Excel/CSV/PDF, filtros período/moneda/categoría, doughnut a PNG en el
+  PDF fiscal) + wiring (Sidebar `NAV_ITEMS`, App `VIEW_TITLES` + branch).
+  **Code-splitting con `React.lazy`** para ReportsView: exceljs+jspdf subían el
+  chunk principal 832→2215 kB; con lazy vuelve a ~838 kB. Deps agregadas:
+  `exceljs ^4.4.0`, `jspdf ^4.2.1`, `jspdf-autotable ^5.0.8` (package.json+lock).
+  Suite **npm 460/460** (41 files, +39) + lint 0 + coverage lib 95.9% + build OK
+  (chunk warning pre-existente del baseline). Detalle en `DONE.md`; decisiones en
+  `DECISIONS.md`.
 - **QA del usuario en el reset de contraseña (B9) → 2 fixes frontend (autodeploy en push)**.
   Probando el link de recuperación en hosting encontró: **(1)** al poner la misma contraseña,
   la notificación llegaba **en inglés** — `authErrors.js` no mapeaba `same_password` (código ni
@@ -16,6 +30,9 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
   `ThemeToggle` (mismo patrón de `Landing.js`; al togglear se traduce toda la pantalla vía
   `LangProvider`). Suite **npm 421/421** (+2) + lint 0 + coverage lib 96.6% + build OK.
   Detalle en `DONE.md`.
+
+## Sesiones anteriores (hasta 2026-08-17)
+
 - **Batch 9 de `post-improvements.md` — Hardening: CORS, reset, rate limit HECHO. ÚLTIMO batch de la cola (B1–B9 cerrados)**.
   Cerró `batches/batch-09-hardening.md` ([x] en `batches/README.md`). **Deploy APLICADO
   (2026-08-17)**: `supabase functions deploy quotes parse-summary import-plan` (sin `db push`,

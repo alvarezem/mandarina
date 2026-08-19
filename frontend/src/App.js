@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import supabase from './lib/supabaseClient'
 import { applyLangToHtml, readLang, t, writeLang } from './lib/i18n'
 import { useTheme } from './hooks/useTheme'
@@ -14,7 +14,15 @@ import ToastProvider, { useToast } from './components/Toast'
 import OnboardingTour from './components/OnboardingTour'
 import { LangProvider } from './components/LangProvider'
 
-const VIEW_TITLES = { resumenes: 'nav.view.resumenes', inversiones: 'nav.view.inversiones' }
+const VIEW_TITLES = {
+  resumenes: 'nav.view.resumenes',
+  inversiones: 'nav.view.inversiones',
+  reportes: 'reports.nav.view',
+}
+
+// ReportsView carga exceljs + jspdf (pesados): se divide en chunk aparte y
+// solo se descarga al abrir la pestaña Reportes.
+const ReportsView = lazy(() => import('./components/ReportsView'))
 
 const TOUR_VERSION = 1
 const tourSeenKey = (userId) => `mandarina:tour:${userId}`
@@ -361,6 +369,10 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
             <div key={view}>
               {view === 'inversiones' ? (
                 <InvestmentsView session={session} />
+              ) : view === 'reportes' ? (
+                <Suspense fallback={<div className="p-4 text-sm text-slate-400">…</div>}>
+                  <ReportsView session={session} />
+                </Suspense>
               ) : (
                 <ResumenesView
                   session={session}

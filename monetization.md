@@ -1,7 +1,9 @@
 # monetization.md — Ideas de suscripción por servicio
 
 La app es **100% gratis** hoy. Este documento lista ideas de un tier pago con sus
-tradeoffs para decidir rumbo en una sesión futura. **Sin decisión tomada.**
+tradeoffs para decidir rumbo en una sesión futura. **Sin decisión tomada** — salvo
+que **los reportes avanzados (C) ya se implementaron gratis (2026-08)** y quedaron
+como **primer candidato del tier Pro** (ver `DECISIONS.md`).
 
 > Antes de elegir, hay un debate de fondo: el proyecto acumula **decisiones de
 > "100% gratis"** (dominio custom descartado, PWA/App Store descartada por el
@@ -24,7 +26,7 @@ tradeoffs para decidir rumbo en una sesión futura. **Sin decisión tomada.**
 |---|---|---|---|---|---|
 | A | **Mandi (asistente IA) como feature Pro** | Alto | Medio | **LLM por token** | El item más valioso del roadmap (responde sobre consumo/ledger). Pero manda datos financieros a un LLM → decidir provider + presupuesto de tokens + privacidad. |
 | B | **Límite de resúmenes/mes** (free 3-5, Pro ilimitado) | Bajo | Bajo | Cero | Fácil (count por mes), sustenta el free tier. Pero se siente artificial y castiga al usuario fiel. |
-| C | **Reportes avanzados / exportación** (Excel/PDF anual, resumen impositivo) | Medio | Medio | Cero | Valor claro para "avanzados". Pero es app personal → ¿lo usaría alguien? |
+| C | **Reportes avanzados / exportación** (Excel/PDF anual, resumen impositivo) | Medio | **Hecho (frontend, 2026-08)** | Cero | **Elegido como primer candidato Pro** (ver `DECISIONS.md`). Hoy es gratis; el gating + billing MercadoPago son el paso futuro. |
 | D | **Datos extra en cotizaciones** (ONs/cauciones/futuros, intradía, más histórico) | Medio | Medio-Alto | **Fuente de datos paga** | Reactiva el item EN HOLD de ONs/cauciones (BYMA free no los cubre). Solo viable como Pro porque la fuente se paga. |
 | E | **Afiliados de brokers** (IOL/Balanz/Cocos) | Bajo | Bajo | Cero | Cero infra. Pero choca con la tabla "honesta" de `/alternatives` (neutralidad). |
 | F | **Donación one-time** ("Invitame un café", link MercadoPago) | Mínimo | Cero | Cero | Respeta la regla "100% gratis"; no escala pero valida demanda sin billing. |

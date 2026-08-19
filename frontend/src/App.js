@@ -13,6 +13,8 @@ import MobileDrawer from './components/MobileDrawer'
 import ToastProvider, { useToast } from './components/Toast'
 import OnboardingTour from './components/OnboardingTour'
 import { LangProvider } from './components/LangProvider'
+import { ProProvider, usePro } from './components/ProProvider'
+import ProUpsell from './components/ProUpsell'
 
 const VIEW_TITLES = {
   resumenes: 'nav.view.resumenes',
@@ -125,20 +127,23 @@ function App() {
 
   return (
     <ToastProvider>
-      <AppContent
-        session={session}
-        dark={dark}
-        setDark={setDark}
-        greeting={greeting}
-        setGreeting={setGreeting}
-        recovery={recovery}
-      />
+      <ProProvider userId={session?.user?.id ?? null}>
+        <AppContent
+          session={session}
+          dark={dark}
+          setDark={setDark}
+          greeting={greeting}
+          setGreeting={setGreeting}
+          recovery={recovery}
+        />
+      </ProProvider>
     </ToastProvider>
   )
 }
 
 function AppContent({ session, dark, setDark, greeting, setGreeting, recovery }) {
   const pushToast = useToast()
+  const { isPro } = usePro()
   const [view, setView] = useState('resumenes')
   const [selectedId, setSelectedId] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -360,7 +365,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
         </header>
 
         <div className="flex min-h-0 flex-1">
-          <Sidebar view={view} onNavigate={navigate} expanded={railExpanded} />
+          <Sidebar view={view} onNavigate={navigate} expanded={railExpanded} isPro={isPro} />
 
           <main
             ref={mainRef}
@@ -370,9 +375,13 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
               {view === 'inversiones' ? (
                 <InvestmentsView session={session} />
               ) : view === 'reportes' ? (
-                <Suspense fallback={<div className="p-4 text-sm text-slate-400">…</div>}>
-                  <ReportsView session={session} />
-                </Suspense>
+                isPro ? (
+                  <Suspense fallback={<div className="p-4 text-sm text-slate-400">…</div>}>
+                    <ReportsView session={session} />
+                  </Suspense>
+                ) : (
+                  <ProUpsell />
+                )
               ) : (
                 <ResumenesView
                   session={session}
@@ -395,6 +404,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
           onNavigate={handleNavigate}
           userEmail={session.user.email}
           onSignOut={handleSignOut}
+          isPro={isPro}
         />
 
         <OnboardingTour open={tourOpen} onClose={closeTour} />

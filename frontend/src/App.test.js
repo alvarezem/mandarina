@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { act } from 'react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
@@ -225,6 +225,25 @@ describe('App', () => {
       expect(await screen.findByText('Subir resumen')).toBeInTheDocument()
       expect(screen.queryByText(EMPTY_STATE)).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
+    })
+
+    it('oculta Reportes del rail cuando no es Pro', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      const rail = screen.getByRole('navigation', { name: 'Navegación' })
+      expect(within(rail).queryByRole('button', { name: 'Reportes' })).not.toBeInTheDocument()
+    })
+
+    it('muestra Reportes en el rail cuando es Pro', async () => {
+      supabase.mockTable('subscriptions', [{ id: 's1', status: 'active' }])
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      const rail = screen.getByRole('navigation', { name: 'Navegación' })
+      await waitFor(() =>
+        expect(within(rail).getByRole('button', { name: 'Reportes' })).toBeInTheDocument(),
+      )
     })
 
     it('cambia entre las pestañas Egresos e Ingresos', async () => {

@@ -4,8 +4,17 @@ import { useLang } from './LangProvider'
 import { t } from '../lib/i18n'
 import LangToggle from './LangToggle'
 
-export default function MobileDrawer({ open, onClose, view, onNavigate, userEmail, onSignOut }) {
+export default function MobileDrawer({
+  open,
+  onClose,
+  view,
+  onNavigate,
+  userEmail,
+  onSignOut,
+  isPro,
+}) {
   const { lang } = useLang()
+  const items = NAV_ITEMS.filter((item) => item.key !== 'reportes' || isPro)
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {
@@ -61,7 +70,7 @@ export default function MobileDrawer({ open, onClose, view, onNavigate, userEmai
         </div>
 
         <div className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
-          {NAV_ITEMS.map((item) => {
+          {items.map((item) => {
             const active = view === item.key
             const label = t(lang, item.label)
             return (

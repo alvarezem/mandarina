@@ -4,7 +4,25 @@ Documento de traspaso entre sesiones. El agente lo **lee al inicio** de cada
 sesión y lo **actualiza al cerrar** (o al terminar una tarea grande). Resumen
 corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
-## Última sesión (2026-08-18)
+## Última sesión (2026-08-19)
+
+- **Monetización de la idea C — Gating de Reportes Pro HECHO (billing MP diferido a paso 2)**.
+  Rumbo monetario decidido: los **reportes avanzados** (C1+C2+C3, gratis desde el 18/08) pasan a
+  ser el **primer feature del tier Pro**, completos detrás del paywall (sin freemium).
+  **Activación manual** por ahora (SQL editor: `insert into subscriptions (user_id, plan, status)
+  values ('<uid>', 'pro', 'active')`); el billing de MercadoPago (checkout + webhook) se anotó en
+  `TODO.md` como paso 2 sin construir (sin checkout que lo dispare es código especulativo).
+  Backend: migración **`0023_subscriptions.sql`** (tabla `subscriptions`: plan/status con check,
+  `mp_preapproval_id`/`current_period_end` reservados, índice único `(user_id)`, RLS own,
+  trigger `set_updated_at`). Frontend: `lib/subscriptions.js` (puro, `isProActive`),
+  `ProProvider.js`/`usePro()` (3er contexto global, fetch por `user_id`), gating en 3 puntos
+  (Sidebar/MobileDrawer filtran el item Reportes, `App.js` branch → `ProUpsell`),
+  `ProUpsell.js` (features + CTA con toast `pro.upcoming`), i18n `pro.*` es/en.
+  Suite **npm 474/474** (+14) + lint 0 + coverage lib 96.32% + build OK.
+  **Deploy APLICADO (2026-08-19)**: `supabase db push` (0023) ANTES del push a master (autodeploy Vercel).
+  Detalle en `DONE.md`; decisión en `DECISIONS.md`.
+
+## Sesiones anteriores (hasta 2026-08-18)
 
 - **Reportes avanzados C1+C2+C3 — exportación Excel/CSV/PDF HECHO (frontend-only)**.
   Idea C de `monetization.md` implementada **100% gratis**; pasa a ser el primer
@@ -170,19 +188,21 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
   `offpage.md` para sumar `sameAs` al JSON-LD (sin fecha).
 - **Siguiente**: candidatos del roadmap — **Mandi** (asistente IA; requiere decidir
   proveedor/costo), **PWA/App Store** ($99/año Apple, choca con "100% gratis"),
-  **monetización** (`monetization.md`, sin decidir rumbo).
+  **monetización paso 2** (billing MercadoPago de los reportes Pro — ver `TODO.md`).
 
 ## En progreso
 
 - **Batches de `post-improvements.md` — COLUMNA COMPLETA (B1–B9 cerrados, 2026-08-17)**.
   Índice en `batches/README.md` con las 9 filas [x] y las decisiones acumuladas por batch.
   No quedan batches pendientes.
-- **Nada activo del roadmap.** Los items de backend/frontend del roadmap viven en
-  `TODO.md` (orden de la cola: Mandi, PWA, monetización; ONs/cauciones EN HOLD
+- **Monetización: idea C (Reportes Pro) en producción (2026-08-19)** — gating activo; el
+  **billing MercadoPago es el paso 2** de la cola de monetización (anotado en `TODO.md`).
+  Los demás items del roadmap viven en `TODO.md` (Mandi, PWA; ONs/cauciones EN HOLD
   hasta que el usuario confirme tickers que BYMA free publique).
 - **Pendiente del usuario (QA)**: re-verificar el flujo de reset de contraseña en hosting tras el
-  fix de i18n (error `same_password` en español + toggle de idioma en `NewPasswordScreen`) y crear
-  los perfiles externos de `offpage.md` (GEO).
+  fix de i18n (error `same_password` en español + toggle de idioma en `NewPasswordScreen`), crear
+  los perfiles externos de `offpage.md` (GEO) y **activar Pro para su usuario** (SQL editor:
+  `insert into subscriptions (user_id, plan, status) values ('<uid>', 'pro', 'active')`).
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 

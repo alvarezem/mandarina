@@ -73,9 +73,10 @@ export function Logo({ className = '' }) {
   )
 }
 
-export default function Sidebar({ view, onNavigate, expanded }) {
+export default function Sidebar({ view, onNavigate, expanded, isPro }) {
   const { lang } = useLang()
   const labelFor = (item) => t(lang, item.label)
+  const items = NAV_ITEMS.filter((item) => item.key !== 'reportes' || isPro)
   return (
     <nav
       aria-label={t(lang, 'nav.aria')}
@@ -83,7 +84,7 @@ export default function Sidebar({ view, onNavigate, expanded }) {
         expanded ? 'w-52 items-stretch px-3' : 'w-16'
       }`}
     >
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = view === item.key
         const label = labelFor(item)
         return (

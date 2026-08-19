@@ -5,7 +5,7 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 ## 🔄 En progreso
 
 - **Orden de la cola (decisión del usuario 2026-08-13)**: 1) QW-C Ingresos → **HECHO** 2) QW-D layout/toggle → **HECHO** 3) QW-E cards 4 simétricas → **HECHO** 4) QW-F cambio de contraseña → **HECHO** 5) QW-G drawer móvil → **HECHO** 6) QW-H fix botón duplicado + números → **HECHO** (ver DONE). **Backend todo al final** (últimos items del roadmap).
-- **Nada activo hoy** — ver `HANDOFF.md` (última sesión + próximos candidatos: Mandi, PWA/App Store, monetización).
+- **Monetización: idea C (Reportes Pro) en producción** — ver item del roadmap abajo. Siguiente en la cola de monetización (sin fecha): **paso 2 del billing MercadoPago**.
 
 ## 📋 Pendiente (roadmap)
 
@@ -23,7 +23,7 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 - **Memoria de opencode — capas 1+2+DECISIONS hechas** — hoy están `AGENTS.md` + `HANDOFF.md` (auto-cargadas vía `.opencode/opencode.json`) + `DECISIONS.md` (log de decisiones, ver raíz). Cuando surja necesidad: **skills** on-demand para procedimientos repetidos (deploy, migraciones) y **subagentes** de dominio (frontend/backend/reviewer). El agente debe señalar cuándo valen la pena.
 
-- **Pensar ideas de suscripción por servicio — HECHO (2026-08-16, ver `monetization.md`)** — la app es 100% gratis hoy; se listaron 6 ideas de tier pago con tradeoffs (Mandi, límites de resúmenes, reportes/exportación, datos extra en cotizaciones, afiliados de brokers, donación one-time) + contexto de costos (Supabase free tier, billing MercadoPago en ARG). **Sin decisión tomada** — decidir rumbo en una próxima sesión.
+- **Monetización — idea C (Reportes Pro) EN PRODUCCIÓN, billing MP deferido (2026-08-19, ver `DECISIONS.md`)** — la app era 100% gratis; **rumbo decidido**: monetizar la **exportación avanzada (C)** como primer feature del tier Pro, con el resto gratis. Los reportes quedaron **completos detrás del paywall** (gating en Sidebar/MobileDrawer + branch de `App.js` + `ProProvider`/`usePro` + tabla `subscriptions` migración `0023`, activación manual por SQL editor). Las otras ideas de `monetization.md` (Mandi Pro, límite de resúmenes, datos extra en cotizaciones, afiliados, donación) quedan anotadas sin prioridad. **PASO 2 (futuro) — billing MercadoPago**: edge `mp-checkout` (crea preapproval con `external_reference = user_id`, devuelve `init_point`), edge `mp-webhook` (`verify_jwt = false`, firma HMAC `x-signature` con secret `MERCADOPAGO_WEBHOOK_SECRET` — primer secret custom del proyecto) → RPC `set_subscription_status` `security definer` (único punto de escritura server-to-server; primer uso de la secret key, scoped a un RPC, registrar en DECISIONS), pricing final ARS + testing sandbox.
 
 - **Mejorar versión mobile + app en App Store** — además del item "Móvil (`<lg`)" (drawer/bottom nav), evaluar empaquetar la app como **PWA instalable** y/o app nativa (Capacitor) para publicar en App Store. Requiere cuenta de desarrollador Apple ($99/año) — choca con la regla "100% gratis"; decidir si el usuario paga o se queda en PWA.
 

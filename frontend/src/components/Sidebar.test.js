@@ -5,12 +5,12 @@ import { t } from '../lib/i18n'
 import { LangProvider } from './LangProvider'
 
 const renderSidebar = (props = {}) =>
-  render(<Sidebar view="resumenes" onNavigate={vi.fn()} {...props} />)
+  render(<Sidebar view="resumenes" onNavigate={vi.fn()} isPro {...props} />)
 
 const labelOf = (item) => t('es', item.label)
 
 describe('Sidebar', () => {
-  it('muestra los 2 items de navegación y marca el activo', () => {
+  it('muestra los 3 items de navegación y marca el activo', () => {
     renderSidebar()
     for (const item of NAV_ITEMS) {
       expect(screen.getByRole('button', { name: labelOf(item) })).toBeInTheDocument()
@@ -19,6 +19,13 @@ describe('Sidebar', () => {
       'aria-current',
       'page',
     )
+  })
+
+  it('oculta Reportes cuando no es Pro', () => {
+    renderSidebar({ isPro: false })
+    expect(screen.queryByRole('button', { name: 'Reportes' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Resúmenes' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Inversiones' })).toBeInTheDocument()
   })
 
   it('colapsa a iconos sin labels cuando expanded está apagado', () => {

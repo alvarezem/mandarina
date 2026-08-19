@@ -6,6 +6,7 @@ import ToastProvider from './Toast'
 import { LangProvider } from './LangProvider'
 import supabase from '../lib/supabaseClient'
 import { toPdf } from '../lib/reports'
+import { fmt } from '../lib/format'
 
 vi.mock('chart.js', async (importOriginal) => {
   const actual = await importOriginal()
@@ -187,6 +188,8 @@ describe('ReportsView', () => {
     expect(arg.title).toBe('Exportación completa')
     expect(arg.tables.map((t) => t.title)).toEqual(['Por categoría', 'Por comercio'])
     expect(arg.meta[2].label).toBe('Transacciones')
+    expect(arg.tables[0].rows[0]).toEqual(['ARS', 'Compras', 1, fmt(-1500, 'ARS')])
+    expect(arg.tables[1].rows[0]).toEqual(['ARS', 'MERCADO LIBRE', 1, fmt(-1500, 'ARS')])
     expect(screen.getByText('Exportado: PDF')).toBeInTheDocument()
   })
 
@@ -239,6 +242,8 @@ describe('ReportsView', () => {
     ])
     const usdCat = arg.tables[2].rows
     expect(usdCat.some((r) => r[0] === 'Compras')).toBe(true)
+    expect(arg.tables[0].rows[1]).toEqual(['Compras', 1, fmt(-1500, 'ARS')])
+    expect(usdCat.find((r) => r[0] === 'Compras')[2]).toBe(fmt(-99, 'USD'))
     const { save } = toPdf.mock.results[0].value
     expect(save).toHaveBeenCalledWith('mandarina-impositivo-2026.pdf')
     expect(screen.getByText('Exportado: PDF')).toBeInTheDocument()
@@ -312,6 +317,21 @@ describe('ReportsView', () => {
     ])
     expect(arg.tables.map((t) => t.title)).toEqual(['Resumen por símbolo', 'Operaciones'])
     expect(arg.tables[1].rows[0][2]).toBe('Compra')
+    const ggal = arg.tables[0].rows.find((r) => r[0] === 'GGAL')
+    expect(ggal).toEqual(['GGAL', 'ARS', 10, fmt(25.2, 'ARS'), fmt(252, 'ARS'), 1])
+    const aapl = arg.tables[0].rows.find((r) => r[0] === 'AAPL')
+    expect(aapl).toEqual(['AAPL', 'USD', 3, fmt(602 / 3, 'USD'), fmt(602, 'USD'), 1])
+    expect(arg.tables[1].rows[0]).toEqual([
+      '2026-07-10',
+      'GGAL',
+      'Compra',
+      10,
+      fmt(25, 'ARS'),
+      'ARS',
+      fmt(2, 'ARS'),
+      '—',
+      fmt(252, 'ARS'),
+    ])
   })
 
   it('muestra el estado vacío del ledger', async () => {

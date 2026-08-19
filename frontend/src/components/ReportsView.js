@@ -367,7 +367,12 @@ export default function ReportsView({ session }) {
           {
             title: t(lang, 'reports.sheet.byCategory'),
             headers: aggHeaders,
-            rows: expenseReport.byCategory.map((r) => [r.currency, nameCat(r), r.count, r.total]),
+            rows: expenseReport.byCategory.map((r) => [
+              r.currency,
+              nameCat(r),
+              r.count,
+              fmt(r.total, r.currency),
+            ]),
           },
           {
             title: t(lang, 'reports.sheet.byMerchant'),
@@ -376,7 +381,7 @@ export default function ReportsView({ session }) {
               r.currency,
               nameMerchant(r),
               r.count,
-              r.total,
+              fmt(r.total, r.currency),
             ]),
           },
         ],
@@ -448,12 +453,16 @@ export default function ReportsView({ session }) {
         {
           title: `${t(lang, 'reports.fiscal.byCategory')} (ARS)`,
           headers: catHeaders,
-          rows: fiscalReport.ars.byCategory.map((r) => [nameCat(r), r.count, r.total]),
+          rows: fiscalReport.ars.byCategory.map((r) => [nameCat(r), r.count, fmt(r.total, 'ARS')]),
         },
         {
           title: `${t(lang, 'reports.fiscal.byMerchant')} (ARS)`,
           headers: merHeaders,
-          rows: fiscalReport.ars.byMerchant.map((r) => [nameMerchant(r), r.count, r.total]),
+          rows: fiscalReport.ars.byMerchant.map((r) => [
+            nameMerchant(r),
+            r.count,
+            fmt(r.total, 'ARS'),
+          ]),
         },
       ]
       if (fiscalReport.usd.byCategory.length) {
@@ -461,12 +470,20 @@ export default function ReportsView({ session }) {
           {
             title: `${t(lang, 'reports.fiscal.byCategory')} (USD)`,
             headers: catHeaders,
-            rows: fiscalReport.usd.byCategory.map((r) => [nameCat(r), r.count, r.total]),
+            rows: fiscalReport.usd.byCategory.map((r) => [
+              nameCat(r),
+              r.count,
+              fmt(r.total, 'USD'),
+            ]),
           },
           {
             title: `${t(lang, 'reports.fiscal.byMerchant')} (USD)`,
             headers: merHeaders,
-            rows: fiscalReport.usd.byMerchant.map((r) => [nameMerchant(r), r.count, r.total]),
+            rows: fiscalReport.usd.byMerchant.map((r) => [
+              nameMerchant(r),
+              r.count,
+              fmt(r.total, 'USD'),
+            ]),
           },
         )
       }
@@ -497,6 +514,20 @@ export default function ReportsView({ session }) {
     r.commission_is_pct ? `${r.commission}%` : r.commission,
     r.notes || '—',
     r.subtotal,
+  ]
+
+  // Fila del PDF del ledger: los montos se formatean (máx 2 decimales + miles),
+  // los % de comisión sin ruido de floats. Cantidades quedan como número.
+  const ledgerPdfRow = (r) => [
+    r.date,
+    r.symbol,
+    sideLabel(lang, r.side),
+    r.quantity,
+    fmt(r.price, r.currency),
+    r.currency,
+    r.commission_is_pct ? `${parseFloat(r.commission.toFixed(2))}%` : fmt(r.commission, r.currency),
+    r.notes || '—',
+    fmt(r.subtotal, r.currency),
   ]
 
   const handleLedgerCsv = () =>
@@ -561,15 +592,15 @@ export default function ReportsView({ session }) {
               s.symbol,
               s.currency,
               s.quantity,
-              s.avgCost,
-              s.invested,
+              fmt(s.avgCost, s.currency),
+              fmt(s.invested, s.currency),
               s.ops,
             ]),
           },
           {
             title: t(lang, 'reports.meta.ops'),
             headers: ledgerHeaders,
-            rows: ledgerReport.rows.map(ledgerRow),
+            rows: ledgerReport.rows.map(ledgerPdfRow),
           },
         ],
       })

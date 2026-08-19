@@ -90,16 +90,19 @@ lógico; el baseline de formato y los refactors de lint van en commits separados
 
 > Fuentes únicas de verdad: **historial → `DONE.md`**, **handoff corto →
 > `HANDOFF.md`**, **roadmap/status → `TODO.md`**, **decisiones → `DECISIONS.md`**.
-> `monetization.md` (raíz) lista ideas de tier pago sin decidir rumbo.
+> La monetización (rumbo decidido: Reportes Pro, billing MercadoPago diferido)
+> se documenta en `DECISIONS.md`/`TODO.md`; `monetization.md` se borró.
 
-> `post-improvements.md` (raíz) es el reporte vivo de hallazgos post-Fase 8 (sin
-> resolver). El plan de saneamiento en 8 fases (`improvements.md`) se **cerró y
-> borró**: las justificaciones de sus decisiones D1-D13 viven en
-> `DECISIONS.md`/`DONE.md` (el detalle D1-D13 quedó en git history).
+> `post-improvements.md` (raíz) se **borró** (2026-08-19): los 9 batches de
+> `batches/` están cerrados y sus hallazgos/decisiones viven en
+> `DECISIONS.md`/`DONE.md`/`batches/*.md` (quedan en git history).
+> `offpage.md` también se borró; las acciones GEO off-page pendientes se
+> resumen en el item GEO de `TODO.md`.
 
-> `batches/` (raíz) es el plan de implementación de `post-improvements.md`:
+> `batches/` (raíz) es el plan de implementación de la cola de `post-improvements.md`:
 > 9 batches autocontenidos (implementación + tests + docs), índice en
 > `batches/README.md`. Orden de ejecución: 1 → 3 → 2 → 4 → 6 → 5 → 7 → 8 → 9.
+> **Columna completa — B1–B9 cerrados (2026-08-17).**
 
 > `fase8.md` (raíz) es el plan de ejecución de la Fase 8; `faseN.md` anteriores
 > ya se archivaron al cerrar sus fases. `compromised.md` se borró en Fase 8: la

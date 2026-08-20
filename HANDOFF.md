@@ -6,6 +6,22 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-20)
 
+- **Admin: duración de Pro en meses + deshabilitar/habilitar cuentas + UX de perfil/header HECHO y en producción**.
+  Feedback del usuario sobre el flujo Pro. **Deploy APLICADO (2026-08-20)**: `supabase db push`
+  (0025) ANTES del push a master (commit `57b43c5`, autodeploy Vercel).
+  Backend: migración `0025_admin_accounts.sql` — `admin_set_subscription` con `p_months`
+  (renovación acumulativa: `greatest(now(), current_period_end) + p_months`), nuevo
+  `admin_ban_user` (ban vía `auth.users.banned_until`, null = habilitar; guard admin + no
+  auto-ban), `admin_pro_overview` agrega `banned_until`; sanity check en el push que valida el
+  permiso de UPDATE sobre `auth.users` (OK en hosting; smoke test de las 5 firmas RPC: 400 anon).
+  Frontend: `AdminView` con **selector de duración 1/3/6/12 meses**, columna **Vence** (fecha +
+  meses restantes), **Deshabilitar/Habilitar** con confirm (oculto para la cuenta propia) y
+  Cancelar con confirm; `ProProvider` expone `subscription` → Perfil muestra **"Pro activo hasta
+  <fecha>"**; el perfil deja de mostrar idioma/tema; `LangToggle` con botones de **ancho fijo
+  (`w-10 h-9`)** para que el toggle no reflowee el header. **Sin borrado de cuentas** (decisión
+  del usuario: "borrar" = cancelar suscripción). Suite **511/511** (+7) + lint 0 + build OK.
+  Detalle en `DONE.md`; decisiones en `DECISIONS.md`.
+
 - **Solicitud de Pro en-app + Panel Admin de gestión de suscripciones HECHO y en producción**.
   Se cerró el gap de cómo se entera el owner de un upgrade y cómo lo activa sin SQL editor
   (primer eslabón previo al billing MP, paso 2). **Deploy APLICADO (2026-08-20)**: `supabase db

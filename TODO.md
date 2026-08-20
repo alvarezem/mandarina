@@ -4,7 +4,7 @@ Lista viva del proyecto. Se actualiza en cada iteración. Lo completado se archi
 
 ## 🔄 En progreso
 
-- **Solicitud de Pro en-app + Panel Admin HECHO (2026-08-20, ver DONE.md)** — flujo previo al billing MP: el usuario pide Pro desde **Perfil** (avatar en el header) y el owner lo aprueba/desactiva desde el item **Admin** (migración `0024` + `AdminProvider`/`ProfileView`/`AdminView` + fix RLS de `subscriptions`). El billing MP (paso 2) setea el mismo `subscriptions` y retira `pro_requests`.
+- **Solicitud de Pro en-app + Panel Admin HECHO (2026-08-20, ver DONE.md)** — flujo previo al billing MP: el usuario pide Pro desde **Perfil** (avatar en el header) y el owner lo aprueba/desactiva desde el item **Admin** (migración `0024` + `AdminProvider`/`ProfileView`/`AdminView` + fix RLS de `subscriptions`). **Iteración HECHO (2026-08-20, migración `0025`)**: activación con **duración en meses** (1/3/6/12, `current_period_end` acumulativo) + **Deshabilitar/Habilitar cuentas** (`admin_ban_user` vía `banned_until`) + columna Vence + badge Bloqueado. **Sin borrado de cuentas** (decisión del usuario). El billing MP (paso 2) setea el mismo `subscriptions` y retira `pro_requests`.
 - **Orden de la cola (decisión del usuario 2026-08-13)**: 1) QW-C Ingresos → **HECHO** 2) QW-D layout/toggle → **HECHO** 3) QW-E cards 4 simétricas → **HECHO** 4) QW-F cambio de contraseña → **HECHO** 5) QW-G drawer móvil → **HECHO** 6) QW-H fix botón duplicado + números → **HECHO** (ver DONE). **Backend todo al final** (últimos items del roadmap).
 - **Monetización: idea C (Reportes Pro) en producción** — ver item del roadmap abajo. Siguiente en la cola de monetización (sin fecha): **paso 2 del billing MercadoPago**.
 

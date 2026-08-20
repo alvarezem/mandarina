@@ -16,12 +16,20 @@ const memberSince = (user, lang) =>
       })
     : '—'
 
-function ProCard({ isPro, request, onRequest }) {
+function ProCard({ isPro, subscription, request, onRequest }) {
   const { lang } = useLang()
   const pushToast = useToast()
   const [busy, setBusy] = useState(false)
   const status = requestStatus(request)
   const canRequest = canRequestPro({ isPro, request })
+
+  const periodEnd =
+    isPro && subscription?.current_period_end
+      ? new Date(subscription.current_period_end).toLocaleDateString(
+          lang === 'en' ? 'en-US' : 'es-AR',
+          { year: 'numeric', month: 'long', day: 'numeric' },
+        )
+      : null
 
   const badge =
     isPro || status === 'approved'
@@ -59,6 +67,11 @@ function ProCard({ isPro, request, onRequest }) {
             {t(lang, 'profile.pro.title')}
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{t(lang, hintKey)}</p>
+          {periodEnd && (
+            <p className="mt-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+              {t(lang, 'profile.pro.until', { date: periodEnd })}
+            </p>
+          )}
         </div>
         <span
           className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${
@@ -112,11 +125,11 @@ function ProCard({ isPro, request, onRequest }) {
   )
 }
 
-export default function ProfileView({ session, dark }) {
+export default function ProfileView({ session }) {
   const { lang } = useLang()
   const pushToast = useToast()
   const userId = session?.user?.id
-  const { isPro } = usePro()
+  const { isPro, subscription } = usePro()
 
   const {
     data: request,
@@ -173,30 +186,17 @@ export default function ProfileView({ session, dark }) {
               </p>
             </div>
           </div>
-          <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-sm dark:border-slate-800">
-            <div>
-              <dt className="text-xs text-slate-400 dark:text-slate-500">
-                {t(lang, 'profile.language')}
-              </dt>
-              <dd className="mt-0.5 font-medium text-slate-700 dark:text-slate-200">
-                {lang === 'en' ? 'English' : 'Español'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-slate-400 dark:text-slate-500">
-                {t(lang, 'profile.theme')}
-              </dt>
-              <dd className="mt-0.5 font-medium text-slate-700 dark:text-slate-200">
-                {dark ? t(lang, 'profile.theme.dark') : t(lang, 'profile.theme.light')}
-              </dd>
-            </div>
-          </dl>
         </section>
 
         {loading ? (
           <div className="animate-pulse rounded-xl bg-slate-100 p-4 dark:bg-slate-800" />
         ) : (
-          <ProCard isPro={isPro} request={request} onRequest={onRequest} />
+          <ProCard
+            isPro={isPro}
+            subscription={subscription}
+            request={request}
+            onRequest={onRequest}
+          />
         )}
       </div>
     </div>

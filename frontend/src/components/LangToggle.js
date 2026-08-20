@@ -16,7 +16,7 @@ export default function LangToggle() {
           aria-pressed={lang === o.code}
           aria-label={o.aria}
           title={o.aria}
-          className={`rounded-md px-2 py-1 text-xs font-semibold transition ${
+          className={`flex h-9 w-10 items-center justify-center rounded-md text-sm font-semibold transition ${
             lang === o.code
               ? 'bg-brand-500 text-white shadow-sm'
               : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'

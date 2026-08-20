@@ -404,9 +404,9 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
                   <ProUpsell />
                 )
               ) : view === 'perfil' ? (
-                <ProfileView session={session} dark={dark} />
+                <ProfileView session={session} />
               ) : view === 'admin' && isAdmin ? (
-                <AdminView />
+                <AdminView currentUserId={session.user.id} />
               ) : (
                 <ResumenesView
                   session={session}

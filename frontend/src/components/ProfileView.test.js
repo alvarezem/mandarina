@@ -17,7 +17,7 @@ const wrap = (ui, lang = 'es') =>
     </LangProvider>,
   )
 
-const renderView = (props = {}) => wrap(<ProfileView session={session} dark={false} {...props} />)
+const renderView = (props = {}) => wrap(<ProfileView session={session} {...props} />)
 
 describe('ProfileView', () => {
   beforeEach(() => {
@@ -64,6 +64,15 @@ describe('ProfileView', () => {
     expect(screen.queryByRole('button', { name: 'Solicitar Pro' })).not.toBeInTheDocument()
   })
 
+  it('muestra la fecha de vencimiento cuando hay período', async () => {
+    supabase.mockTable('subscriptions', [
+      { id: 's1', user_id: 'u1', status: 'active', current_period_end: '2026-12-31T00:00:00Z' },
+    ])
+    renderView()
+    expect(await screen.findByText(/Pro activo hasta/)).toBeInTheDocument()
+    expect(screen.getByText(/diciembre de 2026/)).toBeInTheDocument()
+  })
+
   it('muestra toast de error si el RPC falla', async () => {
     supabase.rpc.mockResolvedValue({ data: null, error: { message: 'boom' } })
     renderView()
@@ -75,7 +84,7 @@ describe('ProfileView', () => {
   })
 
   it('traduce al inglés', async () => {
-    wrap(<ProfileView session={session} dark={false} />, 'en')
+    wrap(<ProfileView session={session} />, 'en')
     expect(await screen.findByRole('heading', { name: 'My profile' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Request Pro' })).toBeInTheDocument()
   })

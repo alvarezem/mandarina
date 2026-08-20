@@ -4,7 +4,23 @@ Documento de traspaso entre sesiones. El agente lo **lee al inicio** de cada
 sesión y lo **actualiza al cerrar** (o al terminar una tarea grande). Resumen
 corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
-## Última sesión (2026-08-19)
+## Última sesión (2026-08-20)
+
+- **Solicitud de Pro en-app + Panel Admin de gestión de suscripciones HECHO y en producción**.
+  Se cerró el gap de cómo se entera el owner de un upgrade y cómo lo activa sin SQL editor
+  (primer eslabón previo al billing MP, paso 2). **Deploy APLICADO (2026-08-20)**: `supabase db
+  push` (0024) ANTES del push a master (commit `637c53c`, autodeploy Vercel).
+  Backend: migración `0024_admin.sql` — tabla `admins` (RLS select own, siembra por SQL editor),
+  tabla `pro_requests` (cola de solicitudes) y RPCs `request_pro`/`admin_pro_overview`/
+  `admin_set_subscription`/`admin_dismiss_request` (security definer con guard admin).
+  **Fix de seguridad**: se quitaron las policies insert/update/delete de `subscriptions`
+  (cualquier user podía auto-activarse Pro por la API; la única escritura ahora es el RPC admin).
+  Frontend: `lib/admin.js` + `AdminProvider`/`useAdmin`; **Perfil** con avatar de iniciales en el
+  header (reemplaza el email) y botón "Solicitar Pro"; **AdminView** (item "Admin" solo para el
+  owner) con solicitudes (Activar/Descartar) + suscriptos (Activar/Cancelar); `ProUpsell` CTA →
+  `request_pro`. i18n `profile.*`/`admin.*`. Suite **504/504** (+30) + lint 0 + build OK. Detalle
+  en `DONE.md`; decisión en `DECISIONS.md`.
+  **⚠️ Acción del usuario**: sembrar su `user_id` en `admins` (SQL editor): `insert into public.admins (user_id) values ('<tu-user-id>');` — sin esto no aparece el item Admin ni autorizan los RPC.
 
 - **Iteración de UX sobre el gating — item Reportes siempre visible en el nav, deshabilitado para no-Pro**.
   En vez de ocultar el item `reportes`, ahora **siempre aparece** en `Sidebar`/`MobileDrawer` y para
@@ -208,8 +224,8 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
   hasta que el usuario confirme tickers que BYMA free publique).
 - **Pendiente del usuario (QA)**: re-verificar el flujo de reset de contraseña en hosting tras el
   fix de i18n (error `same_password` en español + toggle de idioma en `NewPasswordScreen`), crear
-  los perfiles externos de `offpage.md` (GEO) y **activar Pro para su usuario** (SQL editor:
-  `insert into subscriptions (user_id, plan, status) values ('<uid>', 'pro', 'active')`).
+  los perfiles externos de `offpage.md` (GEO) y **sembrar su `user_id` en `admins`** (SQL editor:
+  `insert into public.admins (user_id) values ('<tu-user-id>');`) para habilitar el item Admin.
 - **Sin fases de saneamiento activas** — las 8 fases de `improvements.md` están
   cerradas.
 

@@ -21,9 +21,12 @@ describe('Sidebar', () => {
     )
   })
 
-  it('oculta Reportes cuando no es Pro', () => {
-    renderSidebar({ isPro: false })
-    expect(screen.queryByRole('button', { name: 'Reportes' })).not.toBeInTheDocument()
+  it('muestra Reportes deshabilitado con hint Pro cuando no es Pro', () => {
+    renderSidebar({ isPro: false, expanded: true })
+    const reportes = screen.getByText('Reportes')
+    expect(reportes).toBeInTheDocument()
+    expect(screen.getByText('Mejora a Pro')).toBeInTheDocument()
+    expect(reportes.closest('[aria-disabled="true"]')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Resúmenes' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Inversiones' })).toBeInTheDocument()
   })

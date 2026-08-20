@@ -227,12 +227,15 @@ describe('App', () => {
       expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
     })
 
-    it('oculta Reportes del rail cuando no es Pro', async () => {
+    it('muestra Reportes deshabilitado en el rail cuando no es Pro', async () => {
       render(<App />)
       await screen.findByText(EMPTY_STATE)
 
       const rail = screen.getByRole('navigation', { name: 'Navegación' })
-      expect(within(rail).queryByRole('button', { name: 'Reportes' })).not.toBeInTheDocument()
+      const reportes = within(rail).getByText('Reportes')
+      expect(reportes).toBeInTheDocument()
+      expect(within(rail).getByText('Mejora a Pro')).toBeInTheDocument()
+      expect(reportes.closest('[aria-disabled="true"]')).toBeInTheDocument()
     })
 
     it('muestra Reportes en el rail cuando es Pro', async () => {

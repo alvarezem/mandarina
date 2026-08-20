@@ -6,6 +6,13 @@ corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
 ## Última sesión (2026-08-19)
 
+- **Iteración de UX sobre el gating — item Reportes siempre visible en el nav, deshabilitado para no-Pro**.
+  En vez de ocultar el item `reportes`, ahora **siempre aparece** en `Sidebar`/`MobileDrawer` y para
+  no-Pro se ve **deshabilitado de verdad** (sin click) con hint naranja "Mejora a Pro" debajo del label
+  (o píldora "PRO" en colapsado). El paywall no cambia (no-Pro no accede); solo agrega señal de Pro que
+  tenta a la suscripción. i18n `pro.navHint`/`pro.navTitle`/`pro.navShort`. Suite **474/474** + lint 0 +
+  build OK. Frontend-only (autodeploy en push). Detalle en `DONE.md`.
+
 - **Monetización de la idea C — Gating de Reportes Pro HECHO (billing MP diferido a paso 2)**.
   Rumbo monetario decidido: los **reportes avanzados** (C1+C2+C3, gratis desde el 18/08) pasan a
   ser el **primer feature del tier Pro**, completos detrás del paywall (sin freemium).

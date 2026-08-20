@@ -14,7 +14,6 @@ export default function MobileDrawer({
   isPro,
 }) {
   const { lang } = useLang()
-  const items = NAV_ITEMS.filter((item) => item.key !== 'reportes' || isPro)
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {
@@ -70,9 +69,29 @@ export default function MobileDrawer({
         </div>
 
         <div className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
-          {items.map((item) => {
-            const active = view === item.key
+          {NAV_ITEMS.map((item) => {
+            const locked = item.key === 'reportes' && !isPro
+            const active = view === item.key && !locked
             const label = t(lang, item.label)
+            if (locked) {
+              return (
+                <div
+                  key={item.key}
+                  aria-disabled="true"
+                  title={`${label} — ${t(lang, 'pro.navTitle')}`}
+                  data-tour={item.key}
+                  className="flex w-full cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-slate-400 opacity-50 saturate-50 dark:text-slate-500"
+                >
+                  {item.icon}
+                  <span className="flex flex-col">
+                    <span className="truncate text-sm font-medium">{label}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-orange-500 dark:text-orange-400">
+                      {t(lang, 'pro.navHint')}
+                    </span>
+                  </span>
+                </div>
+              )
+            }
             return (
               <button
                 key={item.key}

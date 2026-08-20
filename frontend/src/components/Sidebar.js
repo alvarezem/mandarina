@@ -76,7 +76,6 @@ export function Logo({ className = '' }) {
 export default function Sidebar({ view, onNavigate, expanded, isPro }) {
   const { lang } = useLang()
   const labelFor = (item) => t(lang, item.label)
-  const items = NAV_ITEMS.filter((item) => item.key !== 'reportes' || isPro)
   return (
     <nav
       aria-label={t(lang, 'nav.aria')}
@@ -84,9 +83,37 @@ export default function Sidebar({ view, onNavigate, expanded, isPro }) {
         expanded ? 'w-52 items-stretch px-3' : 'w-16'
       }`}
     >
-      {items.map((item) => {
-        const active = view === item.key
+      {NAV_ITEMS.map((item) => {
+        const locked = item.key === 'reportes' && !isPro
+        const active = view === item.key && !locked
         const label = labelFor(item)
+        if (locked) {
+          return (
+            <div
+              key={item.key}
+              aria-disabled="true"
+              title={`${label} — ${t(lang, 'pro.navTitle')}`}
+              data-tour={item.key}
+              className={`relative flex items-center gap-3 rounded-xl opacity-50 saturate-50 ${
+                expanded ? 'w-full px-3 justify-start' : 'w-10 justify-center'
+              }`}
+            >
+              {item.icon}
+              {expanded ? (
+                <span className="flex flex-col">
+                  <span className="truncate text-sm font-medium">{label}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-orange-500 dark:text-orange-400">
+                    {t(lang, 'pro.navHint')}
+                  </span>
+                </span>
+              ) : (
+                <span className="absolute -right-1 -top-1 rounded-full bg-orange-500 px-1 text-[8px] font-bold leading-3 text-white">
+                  {t(lang, 'pro.navShort')}
+                </span>
+              )}
+            </div>
+          )
+        }
         return (
           <button
             key={item.key}

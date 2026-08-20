@@ -81,6 +81,7 @@ export function createSupabaseMock() {
       })),
     },
     functions: { invoke: vi.fn() },
+    rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
     from: vi.fn((table) => chains.get(table) ?? makeChain(tables, table, chains)),
     __tables: tables,
     __chains: chains,
@@ -112,6 +113,8 @@ export function createSupabaseMock() {
       update: vi.fn(() => Promise.resolve({ error: null })),
     }))
     client.functions.invoke.mockReset()
+    client.rpc.mockReset()
+    client.rpc.mockImplementation(() => Promise.resolve({ data: null, error: null }))
     tables.clear()
     chains.clear()
   }

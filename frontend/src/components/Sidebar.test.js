@@ -10,15 +10,25 @@ const renderSidebar = (props = {}) =>
 const labelOf = (item) => t('es', item.label)
 
 describe('Sidebar', () => {
-  it('muestra los 3 items de navegación y marca el activo', () => {
+  it('muestra los items de navegación y marca el activo', () => {
     renderSidebar()
-    for (const item of NAV_ITEMS) {
+    for (const item of NAV_ITEMS.filter((i) => i.key !== 'admin')) {
       expect(screen.getByRole('button', { name: labelOf(item) })).toBeInTheDocument()
     }
     expect(screen.getByRole('button', { name: 'Resúmenes' })).toHaveAttribute(
       'aria-current',
       'page',
     )
+  })
+
+  it('oculta Admin cuando no es admin', () => {
+    renderSidebar({ isAdmin: false })
+    expect(screen.queryByRole('button', { name: 'Admin' })).not.toBeInTheDocument()
+  })
+
+  it('muestra Admin solo cuando es admin', () => {
+    renderSidebar({ isAdmin: true })
+    expect(screen.getByRole('button', { name: 'Admin' })).toBeInTheDocument()
   })
 
   it('muestra Reportes deshabilitado con hint Pro cuando no es Pro', () => {
@@ -33,7 +43,7 @@ describe('Sidebar', () => {
 
   it('colapsa a iconos sin labels cuando expanded está apagado', () => {
     renderSidebar({ expanded: false })
-    for (const item of NAV_ITEMS) {
+    for (const item of NAV_ITEMS.filter((i) => i.key !== 'admin')) {
       const btn = screen.getByRole('button', { name: labelOf(item) })
       expect(btn).toHaveAttribute('title', labelOf(item))
     }

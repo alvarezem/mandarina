@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import ProUpsell from './ProUpsell'
 import ToastProvider from './Toast'
 import { LangProvider } from './LangProvider'
+import supabase from '../lib/supabaseClient'
 
 const wrap = (ui, lang = 'es') =>
   render(
@@ -27,11 +28,24 @@ describe('ProUpsell', () => {
     expect(screen.getByRole('button', { name: 'Suscribirme' })).toBeInTheDocument()
   })
 
-  it('avisa con toast que el cobro llega pronto al tocar Suscribirme', async () => {
+  it('registra la solicitud con el RPC y avisa al tocar Suscribirme', async () => {
+    supabase.rpc.mockResolvedValue({ data: null, error: null })
     wrap(<ProUpsell />)
     await userEvent.click(screen.getByRole('button', { name: 'Suscribirme' }))
+
+    expect(supabase.rpc).toHaveBeenCalledWith('request_pro')
     const status = await screen.findByRole('status')
-    expect(status).toHaveTextContent(/El cobro por MercadoPago llega pronto/)
+    expect(status).toHaveTextContent('Solicitud enviada')
+    expect(screen.getByRole('button', { name: 'Solicitud enviada' })).toBeDisabled()
+  })
+
+  it('muestra toast de error si el RPC falla', async () => {
+    supabase.rpc.mockResolvedValue({ data: null, error: { message: 'boom' } })
+    wrap(<ProUpsell />)
+    await userEvent.click(screen.getByRole('button', { name: 'Suscribirme' }))
+
+    const status = await screen.findByRole('status')
+    expect(status).toHaveTextContent('No se pudo enviar la solicitud')
   })
 
   it('traduce los textos al inglés', () => {

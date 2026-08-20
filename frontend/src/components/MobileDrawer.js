@@ -12,8 +12,10 @@ export default function MobileDrawer({
   userEmail,
   onSignOut,
   isPro,
+  isAdmin,
 }) {
   const { lang } = useLang()
+  const items = NAV_ITEMS.filter((item) => item.key !== 'admin' || isAdmin)
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {
@@ -69,7 +71,7 @@ export default function MobileDrawer({
         </div>
 
         <div className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
-          {NAV_ITEMS.map((item) => {
+          {items.map((item) => {
             const locked = item.key === 'reportes' && !isPro
             const active = view === item.key && !locked
             const label = t(lang, item.label)
@@ -122,6 +124,13 @@ export default function MobileDrawer({
           <div className="mt-2 flex justify-end">
             <LangToggle />
           </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('perfil')}
+            className="mt-2 w-full rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            {t(lang, 'profile.nav.view')}
+          </button>
           <button
             type="button"
             onClick={onSignOut}

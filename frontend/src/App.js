@@ -14,12 +14,18 @@ import ToastProvider, { useToast } from './components/Toast'
 import OnboardingTour from './components/OnboardingTour'
 import { LangProvider } from './components/LangProvider'
 import { ProProvider, usePro } from './components/ProProvider'
+import { AdminProvider, useAdmin } from './components/AdminProvider'
+import ProfileView from './components/ProfileView'
+import AdminView from './components/AdminView'
 import ProUpsell from './components/ProUpsell'
+import { initialsOf } from './lib/admin'
 
 const VIEW_TITLES = {
   resumenes: 'nav.view.resumenes',
   inversiones: 'nav.view.inversiones',
   reportes: 'reports.nav.view',
+  perfil: 'profile.nav.view',
+  admin: 'admin.nav.view',
 }
 
 // ReportsView carga exceljs + jspdf (pesados): se divide en chunk aparte y
@@ -128,14 +134,16 @@ function App() {
   return (
     <ToastProvider>
       <ProProvider userId={session?.user?.id ?? null}>
-        <AppContent
-          session={session}
-          dark={dark}
-          setDark={setDark}
-          greeting={greeting}
-          setGreeting={setGreeting}
-          recovery={recovery}
-        />
+        <AdminProvider userId={session?.user?.id ?? null}>
+          <AppContent
+            session={session}
+            dark={dark}
+            setDark={setDark}
+            greeting={greeting}
+            setGreeting={setGreeting}
+            recovery={recovery}
+          />
+        </AdminProvider>
       </ProProvider>
     </ToastProvider>
   )
@@ -144,6 +152,7 @@ function App() {
 function AppContent({ session, dark, setDark, greeting, setGreeting, recovery }) {
   const pushToast = useToast()
   const { isPro } = usePro()
+  const { isAdmin } = useAdmin()
   const [view, setView] = useState('resumenes')
   const [selectedId, setSelectedId] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -351,9 +360,15 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
             </button>
             <ThemeToggle dark={dark} onToggle={() => setDark((d) => !d)} />
             <LangToggle />
-            <span className="hidden max-w-48 truncate text-sm text-slate-500 dark:text-slate-400 sm:block">
-              {session.user.email}
-            </span>
+            <button
+              type="button"
+              onClick={() => navigate('perfil')}
+              aria-label={t(lang, 'profile.avatarAria')}
+              title={t(lang, 'profile.avatarTitle')}
+              className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700 transition hover:bg-brand-200/70 active:scale-[0.98] sm:flex dark:bg-brand-950/40 dark:text-brand-300 dark:hover:bg-brand-900/50"
+            >
+              {initialsOf(session.user.email)}
+            </button>
             <button
               type="button"
               onClick={handleSignOut}
@@ -365,7 +380,13 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
         </header>
 
         <div className="flex min-h-0 flex-1">
-          <Sidebar view={view} onNavigate={navigate} expanded={railExpanded} isPro={isPro} />
+          <Sidebar
+            view={view}
+            onNavigate={navigate}
+            expanded={railExpanded}
+            isPro={isPro}
+            isAdmin={isAdmin}
+          />
 
           <main
             ref={mainRef}
@@ -382,6 +403,10 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
                 ) : (
                   <ProUpsell />
                 )
+              ) : view === 'perfil' ? (
+                <ProfileView session={session} dark={dark} />
+              ) : view === 'admin' && isAdmin ? (
+                <AdminView />
               ) : (
                 <ResumenesView
                   session={session}
@@ -405,6 +430,7 @@ function AppContent({ session, dark, setDark, greeting, setGreeting, recovery })
           userEmail={session.user.email}
           onSignOut={handleSignOut}
           isPro={isPro}
+          isAdmin={isAdmin}
         />
 
         <OnboardingTour open={tourOpen} onClose={closeTour} />

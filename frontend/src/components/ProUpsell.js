@@ -1,17 +1,32 @@
+import { useState } from 'react'
+import supabase from '../lib/supabaseClient'
 import { t } from '../lib/i18n'
 import { useLang } from './LangProvider'
 import { useToast } from './Toast'
 
 // Panel de upgrade del tier Pro. Se muestra en lugar de ReportsView cuando el
 // usuario no tiene una suscripción activa. El billing de MercadoPago (checkout
-// + webhook) llega en un paso futuro: hoy el botón informa que el cobro aún no
-// está activo y la activación es manual.
+// + webhook) llega en un paso futuro: hoy el botón registra una solicitud
+// (`request_pro`) que el owner aprueba desde el panel Admin.
 export default function ProUpsell() {
   const { lang } = useLang()
   const pushToast = useToast()
+  const [requested, setRequested] = useState(false)
+  const [busy, setBusy] = useState(false)
 
-  const handleSubscribe = () => {
-    pushToast({ type: 'info', message: t(lang, 'pro.upcoming') })
+  const handleSubscribe = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const { error } = await supabase.rpc('request_pro')
+      if (error) throw error
+      setRequested(true)
+      pushToast({ type: 'success', message: t(lang, 'pro.requested') })
+    } catch {
+      pushToast({ type: 'error', message: t(lang, 'pro.err.request') })
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -59,9 +74,10 @@ export default function ProUpsell() {
         <button
           type="button"
           onClick={handleSubscribe}
-          className="mt-6 w-full rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[0.98]"
+          disabled={busy || requested}
+          className="mt-6 w-full rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {t(lang, 'pro.cta')}
+          {busy ? t(lang, 'pro.sending') : requested ? t(lang, 'pro.sent') : t(lang, 'pro.cta')}
         </button>
         <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">{t(lang, 'pro.note')}</p>
       </div>

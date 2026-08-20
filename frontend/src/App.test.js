@@ -249,6 +249,35 @@ describe('App', () => {
       )
     })
 
+    it('oculta Admin del rail cuando no es admin', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      const rail = screen.getByRole('navigation', { name: 'Navegación' })
+      expect(within(rail).queryByRole('button', { name: 'Admin' })).not.toBeInTheDocument()
+    })
+
+    it('muestra Admin en el rail cuando es admin', async () => {
+      supabase.mockTable('admins', [{ user_id: 'u1' }])
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      const rail = screen.getByRole('navigation', { name: 'Navegación' })
+      await waitFor(() =>
+        expect(within(rail).getByRole('button', { name: 'Admin' })).toBeInTheDocument(),
+      )
+    })
+
+    it('el avatar del header abre el perfil', async () => {
+      render(<App />)
+      await screen.findByText(EMPTY_STATE)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Abrir mi perfil' }))
+
+      expect(await screen.findByRole('heading', { name: 'Mi perfil' })).toBeInTheDocument()
+      expect(screen.queryByText(EMPTY_STATE)).not.toBeInTheDocument()
+    })
+
     it('cambia entre las pestañas Egresos e Ingresos', async () => {
       mockApp([
         {

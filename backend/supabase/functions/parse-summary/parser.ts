@@ -26,6 +26,9 @@ export type ColumnMap = {
   amountIsDebit: boolean
   currency: number
   currencyDefault: 'ARS' | 'USD'
+  businessUnit: number
+  subUnit: number
+  sourceId: number
 }
 
 export function detectSeparator(text: string): string {
@@ -77,6 +80,18 @@ export function findColumns(row: unknown[]): ColumnMap {
     ? 'USD'
     : 'ARS'
 
+  // Columnas auxiliares para síntesis del merchant en formatos como
+  // MercadoPago (no tienen descripción explícita): BUSINESS_UNIT, SUB_UNIT, SOURCE_ID.
+  const businessUnit = row.findIndex((cell) =>
+    HEADER_ALIASES.businessUnit.some((a) => matchExact(cell, a))
+  )
+  const subUnit = row.findIndex((cell) =>
+    HEADER_ALIASES.subUnit.some((a) => matchExact(cell, a))
+  )
+  const sourceId = row.findIndex((cell) =>
+    HEADER_ALIASES.sourceId.some((a) => matchExact(cell, a))
+  )
+
   return {
     date,
     merchant,
@@ -85,6 +100,9 @@ export function findColumns(row: unknown[]): ColumnMap {
     amountIsDebit: Boolean(debit),
     currency,
     currencyDefault,
+    businessUnit,
+    subUnit,
+    sourceId,
   }
 }
 
@@ -164,13 +182,12 @@ export function normalizeRow(
   if (cells.every((c) => c === '')) return null
 
   const date = parseDate(cells[columns.date])
-  const merchant = columns.merchant >= 0
-    ? cells[columns.merchant]
-    : 'Sin descripción'
 
   // Monto: si hay columna de crédito (abono) y el débito está vacío, se usa el
   // crédito con signo negativo. Si el débito es un "Cargo", el valor de la
   // planilla suele venir positivo → se negativiza (es un egreso).
+  // Para formatos donde el monto ya trae su propio signo (ej. MercadoPago),
+  // amountIsDebit es false y se respeta el signo original.
   let amount: number | null = null
   const debitRaw = columns.amount >= 0 ? cells[columns.amount] : ''
   if (debitRaw) {
@@ -190,11 +207,23 @@ export function normalizeRow(
     else if (/ars|peso/.test(raw)) currency = 'ARS'
   }
 
+  // Descripción: usa la columna merchant si tiene contenido; sino
+  // sintetiza a partir de BUSINESS_UNIT / SUB_UNIT
+  // (campos que suelen seguir a la de monto en el mismo orden).
+  const merchantRaw = columns.merchant >= 0 ? cells[columns.merchant] : ''
+  const parts = [
+    columns.businessUnit >= 0 ? cells[columns.businessUnit] : '',
+    columns.subUnit >= 0 ? cells[columns.subUnit] : '',
+  ].filter(Boolean)
+  const merchant = (!merchantRaw || merchantRaw === 'Sin descripción')
+    ? (parts.length ? parts.join(' / ') : 'Sin descripción')
+    : merchantRaw
+
   if (!date || amount === null) return null
 
   return {
     date,
-    merchant: merchant || 'Sin descripción',
+    merchant,
     amount,
     currency,
   }

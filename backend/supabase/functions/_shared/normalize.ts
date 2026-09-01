@@ -23,6 +23,10 @@ export const HEADER_ALIASES = {
     'release date',
     'fecha liberacion',
     'fecha de liberacion',
+    'transaction date',
+    'transaccion date',
+    'transaction_date',
+    'fecha transaccion',
   ],
   merchant: [
     'descripcion',
@@ -33,7 +37,6 @@ export const HEADER_ALIASES = {
     'referencia',
     'titular',
     'concepto',
-    'transaction type',
     'tipo de transaccion',
   ],
   amount: [
@@ -51,6 +54,10 @@ export const HEADER_ALIASES = {
     'transaction net amount',
     'monto neto',
     'importe neto',
+    'transaction amount',
+    'transaction_amount',
+    'real amount',
+    'real_amount',
   ],
   symbol: ['ticker', 'symbol', 'simbolo', 'activo', 'codigo', 'especie'],
   target: [
@@ -77,6 +84,9 @@ export const HEADER_ALIASES = {
   ],
   currency: ['moneda', 'currency', 'divisa'],
   assetType: ['tipo de activo', 'tipo activo', 'asset type', 'tipo', 'clase'],
+  businessUnit: ['business unit', 'business_unit', 'bussiness unit'],
+  subUnit: ['sub unit', 'sub_unit'],
+  sourceId: ['source id', 'source_id'],
 }
 
 export function matchExact(cell: unknown, alias: string): boolean {

@@ -56,6 +56,7 @@ describe('AdminView', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+    vi.useRealTimers()
   })
 
   it('muestra contadores, solicitudes pendientes y suscriptos', async () => {
@@ -73,6 +74,8 @@ describe('AdminView', () => {
   })
 
   it('muestra la columna Vence con la duración restante del Pro activo', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date('2026-08-20T12:00:00Z'))
     renderView()
     expect(
       await screen.findByRole('heading', { name: 'Panel de administración' }),

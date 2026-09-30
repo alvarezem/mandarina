@@ -4,9 +4,13 @@ Documento de traspaso entre sesiones. El agente lo **lee al inicio** de cada
 sesión y lo **actualiza al cerrar** (o al terminar una tarea grande). Resumen
 corto y accionable; el detalle vive en TODO/DONE/DECISIONS.
 
+## En curso (2026-09-30)
+
+- **Deploy de `parse-summary` (soporte CSV MercadoPago) — APLICADO**: `deno check parse-summary/index.ts` OK → `supabase functions deploy parse-summary` → **v25 ACTIVE** (`supabase functions list`, 2026-09-30 22:35 UTC). **Sin `db push`** (no hay migraciones nuevas desde `0025`) y **sin nada en Vercel** (frontend sin cambios en `09db45c`/`1cc10c4`/`b703d98`). `import-plan`/`quotes` quedaron en v12/v10 sin redeployar: solo usan los aliases que el fix no toca. Fix documentado en el bullet de MP de `DONE.md`. Sin smoke e2e (decisión del usuario: confiar en los 107 tests de deno).
+
 ## Última sesión (2026-08-21)
 
-- **Soporte CSV de MercadoPago — HECHO (2026-08-21)**: el CSV de MP con columnas `TRANSACTION_DATE`, `TRANSACTION_AMOUNT`, `REAL_AMOUNT`, `BUSINESS_UNIT`, `SUB_UNIT` (separador `;`) no matcheaba ningún alias → error "No se encontraron transacciones con el formato esperado". Fix en 3 archivos: `_shared/normalize.ts` (nuevos aliases `transaction date`, `transaction amount`, `real amount`, `business unit`, `sub unit`, `source id`), `parse-summary/parser.ts` (`ColumnMap` + `businessUnit`/`subUnit`/`sourceId`, `normalizeRow` sintetiza merchant desde esas columnas cuando la de descripción está vacía, respeta signo original del monto), `parse-summary/parser_test.ts` nuevo (9 tests). Suite deno **107/107** (+9) + lint 0 + fmt OK. Frontend sin cambios. Ejemplo en `examples/ejemplo.csv` (gitignored). Commit `09db45c`.
+- **Soporte CSV de MercadoPago — HECHO (2026-08-21)**: el CSV de MP con columnas `TRANSACTION_DATE`, `TRANSACTION_AMOUNT`, `REAL_AMOUNT`, `BUSINESS_UNIT`, `SUB_UNIT` (separador `;`) no matcheaba ningún alias → error "No se encontraron transacciones con el formato esperado". Fix en 3 archivos: `_shared/normalize.ts` (nuevos aliases `transaction date`, `transaction amount`, `real amount`, `business unit`, `sub unit`, `source id`), `parse-summary/parser.ts` (`ColumnMap` + `businessUnit`/`subUnit`/`sourceId`, `normalizeRow` sintetiza merchant desde esas columnas cuando la de descripción está vacía, respeta signo original del monto), `parse-summary/parser_test.ts` nuevo (9 tests). Suite deno **107/107** (+9) + lint 0 + fmt OK. Frontend sin cambios. Ejemplo en `examples/ejemplo.csv` (gitignored). Commit `09db45c` + **fix `b703d98`** (los headers de MP vienen con guion bajo y `transaction type` colisionaba con merchant) y **deploy de la función el 2026-09-30** (v25).
 
 ## Última sesión (2026-08-20)
 

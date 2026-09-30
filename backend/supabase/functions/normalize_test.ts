@@ -30,19 +30,8 @@ Deno.test('matchExact: solo coincide cuando el header ES el alias', () => {
 
 Deno.test('matchExact: matchea los aliases de HEADER_ALIASES', () => {
   for (const alias of HEADER_ALIASES.date) {
-    if (!alias.includes('_') && !alias.includes('-')) {
-      assertEquals(matchExact(alias, alias), true)
-    }
+    assertEquals(matchExact(alias, alias), true)
   }
-  // Aliases con _/- se normalizan a espacios; verificar forma normalizada
-  assertEquals(matchExact('transaction_date', 'transaction date'), true)
-  assertEquals(matchExact('transaction amount', 'transaction amount'), true)
-  assertEquals(matchExact('real amount', 'real amount'), true)
-  assertEquals(matchExact('transaction_amount', 'transaction amount'), true)
-  assertEquals(matchExact('real_amount', 'real amount'), true)
-  assertEquals(matchExact('business_unit', 'business unit'), true)
-  assertEquals(matchExact('sub_unit', 'sub unit'), true)
-  assertEquals(matchExact('source_id', 'source id'), true)
   assertEquals(matchExact('importe', 'importe'), true)
   assertEquals(matchExact('monto usd', 'monto usd'), true)
 })

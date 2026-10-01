@@ -47,8 +47,7 @@ contexto y detalle de implementación vive en `DONE.md`; acá solo el qué y el 
 - **Memoria opencode**: por ahora solo capas 1+2 (AGENTS.md + HANDOFF.md) +
   **DECISIONS.md** (log de decisiones, este archivo). Re-evaluar
   skills/subagentes cuando surja la necesidad.
-- **Compromised deps** (`keyv`, `flat-cache`, `file-entry-cache`): eliminadas del
-  árbol al migrar a Vite (eran transitivas de react-scripts). Ya no hay `overrides`.
+- **Compromised deps** (`keyv`, `flat-cache`, `file-entry-cache`): **corrección 2026-09-30** — la versión anterior de esta entrada decía que se habían "eliminado del árbol al migrar a Vite", y **eso hoy es falso**: los tres **volvieron** al árbol, traídos por `eslint → file-entry-cache@^8 → flat-cache@^4 → keyv@^4.5.4`. Lo que sí es cierto: (1) el bloque `overrides` de la era CRA (`{file-entry-cache:"6.0.1", flat-cache:"3.2.0", keyv:"4.5.4"}`) **ya no está** — se eliminó en `4c01ec2` y hoy `frontend/package.json` no tiene `overrides` ni `resolutions`; (2) **no hay vulnerabilidad activa** — `npm audit` no reporta ninguno de los tres (la cadena comprometida necesitaba `har-validator`/`request`, que no están en el árbol) y el piso efectivo de `keyv` es el mismo 4.5.4 que forzaba el override. **No re-litigar**: no reintroducir `overrides` salvo que un advisory real lo pida; si aparece, el fix suele caer dentro del rango que el padre ya declara (como pasó el 2026-09-30 con `brace-expansion`/`js-yaml`/`undici`, solo lockfile).
 - **Vercel**: el `vercel.json` (framework vite, output dist) está en el repo, pero
   las settings del dashboard se actualizaron explícitamente con `vercel project update`.
   Env vars en el dashboard: `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (las `REACT_APP_*` se eliminaron).
